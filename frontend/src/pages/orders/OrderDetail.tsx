@@ -15,10 +15,7 @@ import { isSupplierObject } from "@/helpers/isSupplierObject";
 import { isUserObject } from "@/helpers/isUserObject";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useOrderStore } from "@/stores/order.store";
-import {
-  MovementType,
-  OrderStatus
-} from "@/types";
+import { MovementType, OrderStatus } from "@/types";
 import {
   ArrowLeft,
   Calendar,
@@ -31,11 +28,12 @@ import {
   Printer,
   User as UserIcon,
   XCircle,
+  Banknote,
+  CreditCard,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-
 
 export function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -112,6 +110,28 @@ export function OrderDetail() {
     }
   };
 
+  const getPaymentIcon = (paymentType: string | undefined) => {
+    switch (paymentType) {
+      case "cash":
+        return <Banknote className="w-4 h-4 text-green-500" />;
+      case "credit":
+        return <CreditCard className="w-4 h-4 text-blue-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getPaymentLabel = (paymentType: string | undefined) => {
+    switch (paymentType) {
+      case "cash":
+        return "Contado";
+      case "credit":
+        return "Crédito";
+      default:
+        return null;
+    }
+  };
+
   const getTypeLabel = (type: string) => {
     switch (type) {
       case MovementType.SALE:
@@ -168,6 +188,25 @@ export function OrderDetail() {
               {getStatusBadge(currentOrder.status)}
             </div>
             <p className="text-gray-500">{getTypeLabel(currentOrder.type)}</p>
+            {/* Mostrar tipo de pago solo para ventas */}
+            {currentOrder.type === MovementType.SALE &&
+              currentOrder.paymentType && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <div className="flex items-center gap-1.5">
+                    {getPaymentIcon(currentOrder.paymentType)}
+                    <span
+                      className={`text-sm font-medium ${
+                        currentOrder.paymentType === "cash"
+                          ? "text-green-600"
+                          : "text-blue-600"
+                      }`}
+                    >
+                      {getPaymentLabel(currentOrder.paymentType)}
+                    </span>
+                  </div>
+                </>
+              )}
           </div>
         </div>
         <div className="flex gap-2">

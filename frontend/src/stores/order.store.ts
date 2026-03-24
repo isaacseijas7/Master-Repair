@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import { type Order, type CreateOrderInput, type OrderFilters, OrderStatus } from '@/types';
+import { type Order, type CreateOrderInput, type OrderFilters, OrderStatus, type PaymentTypeType } from '@/types';
 import { orderService } from '@/services/order.service';
 
 interface OrderState {
   orders: Order[];
+  paymentType?: PaymentTypeType;
   currentOrder: Order | null;
   todaySales: { count: number; total: number };
   topProducts: any[];

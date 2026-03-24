@@ -1,21 +1,21 @@
 // ==================== ENUMS ====================
 export const UserRole = {
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  CASHIER: 'cashier',
+  ADMIN: "admin",
+  MANAGER: "manager",
+  CASHIER: "cashier",
 } as const;
 
 export enum MovementType {
-  PURCHASE = 'purchase',
-  SALE = 'sale',
-  ADJUSTMENT = 'adjustment',
-  RETURN = 'return',
+  PURCHASE = "purchase",
+  SALE = "sale",
+  ADJUSTMENT = "adjustment",
+  RETURN = "return",
 }
 
 export const OrderStatus = {
-  PENDING: 'pending',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
+  PENDING: "pending",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
 } as const;
 
 // ==================== USER TYPES ====================
@@ -24,7 +24,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: typeof UserRole[keyof typeof UserRole];
+  role: (typeof UserRole)[keyof typeof UserRole];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -40,7 +40,7 @@ export interface CreateUserInput {
   password: string;
   firstName: string;
   lastName: string;
-  role: typeof UserRole[keyof typeof UserRole];
+  role: (typeof UserRole)[keyof typeof UserRole];
   isActive?: boolean;
 }
 
@@ -141,8 +141,9 @@ export interface OrderItem {
 export interface Order {
   _id: string;
   orderNumber: string;
-  type: typeof MovementType[keyof typeof MovementType];
-  status: typeof OrderStatus[keyof typeof OrderStatus];
+  type: (typeof MovementType)[keyof typeof MovementType];
+  status: (typeof OrderStatus)[keyof typeof OrderStatus];
+  paymentType?: PaymentTypeType;
   items: OrderItem[];
   subtotal: number;
   tax: number;
@@ -165,9 +166,23 @@ export interface CreateOrderItem {
   unitPrice?: number;
 }
 
+export const PaymentType = {
+  CASH: "cash",
+  CREDIT: "credit",
+} as const;
+
+export type PaymentTypeType = (typeof PaymentType)[keyof typeof PaymentType];
+
+export type MovementTypeType = (typeof MovementType)[keyof typeof MovementType];
+
 export interface CreateOrderInput {
-  type: typeof MovementType[keyof typeof MovementType];
-  items: CreateOrderItem[];
+  type: MovementTypeType;
+  paymentType?: PaymentTypeType;
+  items: Array<{
+    product: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
   tax?: number;
   discount?: number;
   supplier?: string;
@@ -182,7 +197,7 @@ export interface PaginationParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   search?: string;
 }
 
@@ -278,8 +293,8 @@ export interface ProductFilters extends PaginationParams {
 }
 
 export interface OrderFilters extends PaginationParams {
-  type?: typeof MovementType[keyof typeof MovementType];
-  status?: typeof OrderStatus[keyof typeof OrderStatus];
+  type?: (typeof MovementType)[keyof typeof MovementType];
+  status?: (typeof OrderStatus)[keyof typeof OrderStatus];
   supplier?: string;
   startDate?: string;
   endDate?: string;

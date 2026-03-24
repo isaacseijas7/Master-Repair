@@ -31,10 +31,12 @@ import { useOrderStore } from "@/stores/order.store";
 import { MovementType, OrderStatus, type OrderFilters } from "@/types";
 import {
   ArrowLeftRight,
+  Banknote,
   Calendar,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   Eye,
   Filter,
   MoreHorizontal,
@@ -133,6 +135,28 @@ export function Orders() {
         return <ArrowLeftRight className="w-4 h-4 text-orange-500" />;
       default:
         return <Package className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getPaymentIcon = (paymentType: string | undefined) => {
+    switch (paymentType) {
+      case "cash":
+        return <Banknote className="w-4 h-4 text-green-500" />;
+      case "credit":
+        return <CreditCard className="w-4 h-4 text-blue-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getPaymentLabel = (paymentType: string | undefined) => {
+    switch (paymentType) {
+      case "cash":
+        return "Contado";
+      case "credit":
+        return "Crédito";
+      default:
+        return null;
     }
   };
 
@@ -320,6 +344,23 @@ export function Orders() {
                       <TableCell>
                         <span className="text-sm text-gray-600">
                           {getTypeLabel(order.type)}
+                          {order.type === MovementType.SALE &&
+                            order.paymentType && (
+                              <>
+                                <div className="flex items-center gap-1.5">
+                                  {getPaymentIcon(order.paymentType)}
+                                  <span
+                                    className={`text-sm font-medium ${
+                                      order.paymentType === "cash"
+                                        ? "text-green-600"
+                                        : "text-blue-600"
+                                    }`}
+                                  >
+                                    {getPaymentLabel(order.paymentType)}
+                                  </span>
+                                </div>
+                              </>
+                            )}
                         </span>
                       </TableCell>
                       <TableCell>
