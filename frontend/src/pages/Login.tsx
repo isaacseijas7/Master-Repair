@@ -97,7 +97,7 @@ export function Login() {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="admin@masterrepair.com"
+                        placeholder="..."
                         {...field}
                       />
                     </FormControl>
