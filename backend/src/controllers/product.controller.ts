@@ -24,6 +24,13 @@ interface DeleteProductRoute extends RouteGenericInterface {
 
 interface GenerateSKURoute extends RouteGenericInterface {}
 
+interface ExportProductsRoute extends RouteGenericInterface {
+  Body: {
+    filters?: Record<string, any>;
+    columns?: string[];
+  };
+}
+
 export class ProductController {
   async getProducts(
     request: FastifyRequest<GetProductsRoute>,
@@ -134,6 +141,33 @@ export class ProductController {
         message: "SKU generado exitosamente",
         data: { sku },
       });
+    } catch (error: any) {
+      reply.status(500).send({ success: false, message: error.message });
+    }
+  }
+
+  async exportProducts(
+    request: FastifyRequest<ExportProductsRoute>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const { filters = {}, columns = [] } = request.body;
+
+      // Validar que haya datos para exportar primero (opcional pero recomendado)
+      const buffer = await productService.exportProducts(filters, columns);
+
+      // Configurar headers para descarga de archivo
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filename = `productos-${timestamp}.xlsx`;
+
+      reply.header(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+      reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+      reply.header("Content-Length", buffer.length);
+
+      reply.send(buffer);
     } catch (error: any) {
       reply.status(500).send({ success: false, message: error.message });
     }

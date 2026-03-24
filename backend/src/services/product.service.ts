@@ -143,6 +143,157 @@ export class ProductService {
 
     return products;
   }
+
+  async exportProducts(
+    filters: any = {},
+    columns: string[] = [],
+  ): Promise<Buffer> {
+    const ExcelJS = require("exceljs");
+
+    // Reutilizar lógica de filtros pero SIN paginación (limit = 0 o muy alto)
+    const {
+      search,
+      category,
+      supplier,
+      minStock,
+      isActive,
+      minPrice,
+      maxPrice,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = filters;
+
+    const query: any = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { sku: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (category) query.category = category;
+    if (supplier) query.supplier = supplier;
+    if (minStock === true) query.$expr = { $lte: ["$stock", "$minStock"] };
+    if (isActive !== undefined) query.isActive = isActive;
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      query.unitPrice = {};
+      if (minPrice !== undefined) query.unitPrice.$gte = minPrice;
+      if (maxPrice !== undefined) query.unitPrice.$lte = maxPrice;
+    }
+
+    const sort: any = {};
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Traer TODOS los productos sin paginar
+    const products = await Product.find(query)
+      .populate("category", "name color")
+      .populate("supplier", "name contactName")
+      .sort(sort)
+      .lean();
+
+    // Crear workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Productos");
+
+    // Definir columnas disponibles y sus configuraciones
+    const columnDefinitions: Record<string, any> = {
+      sku: { header: "SKU", key: "sku", width: 20 },
+      name: { header: "Nombre", key: "name", width: 40 },
+      description: { header: "Descripción", key: "description", width: 50 },
+      category: { header: "Categoría", key: "category", width: 20 },
+      unitPrice: { header: "Precio Unitario", key: "unitPrice", width: 15 },
+      wholesalePrice: {
+        header: "Precio Mayorista",
+        key: "wholesalePrice",
+        width: 15,
+      },
+      stock: { header: "Stock", key: "stock", width: 10 },
+      minStock: { header: "Stock Mínimo", key: "minStock", width: 15 },
+      maxStock: { header: "Stock Máximo", key: "maxStock", width: 15 },
+      supplier: { header: "Proveedor", key: "supplier", width: 25 },
+      location: { header: "Ubicación", key: "location", width: 20 },
+      barcode: { header: "Código de Barras", key: "barcode", width: 20 },
+      isActive: { header: "Estado", key: "isActive", width: 12 },
+      createdAt: { header: "Fecha Creación", key: "createdAt", width: 20 },
+    };
+
+    // Si no se especifican columnas, usar todas
+    const selectedColumns =
+      columns.length > 0 ? columns : Object.keys(columnDefinitions);
+
+    // Configurar columnas en el worksheet
+    worksheet.columns = selectedColumns.map((col) => columnDefinitions[col]);
+
+    // Estilo para header
+    worksheet.getRow(1).font = { bold: true, size: 12 };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    // Agregar datos
+    products.forEach((product: any) => {
+      const row: any = {};
+
+      selectedColumns.forEach((col) => {
+        switch (col) {
+          case "category":
+            row[col] = product.category?.name || "-";
+            break;
+          case "supplier":
+            row[col] = product.supplier?.name || "-";
+            break;
+          case "isActive":
+            row[col] = product.isActive ? "Activo" : "Inactivo";
+            break;
+          case "unitPrice":
+          case "wholesalePrice":
+            row[col] = product[col] || 0;
+            break;
+          case "createdAt":
+            row[col] = new Date(product.createdAt).toLocaleDateString("es-ES");
+            break;
+          default:
+            row[col] = product[col] || "-";
+        }
+      });
+
+      const excelRow = worksheet.addRow(row);
+
+      // Aplicar estilos condicionales (ej: stock bajo en rojo)
+      if (
+        selectedColumns.includes("stock") &&
+        selectedColumns.includes("minStock")
+      ) {
+        const stockIndex = selectedColumns.indexOf("stock") + 1;
+        const stockValue = product.stock;
+        const minStockValue = product.minStock;
+
+        if (stockValue <= minStockValue) {
+          excelRow.getCell(stockIndex).font = {
+            color: { argb: "FFFF0000" },
+            bold: true,
+          };
+        }
+      }
+    });
+
+    // Auto-filtros
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: selectedColumns.length },
+    };
+
+    // Congelar primera fila
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
+
+    // Generar buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+  }
 }
 
 export const productService = new ProductService();

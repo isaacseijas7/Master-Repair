@@ -6,6 +6,13 @@ export async function productRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.addHook("preHandler", authenticate);
 
   fastify.get("/", productController.getProducts.bind(productController));
+
+  fastify.post(
+    "/export",
+    { preHandler: [authorize("admin", "manager")] },
+    productController.exportProducts.bind(productController),
+  );
+
   fastify.get(
     "/low-stock",
     productController.getLowStockProducts.bind(productController),
