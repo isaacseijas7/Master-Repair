@@ -31,8 +31,9 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Truck, Mail,
-  Phone
+  Truck,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useForm } from "react-hook-form";
@@ -82,6 +83,11 @@ export function Suppliers() {
 
   const onPageChange = (page: number) => {
     fetchSuppliers({ page });
+  };
+
+  // Nuevo handler para cambiar el límite
+  const handleLimitChange = (limit: number) => {
+    fetchSuppliers({ limit, page: 1 });
   };
 
   const handleDelete = async (id: string) => {
@@ -232,7 +238,11 @@ export function Suppliers() {
           </div>
 
           {/* Pagination */}
-          <Pagination pagination={pagination} onPageChange={onPageChange} />
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onLimitChange={handleLimitChange}
+          />
         </CardContent>
       </Card>
 

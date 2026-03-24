@@ -93,6 +93,11 @@ export function Categories() {
     fetchCategories({ page });
   };
 
+  // Nuevo handler para cambiar el límite
+  const handleLimitChange = (limit: number) => {
+    fetchCategories({ limit, page: 1 });
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de eliminar esta categoría?")) {
       await deleteCategory(id);
@@ -221,7 +226,11 @@ export function Categories() {
           </div>
 
           {/* Pagination */}
-          <Pagination pagination={pagination} onPageChange={onPageChange} />
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onLimitChange={handleLimitChange}
+          />
         </CardContent>
       </Card>
 

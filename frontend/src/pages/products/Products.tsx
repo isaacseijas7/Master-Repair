@@ -39,7 +39,7 @@ export function Products() {
 
   // Nuevo handler para cambiar el límite
   const handleLimitChange = (limit: number) => {
-    setFilters({ limit, page: 1 }); // Resetear a página 1 al cambiar el límite
+    setFilters({ limit, page: 1 });
     fetchProducts({ ...filters, limit, page: 1, search: debouncedSearch });
   };
 

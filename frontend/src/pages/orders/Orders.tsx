@@ -34,7 +34,8 @@ import {
   ArrowLeftRight,
   Banknote,
   Calendar,
-  CheckCircle, CreditCard,
+  CheckCircle,
+  CreditCard,
   Eye,
   Filter,
   MoreHorizontal,
@@ -42,7 +43,7 @@ import {
   Plus,
   Search,
   ShoppingCart,
-  XCircle
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -56,6 +57,7 @@ type FilterState = {
 
 export function Orders() {
   const navigate = useNavigate();
+  const [limit, setLimit] = useState(10);
   const {
     orders,
     pagination,
@@ -85,7 +87,19 @@ export function Orders() {
     const orderFilters: OrderFilters = {
       ...filters,
       search: debouncedSearch,
+      limit,
       page,
+    };
+    fetchOrders(orderFilters);
+  };
+
+  const handleLimitChange = (limit: number) => {
+    setLimit(limit);
+    const orderFilters: OrderFilters = {
+      ...filters,
+      search: debouncedSearch,
+      limit,
+      page: 1,
     };
     fetchOrders(orderFilters);
   };
@@ -426,7 +440,11 @@ export function Orders() {
           </div>
 
           {/* Pagination */}
-          <Pagination pagination={pagination} onPageChange={handlePageChange} />
+          <Pagination
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
+          />
         </CardContent>
       </Card>
     </div>
