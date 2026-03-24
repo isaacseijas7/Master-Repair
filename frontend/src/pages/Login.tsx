@@ -8,10 +8,8 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+  CardDescription, CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import {
   Form,
@@ -154,14 +152,14 @@ export function Login() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
+        {/* <CardFooter className="flex flex-col space-y-2">
           <p className="text-sm text-gray-500 text-center">
             Credenciales de prueba:
           </p>
           <p className="text-xs text-gray-400 text-center">
             admin@masterrepair.com / Admin123!
           </p>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );
