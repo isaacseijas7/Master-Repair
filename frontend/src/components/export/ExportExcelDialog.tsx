@@ -34,7 +34,7 @@ const AVAILABLE_COLUMNS = [
   { id: "supplier", label: "Proveedor", default: false },
 //   { id: "location", label: "Ubicación", default: false },
 //   { id: "barcode", label: "Código de Barras", default: false },
-  { id: "isActive", label: "Estado (Activo/Inactivo)", default: true },
+  { id: "isActive", label: "Estado (Activo/Inactivo)", default: false },
   { id: "createdAt", label: "Fecha de Creación", default: false },
 ];
 
