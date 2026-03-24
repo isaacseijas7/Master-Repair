@@ -37,6 +37,12 @@ export function Products() {
     fetchProducts({ ...filters, page });
   };
 
+  // Nuevo handler para cambiar el límite
+  const handleLimitChange = (limit: number) => {
+    setFilters({ limit, page: 1 }); // Resetear a página 1 al cambiar el límite
+    fetchProducts({ ...filters, limit, page: 1, search: debouncedSearch });
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
       await deleteProduct(id);
@@ -75,6 +81,7 @@ export function Products() {
         <Pagination
           pagination={pagination}
           onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
         />
       </div>
     </div>

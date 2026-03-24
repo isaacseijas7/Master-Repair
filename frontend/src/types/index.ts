@@ -290,6 +290,7 @@ export interface ProductFilters extends PaginationParams {
   isActive?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  limit?: number;
 }
 
 export interface OrderFilters extends PaginationParams {
