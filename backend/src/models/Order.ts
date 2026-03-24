@@ -13,6 +13,12 @@ export const OrderStatus = {
   CANCELLED: "cancelled",
 } as const;
 
+// NUEVO: Tipo de pago
+export const PaymentType = {
+  CASH: "cash",
+  CREDIT: "credit",
+} as const;
+
 export interface IOrderItem {
   product: mongoose.Types.ObjectId;
   quantity: number;
@@ -24,6 +30,7 @@ export interface IOrder extends Document {
   orderNumber: string;
   type: (typeof MovementType)[keyof typeof MovementType];
   status: (typeof OrderStatus)[keyof typeof OrderStatus];
+  paymentType: (typeof PaymentType)[keyof typeof PaymentType]; // NUEVO
   items: IOrderItem[];
   subtotal: number;
   tax: number;
@@ -71,8 +78,6 @@ const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: {
       type: String,
-      // required: true,
-      // unique: true,
     },
     type: {
       type: String,
@@ -83,6 +88,12 @@ const OrderSchema = new Schema<IOrder>(
       type: String,
       enum: Object.values(OrderStatus),
       default: OrderStatus.PENDING,
+    },
+    // NUEVO: Campo paymentType
+    paymentType: {
+      type: String,
+      enum: Object.values(PaymentType),
+      default: PaymentType.CASH, // Por defecto: contado
     },
     items: {
       type: [OrderItemSchema],
@@ -153,6 +164,7 @@ const OrderSchema = new Schema<IOrder>(
 
 OrderSchema.index({ type: 1 });
 OrderSchema.index({ status: 1 });
+OrderSchema.index({ paymentType: 1 });
 OrderSchema.index({ createdAt: -1 });
 
 OrderSchema.pre("save", async function (next) {

@@ -1,16 +1,29 @@
-import { Order, IOrder, MovementType, OrderStatus } from '../models/Order';
-import { Product } from '../models/Product';
+import { Order, IOrder, MovementType, OrderStatus } from "../models/Order";
+import { Product } from "../models/Product";
 
 export class OrderService {
-  async getOrders(filters: any = {}): Promise<{ data: IOrder[]; pagination: any }> {
-    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', search, type, status, supplier, startDate, endDate } = filters;
-    
+  async getOrders(
+    filters: any = {},
+  ): Promise<{ data: IOrder[]; pagination: any }> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+      search,
+      type,
+      status,
+      supplier,
+      startDate,
+      endDate,
+    } = filters;
+
     const query: any = {};
 
     if (search) {
       query.$or = [
-        { orderNumber: { $regex: search, $options: 'i' } },
-        { customerName: { $regex: search, $options: 'i' } },
+        { orderNumber: { $regex: search, $options: "i" } },
+        { customerName: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -24,15 +37,15 @@ export class OrderService {
     }
 
     const sort: any = {};
-    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1;
 
     const skip = (page - 1) * limit;
-    
+
     const [orders, total] = await Promise.all([
       Order.find(query)
-        .populate('items.product', 'name sku unitPrice')
-        .populate('supplier', 'name')
-        .populate('createdBy', 'firstName lastName')
+        .populate("items.product", "name sku unitPrice")
+        .populate("supplier", "name")
+        .populate("createdBy", "firstName lastName")
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -57,10 +70,10 @@ export class OrderService {
 
   async getOrderById(id: string): Promise<IOrder> {
     const order = await Order.findById(id)
-      .populate('items.product', 'name sku unitPrice stock')
-      .populate('supplier', 'name contactName email phone')
-      .populate('createdBy', 'firstName lastName email');
-    if (!order) throw new Error('Orden no encontrada');
+      .populate("items.product", "name sku unitPrice stock")
+      .populate("supplier", "name contactName email phone")
+      .populate("createdBy", "firstName lastName email");
+    if (!order) throw new Error("Orden no encontrada");
     return order;
   }
 
@@ -71,9 +84,13 @@ export class OrderService {
     for (const item of orderData.items) {
       const product = await Product.findById(item.product);
       if (!product) throw new Error(`Producto no encontrado: ${item.product}`);
-      if (!product.isActive) throw new Error(`El producto ${product.name} no está activo`);
+      if (!product.isActive)
+        throw new Error(`El producto ${product.name} no está activo`);
 
-      if (orderData.type === MovementType.SALE && product.stock < item.quantity) {
+      if (
+        orderData.type === MovementType.SALE &&
+        product.stock < item.quantity
+      ) {
         throw new Error(`Stock insuficiente para ${product.name}`);
       }
 
@@ -100,6 +117,8 @@ export class OrderService {
       subtotal,
       total,
       createdBy: userId,
+      // paymentType se maneja automáticamente por el default en el schema
+      // pero si se envía explícitamente, se usará ese valor
     });
 
     await order.save();
@@ -108,12 +127,12 @@ export class OrderService {
       await this.updateStockForOrder(order);
     }
 
-    return order.populate(['items.product', 'supplier', 'createdBy']);
+    return order.populate(["items.product", "supplier", "createdBy"]);
   }
 
   async updateOrderStatus(id: string, status: string): Promise<IOrder> {
     const order = await Order.findById(id);
-    if (!order) throw new Error('Orden no encontrada');
+    if (!order) throw new Error("Orden no encontrada");
 
     const previousStatus = order.status;
     order.status = status as (typeof OrderStatus)[keyof typeof OrderStatus];
@@ -126,14 +145,17 @@ export class OrderService {
     }
 
     await order.save();
-    return order.populate(['items.product', 'supplier', 'createdBy']);
+    return order.populate(["items.product", "supplier", "createdBy"]);
   }
 
   private async updateStockForOrder(order: IOrder): Promise<void> {
     for (const item of order.items) {
       const product = await Product.findById(item.product);
       if (product) {
-        if (order.type === MovementType.PURCHASE || order.type === MovementType.RETURN) {
+        if (
+          order.type === MovementType.PURCHASE ||
+          order.type === MovementType.RETURN
+        ) {
           product.stock += item.quantity;
         } else if (order.type === MovementType.SALE) {
           if (product.stock >= item.quantity) {
@@ -152,8 +174,14 @@ export class OrderService {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const result = await Order.aggregate([
-      { $match: { type: MovementType.SALE, status: OrderStatus.COMPLETED, completedAt: { $gte: today, $lt: tomorrow } } },
-      { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$total' } } },
+      {
+        $match: {
+          type: MovementType.SALE,
+          status: OrderStatus.COMPLETED,
+          completedAt: { $gte: today, $lt: tomorrow },
+        },
+      },
+      { $group: { _id: null, count: { $sum: 1 }, total: { $sum: "$total" } } },
     ]);
 
     return result[0] || { count: 0, total: 0 };
@@ -162,13 +190,34 @@ export class OrderService {
   async getTopSellingProducts(limit: number = 5): Promise<any[]> {
     return Order.aggregate([
       { $match: { type: MovementType.SALE, status: OrderStatus.COMPLETED } },
-      { $unwind: '$items' },
-      { $group: { _id: '$items.product', totalSold: { $sum: '$items.quantity' }, totalRevenue: { $sum: '$items.totalPrice' } } },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.product",
+          totalSold: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: "$items.totalPrice" },
+        },
+      },
       { $sort: { totalSold: -1 } },
       { $limit: limit },
-      { $lookup: { from: 'products', localField: '_id', foreignField: '_id', as: 'product' } },
-      { $unwind: '$product' },
-      { $project: { productId: '$_id', name: '$product.name', sku: '$product.sku', totalSold: 1, totalRevenue: 1 } },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
+        $project: {
+          productId: "$_id",
+          name: "$product.name",
+          sku: "$product.sku",
+          totalSold: 1,
+          totalRevenue: 1,
+        },
+      },
     ]);
   }
 
@@ -179,10 +228,44 @@ export class OrderService {
     startDate.setHours(0, 0, 0, 0);
 
     return Order.aggregate([
-      { $match: { type: MovementType.SALE, status: OrderStatus.COMPLETED, completedAt: { $gte: startDate } } },
-      { $group: { _id: { year: { $year: '$completedAt' }, month: { $month: '$completedAt' } }, revenue: { $sum: '$total' }, orders: { $sum: 1 } } },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
-      { $project: { _id: 0, month: { $concat: [{ $toString: '$_id.year' }, '-', { $cond: { if: { $lt: ['$_id.month', 10] }, then: { $concat: ['0', { $toString: '$_id.month' }] }, else: { $toString: '$_id.month' } } }] }, revenue: 1, orders: 1 } },
+      {
+        $match: {
+          type: MovementType.SALE,
+          status: OrderStatus.COMPLETED,
+          completedAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$completedAt" },
+            month: { $month: "$completedAt" },
+          },
+          revenue: { $sum: "$total" },
+          orders: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      {
+        $project: {
+          _id: 0,
+          month: {
+            $concat: [
+              { $toString: "$_id.year" },
+              "-",
+              {
+                $cond: {
+                  if: { $lt: ["$_id.month", 10] },
+                  then: { $concat: ["0", { $toString: "$_id.month" }] },
+                  else: { $toString: "$_id.month" },
+                },
+              },
+            ],
+          },
+          revenue: 1,
+          orders: 1,
+        },
+      },
     ]);
   }
 

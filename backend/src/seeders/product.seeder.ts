@@ -3,22 +3,34 @@ import mongoose from "mongoose";
 
 export const seedProducts = async (
   categoryIds: mongoose.Types.ObjectId[],
-  supplierIds: mongoose.Types.ObjectId[]
-): Promise<Array<{ id: mongoose.Types.ObjectId; price: number; name: string; stock: number }>> => {
+  supplierIds: mongoose.Types.ObjectId[],
+): Promise<
+  Array<{
+    id: mongoose.Types.ObjectId;
+    price: number;
+    name: string;
+    stock: number;
+  }>
+> => {
   await Product.deleteMany({});
   console.log("🗑️  Colección de productos limpiada");
 
-  // Helper para obtener ID aleatorio
-  const getRandomId = (ids: mongoose.Types.ObjectId[]) =>
-    ids[Math.floor(Math.random() * ids.length)];
+  const generateSeedSKU = (prefix: string, index: number): string => {
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `SEED-${prefix}-${year}${month}${day}-${String(index).padStart(4, "0")}`;
+  };
 
   // Precios base realistas para el mercado mexicano de reparación móvil
   const productsData = [
     // === PANTALLAS (Category 0) - Margen: 40-60% ===
     {
-      sku: "SCR-IPH13-PRO-ORG",
+      sku: generateSeedSKU("SCR", 1),
       name: "Pantalla iPhone 13 Pro OLED Original",
-      description: "Pantalla OLED original Apple, ensamblaje completo con True Tone",
+      description:
+        "Pantalla OLED original Apple, ensamblaje completo con True Tone",
       category: categoryIds[0],
       supplier: supplierIds[0],
       unitPrice: 4850,
@@ -35,7 +47,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "SCR-IPH13-PRO-GEN",
+      sku: generateSeedSKU("SCR", 2),
       name: "Pantalla iPhone 13 Pro OLED Genérica",
       description: "Pantalla OLED compatible, calidad AAA+",
       category: categoryIds[0],
@@ -54,7 +66,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "SCR-IPH12-LCD",
+      sku: generateSeedSKU("SCR", 3),
       name: "Pantalla iPhone 12 LCD",
       description: "Pantalla LCD Incell con táctil integrado",
       category: categoryIds[0],
@@ -70,7 +82,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "SCR-SAM-S23U-ORG",
+      sku: generateSeedSKU("SCR", 4),
       name: "Pantalla Samsung S23 Ultra AMOLED Original",
       description: "AMOLED 6.8' original con marco",
       category: categoryIds[0],
@@ -86,7 +98,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "SCR-SAM-A54-LCD",
+      sku: generateSeedSKU("SCR", 5),
       name: "Pantalla Samsung A54 LCD",
       description: "LCD táctil compatible, calidad original",
       category: categoryIds[0],
@@ -105,7 +117,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "SCR-XIA-13T-AMOLED",
+      sku: generateSeedSKU("SCR", 6),
       name: "Pantalla Xiaomi 13T AMOLED",
       description: "AMOLED 6.67' 120Hz, compatible",
       category: categoryIds[0],
@@ -121,7 +133,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "SCR-MOT-G82-OLED",
+      sku: generateSeedSKU("SCR", 7),
       name: "Pantalla Moto G82 OLED",
       description: "Pantalla pOLED 6.6' con fingerprint",
       category: categoryIds[0],
@@ -139,7 +151,7 @@ export const seedProducts = async (
 
     // === BATERÍAS (Category 1) - Margen: 50-70% ===
     {
-      sku: "BAT-IPH-14PRO-ORG",
+      sku: generateSeedSKU("SCR", 8),
       name: "Batería iPhone 14 Pro Original",
       description: "3200mAh original Apple, ciclo 0",
       category: categoryIds[1],
@@ -155,7 +167,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BAT-IPH-11-GEN",
+      sku: generateSeedSKU("SCR", 9),
       name: "Batería iPhone 11 Genérica Premium",
       description: "3110mAh alta capacidad, certificada",
       category: categoryIds[1],
@@ -174,7 +186,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BAT-SAM-S22U-ORG",
+      sku: generateSeedSKU("SCR", 10),
       name: "Batería Samsung S22 Ultra Original",
       description: "5000mAh EB-BS908ABY original",
       category: categoryIds[1],
@@ -190,7 +202,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BAT-SAM-A14-GEN",
+      sku: generateSeedSKU("SCR", 11),
       name: "Batería Samsung A14 5000mAh",
       description: "Alta capacidad compatible",
       category: categoryIds[1],
@@ -206,7 +218,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BAT-XIA-12T-ORG",
+      sku: generateSeedSKU("SCR", 12),
       name: "Batería Xiaomi 12T 5000mAh",
       description: "BM5J original, alta duración",
       category: categoryIds[1],
@@ -222,7 +234,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BAT-MOT-G60-GEN",
+      sku: generateSeedSKU("SCR", 13),
       name: "Batería Moto G60 6000mAh",
       description: "Alta capacidad, compatible",
       category: categoryIds[1],
@@ -238,7 +250,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BAT-HUA-P30L-ORG",
+      sku: generateSeedSKU("SCR", 14),
       name: "Batería Huawei P30 Lite Original",
       description: "3340mAh HB366481ECW original",
       category: categoryIds[1],
@@ -256,7 +268,7 @@ export const seedProducts = async (
 
     // === CARGADORES (Category 2) - Margen: 60-80% ===
     {
-      sku: "CHG-PD-20W-ORG",
+      sku: generateSeedSKU("SCR", 15),
       name: "Cargador Apple 20W USB-C Original",
       description: "Cargador de pared original con carga rápida",
       category: categoryIds[2],
@@ -272,7 +284,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CHG-PD-20W-CERT",
+      sku: generateSeedSKU("SCR", 16),
       name: "Cargador 20W USB-C Certificado",
       description: "Carga rápida PD, certificado MFi",
       category: categoryIds[2],
@@ -291,7 +303,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CHG-SAM-25W-ORG",
+      sku: generateSeedSKU("SCR", 17),
       name: "Cargador Samsung 25W Original",
       description: "Super Fast Charging, USB-C",
       category: categoryIds[2],
@@ -307,7 +319,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CHG-QC-30-65W",
+      sku: generateSeedSKU("SCR", 18),
       name: "Cargador Rápido 65W GaN 3 Puertos",
       description: "Cargador GaN 65W, 2C+1A, universal",
       category: categoryIds[2],
@@ -323,7 +335,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CBL-LIGHT-1M-ORG",
+      sku: generateSeedSKU("SCR", 19),
       name: "Cable Lightning 1m Original Apple",
       description: "Cable USB-A a Lightning original",
       category: categoryIds[2],
@@ -339,7 +351,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CBL-LIGHT-2M-CERT",
+      sku: generateSeedSKU("SCR", 20),
       name: "Cable Lightning 2m Certificado MFi",
       description: "Nylon trenzado, certificado Apple",
       category: categoryIds[2],
@@ -355,7 +367,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CBL-C-C-100W",
+      sku: generateSeedSKU("SCR", 21),
       name: "Cable USB-C a C 100W 2m",
       description: "E-mark chip, carga rápida 100W, nylon",
       category: categoryIds[2],
@@ -374,7 +386,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CBL-3IN1-UNI",
+      sku: generateSeedSKU("SCR", 22),
       name: "Cable 3 en 1 Universal 1.2m",
       description: "Lightning + MicroUSB + USB-C",
       category: categoryIds[2],
@@ -392,7 +404,7 @@ export const seedProducts = async (
 
     // === CARCASAS (Category 3) - Margen: 50-70% ===
     {
-      sku: "CAS-IPH14-PM-GLS",
+      sku: generateSeedSKU("SCR", 23),
       name: "Tapa Trasera iPhone 14 Pro Max Cristal",
       description: "Cristal templado trasero con imanes MagSafe",
       category: categoryIds[3],
@@ -408,7 +420,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CAS-IPH13-BATT",
+      sku: generateSeedSKU("SCR", 24),
       name: "Tapa con Batería iPhone 13 4200mAh",
       description: "Funda batería integrada, carga inalámbrica",
       category: categoryIds[3],
@@ -424,7 +436,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CAS-SAM-S23U-ARM",
+      sku: generateSeedSKU("SCR", 25),
       name: "Tapa Trasera S23 Ultra Aluminio",
       description: "Aleación de aluminio, resistente",
       category: categoryIds[3],
@@ -442,7 +454,7 @@ export const seedProducts = async (
 
     // === CÁMARAS (Category 4) - Margen: 40-60% ===
     {
-      sku: "CAM-IPH14P-MAIN",
+      sku: generateSeedSKU("SCR", 26),
       name: "Cámara Principal iPhone 14 Pro",
       description: "Módulo triple 48MP original",
       category: categoryIds[4],
@@ -458,7 +470,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CAM-IPH12-FRONT",
+      sku: generateSeedSKU("SCR", 27),
       name: "Cámara Frontal iPhone 12 12MP",
       description: "Módulo selfie con Face ID",
       category: categoryIds[4],
@@ -474,7 +486,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CAM-SAM-S21-MAIN",
+      sku: generateSeedSKU("SCR", 28),
       name: "Cámara Principal Samsung S21",
       description: "Triple cámara 64MP original",
       category: categoryIds[4],
@@ -492,7 +504,7 @@ export const seedProducts = async (
 
     // === BOTONES (Category 5) - Margen: 60-80% ===
     {
-      sku: "BTN-IPH-FLEX-VOL",
+      sku: generateSeedSKU("SCR", 29),
       name: "Flex Botones Volumen iPhone Universal",
       description: "Compatible iPhone X al 14, con brackets",
       category: categoryIds[5],
@@ -508,7 +520,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "BTN-PWR-KIT-50",
+      sku: generateSeedSKU("SCR", 30),
       name: "Kit Botones Power 50 piezas Surtido",
       description: "Varios modelos, acero inoxidable",
       category: categoryIds[5],
@@ -526,7 +538,7 @@ export const seedProducts = async (
 
     // === CONECTORES (Category 6) - Margen: 50-70% ===
     {
-      sku: "CON-LIGHT-FLEX-ORG",
+      sku: generateSeedSKU("SCR", 31),
       name: "Puerto Carga Lightning Original iPhone",
       description: "Flex completo con micrófono, compatible 11/12/13",
       category: categoryIds[6],
@@ -542,7 +554,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "CON-TYPEC-FLEX-UNI",
+      sku: generateSeedSKU("SCR", 32),
       name: "Puerto USB-C Universal 10 piezas",
       description: "Flex desmontable, múltiples modelos",
       category: categoryIds[6],
@@ -558,7 +570,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "JACK-3.5-FLEX",
+      sku: generateSeedSKU("SCR", 33),
       name: "Jack Audio 3.5mm Flex Universal",
       description: "Conector auriculares con flex",
       category: categoryIds[6],
@@ -576,7 +588,7 @@ export const seedProducts = async (
 
     // === HERRAMIENTAS (Category 7) - Margen: 40-60% ===
     {
-      sku: "TLS-SCREW-32",
+      sku: generateSeedSKU("SCR", 34),
       name: "Set Destornilladores 32 piezas Profesional",
       description: "Acero S2, mango ergonómico, estuche",
       category: categoryIds[7],
@@ -592,7 +604,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "TLS-HEAT-858D",
+      sku: generateSeedSKU("SCR", 35),
       name: "Estación Aire Calor 858D Digital",
       description: "700W, 100-450°C, display LED",
       category: categoryIds[7],
@@ -608,7 +620,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "TLS-SOLDER-936",
+      sku: generateSeedSKU("SCR", 36),
       name: "Cautín Estación 936 60W",
       description: "Temperatura regulable, 5 puntas",
       category: categoryIds[7],
@@ -624,7 +636,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "TLS-OCA-LAMINATOR",
+      sku: generateSeedSKU("SCR", 37),
       name: "Laminadora OCA Automática",
       description: "Para pantallas curvas, vacío integrado",
       category: categoryIds[7],
@@ -642,7 +654,7 @@ export const seedProducts = async (
 
     // === ACCESORIOS (Category 8) - Margen: 70-100% ===
     {
-      sku: "ACC-TEMP-9D-50",
+      sku: generateSeedSKU("SCR", 38),
       name: "Mica Cristal Templado 9D 50 piezas Surtido",
       description: "Varios modelos, borde curvo 9D",
       category: categoryIds[8],
@@ -658,7 +670,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "ACC-CASE-TPU-100",
+      sku: generateSeedSKU("SCR", 39),
       name: "Fundas TPU Transparentes 100 piezas",
       description: "Surtido universal, anti-shock",
       category: categoryIds[8],
@@ -674,7 +686,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "ACC-RING-HOLD",
+      sku: generateSeedSKU("SCR", 40),
       name: "Anillo Soporte Metálico Universal",
       description: "360 grados, adhesivo 3M",
       category: categoryIds[8],
@@ -692,7 +704,7 @@ export const seedProducts = async (
 
     // === COMPONENTES INTERNOS (Category 9) - Margen: 50-70% ===
     {
-      sku: "IC-CHARGE-PD",
+      sku: generateSeedSKU("SCR", 41),
       name: "IC Control Carga PD USB-C",
       description: "Chip controlador carga rápida, reballing",
       category: categoryIds[9],
@@ -708,7 +720,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "IC-AUDIO-CODEC",
+      sku: generateSeedSKU("SCR", 42),
       name: "IC Audio Codec Cirrus Logic",
       description: "Para iPhone, reemplazo BGA",
       category: categoryIds[9],
@@ -724,7 +736,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "IC-WIFI-BROAD",
+      sku: generateSeedSKU("SCR", 43),
       name: "IC WiFi Broadcom BCM",
       description: "Módulo WiFi/Bluetooth, reballing",
       category: categoryIds[9],
@@ -740,7 +752,7 @@ export const seedProducts = async (
       isActive: true,
     },
     {
-      sku: "FPC-TOUCH-IPH",
+      sku: generateSeedSKU("SCR", 44),
       name: "FPC Conector Táctil iPhone",
       description: "Flex placa base, reemplazo",
       category: categoryIds[9],

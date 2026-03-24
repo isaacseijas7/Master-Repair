@@ -11,6 +11,7 @@ import { Orders } from "./pages/orders/Orders";
 import { ProductDetail } from "./pages/products/ProductDetail";
 import { OrderForm } from "./pages/orders/OrderForm";
 import { Profile } from "./pages/profile/Profile";
+import { Toaster } from "@/components/ui/sonner";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -52,42 +53,45 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
+    <>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
 
-        {/* Protected Routes */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/products/new" element={<ProductDetail />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/suppliers" element={<Suppliers />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/orders/new" element={<OrderForm />} />
-          <Route path="/orders/:id" element={<OrderDetail />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
+          {/* Protected Routes */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/new" element={<ProductDetail />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/new" element={<OrderForm />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
 
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster />
+    </>
   );
 }
 
