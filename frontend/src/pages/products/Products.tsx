@@ -59,7 +59,7 @@ export function Products() {
 
   return (
     <div className="space-y-6">
-      <ProductsHeader />
+      <ProductsHeader filters={filters} totalCount={pagination.total} />
 
       <ProductFilters
         searchTerm={searchTerm}

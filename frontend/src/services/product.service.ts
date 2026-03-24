@@ -1,4 +1,5 @@
 import apiClient from "./api.service";
+import { saveAs } from "file-saver";
 import type {
   Product,
   CreateProductInput,
@@ -89,5 +90,27 @@ export const productService = {
   async generateSKU(): Promise<string> {
     const response = await apiClient.get("/products/generate-sku");
     return response.data.data.sku;
+  },
+
+  async exportToExcel(filters: any, columns: string[]): Promise<void> {
+    const response = await apiClient.post(
+      "/products/export",
+      { filters, columns },
+      {
+        responseType: "blob", // Importante para recibir archivos binarios
+        headers: {
+          Accept:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+      },
+    );
+
+    // Crear blob y descargar
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const timestamp = new Date().toISOString().split("T")[0];
+    saveAs(blob, `productos-${timestamp}.xlsx`);
   },
 };
