@@ -10,6 +10,11 @@ export async function productRoutes(fastify: FastifyInstance): Promise<void> {
     "/low-stock",
     productController.getLowStockProducts.bind(productController),
   );
+  fastify.get(
+    "/generate-sku",
+    { preHandler: [authorize("admin", "manager")] },
+    productController.generateSKU.bind(productController),
+  );
   fastify.get("/:id", productController.getProductById.bind(productController));
   fastify.post(
     "/",

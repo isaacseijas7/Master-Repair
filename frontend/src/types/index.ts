@@ -114,7 +114,7 @@ export interface Product {
 }
 
 export interface CreateProductInput {
-  sku: string;
+  sku?: string;
   name: string;
   description?: string;
   category: string;

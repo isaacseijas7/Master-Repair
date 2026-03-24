@@ -1,4 +1,4 @@
-import { Product } from "../models/Product";
+import { generateSKU, Product } from "../models/Product";
 import { LeanProduct, ProductDocument } from "../types/product.types";
 
 export class ProductService {
@@ -78,19 +78,24 @@ export class ProductService {
     return product;
   }
 
+  async generateSKU(): Promise<string> {
+    return generateSKU();
+  }
+
   async createProduct(productData: any): Promise<ProductDocument> {
-    const existingProduct = await Product.findOne({
-      sku: productData.sku.toUpperCase(),
-    });
-    if (existingProduct) {
-      throw new Error("El SKU ya existe");
+    if (!productData.sku || productData.sku === "AUTO") {
+      productData.sku = await generateSKU();
+    } else {
+      const existingProduct = await Product.findOne({
+        sku: productData.sku.toUpperCase(),
+      });
+      if (existingProduct) {
+        throw new Error("El SKU ya existe");
+      }
+      productData.sku = productData.sku.toUpperCase();
     }
 
-    const product = new Product({
-      ...productData,
-      sku: productData.sku.toUpperCase(),
-    });
-
+    const product = new Product(productData);
     await product.save();
     return product.populate(["category", "supplier"]);
   }
@@ -100,11 +105,15 @@ export class ProductService {
     if (!product) throw new Error("Producto no encontrado");
 
     if (updateData.sku && updateData.sku !== product.sku) {
-      const existingProduct = await Product.findOne({
-        sku: updateData.sku.toUpperCase(),
-      });
-      if (existingProduct) throw new Error("El SKU ya existe");
-      updateData.sku = updateData.sku.toUpperCase();
+      if (updateData.sku === "AUTO") {
+        updateData.sku = await generateSKU();
+      } else {
+        const existingProduct = await Product.findOne({
+          sku: updateData.sku.toUpperCase(),
+        });
+        if (existingProduct) throw new Error("El SKU ya existe");
+        updateData.sku = updateData.sku.toUpperCase();
+      }
     }
 
     Object.assign(product, updateData);

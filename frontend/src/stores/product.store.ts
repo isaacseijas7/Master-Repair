@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import type { Product, CreateProductInput, ProductFilters } from '@/types';
-import { productService } from '@/services/product.service';
+import { create } from "zustand";
+import type { Product, CreateProductInput, ProductFilters } from "@/types";
+import { productService } from "@/services/product.service";
 
 interface ProductState {
   // State
@@ -24,12 +24,20 @@ interface ProductState {
   fetchProductById: (id: string) => Promise<void>;
   fetchLowStockProducts: () => Promise<void>;
   createProduct: (data: CreateProductInput) => Promise<void>;
-  updateProduct: (id: string, data: Partial<CreateProductInput>) => Promise<void>;
+  updateProduct: (
+    id: string,
+    data: Partial<CreateProductInput>,
+  ) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  updateStock: (id: string, quantity: number, isAddition: boolean) => Promise<void>;
+  updateStock: (
+    id: string,
+    quantity: number,
+    isAddition: boolean,
+  ) => Promise<void>;
   setFilters: (filters: Partial<ProductFilters>) => void;
   clearError: () => void;
   clearCurrentProduct: () => void;
+  generateSKU: () => Promise<string>;
 }
 
 const defaultPagination = {
@@ -52,8 +60,8 @@ export const useProductStore = create<ProductState>((set, get) => ({
   filters: {
     page: 1,
     limit: 10,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+    sortBy: "createdAt",
+    sortOrder: "desc",
   },
 
   // Fetch products with filters
@@ -62,9 +70,9 @@ export const useProductStore = create<ProductState>((set, get) => ({
     try {
       const currentFilters = get().filters;
       const mergedFilters = { ...currentFilters, ...filters };
-      
+
       const response = await productService.getProducts(mergedFilters);
-      
+
       set({
         products: response.data,
         pagination: response.pagination,
@@ -73,7 +81,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
       });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al cargar productos',
+        error: error.response?.data?.message || "Error al cargar productos",
         isLoading: false,
       });
     }
@@ -90,7 +98,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
       });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al cargar el producto',
+        error: error.response?.data?.message || "Error al cargar el producto",
         isLoading: false,
       });
     }
@@ -107,7 +115,9 @@ export const useProductStore = create<ProductState>((set, get) => ({
       });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al cargar productos con stock bajo',
+        error:
+          error.response?.data?.message ||
+          "Error al cargar productos con stock bajo",
         isLoading: false,
       });
     }
@@ -123,7 +133,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al crear el producto',
+        error: error.response?.data?.message || "Error al crear el producto",
         isLoading: false,
       });
       throw error;
@@ -143,7 +153,8 @@ export const useProductStore = create<ProductState>((set, get) => ({
       await get().fetchProducts();
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al actualizar el producto',
+        error:
+          error.response?.data?.message || "Error al actualizar el producto",
         isLoading: false,
       });
       throw error;
@@ -160,7 +171,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al eliminar el producto',
+        error: error.response?.data?.message || "Error al eliminar el producto",
         isLoading: false,
       });
       throw error;
@@ -177,7 +188,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al actualizar el stock',
+        error: error.response?.data?.message || "Error al actualizar el stock",
         isLoading: false,
       });
       throw error;
@@ -199,5 +210,16 @@ export const useProductStore = create<ProductState>((set, get) => ({
   // Clear current product
   clearCurrentProduct: () => {
     set({ currentProduct: null });
+  },
+
+  generateSKU: async () => {
+    try {
+      const sku = await productService.generateSKU();
+      return sku;
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Error al generar SKU";
+      set({ error: message });
+      throw error;
+    }
   },
 }));

@@ -25,6 +25,30 @@ export interface IProduct extends Document {
   __v?: any;
 }
 
+// Función para generar SKU automático
+async function generateSKU(): Promise<string> {
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  // Buscar el último producto creado hoy
+  const prefix = `PROD-${year}${month}${day}-`;
+  const lastProduct = await mongoose.model('Product').findOne({
+    sku: { $regex: `^${prefix}` }
+  }).sort({ sku: -1 });
+  
+  let sequence = 1;
+  if (lastProduct) {
+    const lastSequence = parseInt(lastProduct.sku.split('-')[2]);
+    if (!isNaN(lastSequence)) {
+      sequence = lastSequence + 1;
+    }
+  }
+  
+  return `${prefix}${String(sequence).padStart(4, '0')}`;
+}
+
 const PriceTierSchema = new Schema<IPriceTier>(
   {
     minQuantity: {
@@ -125,6 +149,14 @@ const ProductSchema = new Schema<IProduct>(
   }
 );
 
+// Middleware pre-save para generar SKU automático
+ProductSchema.pre('save', async function(next) {
+  if (!this.sku || this.sku === 'AUTO' || this.sku === '') {
+    this.sku = await generateSKU();
+  }
+  next();
+});
+
 ProductSchema.virtual('isLowStock').get(function () {
   return this.stock <= this.minStock;
 });
@@ -135,4 +167,5 @@ ProductSchema.index({ supplier: 1 });
 ProductSchema.index({ isActive: 1 });
 ProductSchema.index({ stock: 1, minStock: 1 });
 
+export { generateSKU };
 export const Product = mongoose.model<IProduct>('Product', ProductSchema);

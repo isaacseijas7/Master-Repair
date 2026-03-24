@@ -22,6 +22,8 @@ interface DeleteProductRoute extends RouteGenericInterface {
   Params: { id: string };
 }
 
+interface GenerateSKURoute extends RouteGenericInterface {}
+
 export class ProductController {
   async getProducts(
     request: FastifyRequest<GetProductsRoute>,
@@ -115,6 +117,22 @@ export class ProductController {
         success: true,
         message: "Productos con stock bajo obtenidos exitosamente",
         data: { products },
+      });
+    } catch (error: any) {
+      reply.status(500).send({ success: false, message: error.message });
+    }
+  }
+
+  async generateSKU(
+    request: FastifyRequest<GenerateSKURoute>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const sku = await productService.generateSKU();
+      reply.send({
+        success: true,
+        message: "SKU generado exitosamente",
+        data: { sku },
       });
     } catch (error: any) {
       reply.status(500).send({ success: false, message: error.message });

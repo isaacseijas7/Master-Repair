@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useProductStore } from "@/stores/product.store";
@@ -28,10 +28,7 @@ import {
   Boxes,
   Tag,
   Building,
-  MapPin,
-  Barcode,
-  Trash2,
-  Plus,
+  MapPin, Trash2
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,10 +47,7 @@ const productFormSchema = z.object({
     .string()
     .min(2, "El nombre debe tener al menos 2 caracteres")
     .max(100, "Máximo 100 caracteres"),
-  sku: z
-    .string()
-    .min(1, "El SKU es obligatorio")
-    .max(50, "Máximo 50 caracteres"),
+  sku: z.string().max(50, "Máximo 50 caracteres").optional(),
   description: z
     .string()
     .max(500, "Máximo 500 caracteres")
@@ -93,7 +87,7 @@ const productFormSchema = z.object({
 
 type ProductFormData = {
   name: string;
-  sku: string;
+  sku?: string;
   description?: string;
   category: string;
   supplier: string;
@@ -114,7 +108,6 @@ type ProductFormData = {
 
 const DEFAULT_VALUES: ProductFormData = {
   name: "",
-  sku: "",
   description: "",
   category: "",
   supplier: "",
@@ -147,6 +140,7 @@ export function ProductDetail() {
     deleteProduct,
     isLoading: isStoreLoading,
     clearCurrentProduct,
+    generateSKU,
   } = useProductStore();
 
   const { activeCategories, fetchActiveCategories } = useCategoryStore();
@@ -171,10 +165,10 @@ export function ProductDetail() {
   });
 
   // Field array para escalas de precio
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "priceTiers",
-  });
+  // const { fields, append, remove } = useFieldArray({
+  //   control,
+  //   name: "priceTiers",
+  // });
 
   // Watch para mostrar estado de stock en tiempo real
   const watchedStock = watch("stock");
@@ -232,13 +226,33 @@ export function ProductDetail() {
   // 7. HANDLERS
   // ==========================================
 
+  // Efecto para generar SKU automáticamente en modo creación
+  useEffect(() => {
+    if (!isEditMode && !id) {
+      // Generar SKU automáticamente al crear nuevo producto
+      generateSKU()
+        .then((sku) => {
+          reset({ ...DEFAULT_VALUES, sku });
+        })
+        .catch(() => {
+          // Si falla, dejar vacío para que el backend lo genere
+          reset(DEFAULT_VALUES);
+        });
+    }
+  }, [isEditMode, id, generateSKU, reset]);
+
   const onSubmit = async (data: ProductFormData) => {
     try {
+      const submitData = {
+        ...data,
+        sku: data.sku || "AUTO",
+      };
+
       if (isEditMode && id) {
-        await updateProduct(id, data);
+        await updateProduct(id, submitData);
         toast.success("Producto actualizado exitosamente");
       } else {
-        await createProduct(data);
+        await createProduct(submitData);
         toast.success("Producto creado exitosamente");
         navigate("/products");
       }
@@ -268,9 +282,9 @@ export function ProductDetail() {
     }
   };
 
-  const handleAddPriceTier = () => {
-    append({ minQuantity: 1, price: 0 });
-  };
+  // const handleAddPriceTier = () => {
+  //   append({ minQuantity: 1, price: 0 });
+  // };
 
   // ==========================================
   // 8. RENDERIZADO CONDICIONAL (LOADING)
@@ -371,20 +385,45 @@ export function ProductDetail() {
                   )}
                 </div>
 
-                {/* SKU */}
+                {/* SKU con opción de generación automática */}
                 <div className="space-y-2">
-                  <Label htmlFor="sku">SKU *</Label>
-                  <Input
-                    id="sku"
-                    {...register("sku", {
-                      onChange: (e) => {
-                        e.target.value = e.target.value.toUpperCase();
-                      },
-                    })}
-                    className={errors.sku ? "border-red-500" : ""}
-                  />
+                  <Label htmlFor="sku">SKU {isEditMode ? "*" : "(Auto)"}</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="sku"
+                      {...register("sku", {
+                        onChange: (e) => {
+                          e.target.value = e.target.value.toUpperCase();
+                        },
+                      })}
+                      placeholder={
+                        isEditMode
+                          ? "SKU del producto"
+                          : "Se genera automáticamente"
+                      }
+                      disabled={true} // Solo editable en edición
+                      className={errors.sku ? "border-red-500" : ""}
+                    />
+                    {!isEditMode && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          const newSku = await generateSKU();
+                          reset({ ...watch(), sku: newSku });
+                        }}
+                      >
+                        Generar
+                      </Button>
+                    )}
+                  </div>
                   {errors.sku && (
                     <p className="text-sm text-red-500">{errors.sku.message}</p>
+                  )}
+                  {!isEditMode && (
+                    <p className="text-xs text-gray-500">
+                      El SKU se genera automáticamente al guardar
+                    </p>
                   )}
                 </div>
               </div>
@@ -639,7 +678,7 @@ export function ProductDetail() {
                 </div>
 
                 {/* Stock Máximo */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="maxStock">Stock Máximo</Label>
                   <Input
                     id="maxStock"
@@ -653,7 +692,7 @@ export function ProductDetail() {
                       {errors.maxStock.message}
                     </p>
                   )}
-                </div>
+                </div> */}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -677,7 +716,7 @@ export function ProductDetail() {
                 </div>
 
                 {/* Código de Barras */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="barcode" className="flex items-center gap-2">
                     <Barcode className="w-4 h-4" />
                     Código de Barras
@@ -692,7 +731,7 @@ export function ProductDetail() {
                       {errors.barcode.message}
                     </p>
                   )}
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
