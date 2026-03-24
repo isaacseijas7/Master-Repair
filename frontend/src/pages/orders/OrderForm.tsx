@@ -420,12 +420,12 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                               Compra
                             </div>
                           </SelectItem>
-                          <SelectItem value={MovementType.RETURN}>
+                          {/* <SelectItem value={MovementType.RETURN}>
                             <div className="flex items-center gap-2">
                               <ArrowRightLeft className="w-4 h-4 text-orange-500" />
                               Devolución
                             </div>
-                          </SelectItem>
+                          </SelectItem> */}
                         </SelectContent>
                       </Select>
                     )}
