@@ -31,6 +31,7 @@ import {
   Banknote,
   CreditCard,
   MessageSquare,
+  Edit,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -247,6 +248,16 @@ export function OrderDetail() {
             <Printer className="w-4 h-4 mr-2" />
             Imprimir
           </Button>
+
+          {currentOrder.status === OrderStatus.PENDING && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/orders/${currentOrder._id}/edit`)}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Editar Orden
+            </Button>
+          )}
 
           {/* NUEVO BOTÓN PARA WHATSAPP */}
           {currentOrder.type === MovementType.PURCHASE &&

@@ -130,6 +130,93 @@ export class OrderService {
     return order.populate(["items.product", "supplier", "createdBy"]);
   }
 
+  async updateOrder(
+    id: string,
+    orderData: any,
+    userId: string,
+  ): Promise<IOrder> {
+    // Buscar la orden existente
+    const existingOrder = await Order.findById(id);
+    if (!existingOrder) throw new Error("Orden no encontrada");
+
+    // Solo permitir editar si está en estado PENDING
+    if (existingOrder.status !== OrderStatus.PENDING) {
+      throw new Error("Solo se pueden editar órdenes en estado pendiente");
+    }
+
+    // Validar que el tipo no cambie (o permitirlo si tu lógica lo permite)
+    // Si quieres permitir cambiar el tipo, descomenta esto:
+    // if (orderData.type && orderData.type !== existingOrder.type) {
+    //   throw new Error("No se puede cambiar el tipo de orden");
+    // }
+
+    // Procesar items si vienen nuevos
+    if (orderData.items && orderData.items.length > 0) {
+      const processedItems = [];
+      let subtotal = 0;
+
+      for (const item of orderData.items) {
+        const product = await Product.findById(item.product);
+        if (!product)
+          throw new Error(`Producto no encontrado: ${item.product}`);
+        if (!product.isActive)
+          throw new Error(`El producto ${product.name} no está activo`);
+
+        // Validar stock solo para ventas
+        if (
+          orderData.type === MovementType.SALE ||
+          existingOrder.type === MovementType.SALE
+        ) {
+          if (product.stock < item.quantity) {
+            throw new Error(
+              `Stock insuficiente para ${product.name}. Disponible: ${product.stock}`,
+            );
+          }
+        }
+
+        const unitPrice = item.unitPrice || product.unitPrice;
+        const totalPrice = unitPrice * item.quantity;
+
+        processedItems.push({
+          product: item.product,
+          quantity: item.quantity,
+          unitPrice,
+          totalPrice,
+        });
+
+        subtotal += totalPrice;
+      }
+
+      existingOrder.items = processedItems;
+      existingOrder.subtotal = subtotal;
+
+      // Recalcular totales
+      const tax = orderData.tax ?? existingOrder.tax ?? 0;
+      const discount = orderData.discount ?? existingOrder.discount ?? 0;
+      existingOrder.tax = tax;
+      existingOrder.discount = discount;
+      existingOrder.total = subtotal + tax - discount;
+    }
+
+    // Actualizar campos permitidos
+    if (orderData.supplier !== undefined)
+      existingOrder.supplier = orderData.supplier;
+    if (orderData.customerName !== undefined)
+      existingOrder.customerName = orderData.customerName;
+    if (orderData.customerEmail !== undefined)
+      existingOrder.customerEmail = orderData.customerEmail;
+    if (orderData.customerPhone !== undefined)
+      existingOrder.customerPhone = orderData.customerPhone;
+    if (orderData.notes !== undefined) existingOrder.notes = orderData.notes;
+    if (orderData.paymentType !== undefined)
+      existingOrder.paymentType = orderData.paymentType;
+
+    existingOrder.updatedAt = new Date();
+    await existingOrder.save();
+
+    return existingOrder.populate(["items.product", "supplier", "createdBy"]);
+  }
+
   async updateOrderStatus(id: string, status: string): Promise<IOrder> {
     const order = await Order.findById(id);
     if (!order) throw new Error("Orden no encontrada");

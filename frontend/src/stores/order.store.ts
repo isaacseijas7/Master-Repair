@@ -30,6 +30,7 @@ interface OrderState {
   fetchOrders: (filters?: OrderFilters) => Promise<void>;
   fetchOrderById: (id: string) => Promise<void>;
   createOrder: (data: CreateOrderInput) => Promise<Order>;
+  updateOrder: (id: string, data: CreateOrderInput) => Promise<Order>;
   updateOrderStatus: (
     id: string,
     status: (typeof OrderStatus)[keyof typeof OrderStatus],
@@ -105,6 +106,23 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     } catch (error: any) {
       set({
         error: error.response?.data?.message || "Error al crear la orden",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  updateOrder: async (id, data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await orderService.updateOrder(id, data);
+      await get().fetchOrders();
+      await get().fetchTodaySales();
+      set({ isLoading: false });
+      return response;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || "Error al actualizar la orden",
         isLoading: false,
       });
       throw error;

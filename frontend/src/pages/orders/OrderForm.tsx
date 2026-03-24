@@ -19,11 +19,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/lib/utils";
 import { useOrderStore } from "@/stores/order.store";
 import { useProductStore } from "@/stores/product.store";
 import { useSupplierStore } from "@/stores/supplier.store";
-import { MovementType, type MovementTypeType } from "@/types";
+import { MovementType, OrderStatus, type MovementTypeType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Package,
@@ -41,26 +42,24 @@ import {
   ArrowLeft,
   Banknote,
   CreditCard,
+  AlertCircle,
+  Edit,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { isSupplierObject } from "@/helpers/isSupplierObject";
 
 // ==========================================
-// TIPOS LOCALES
+// TIPOS Y SCHEMA (sin cambios)
 // ==========================================
 
-// NUEVO: Tipo de pago
 const PaymentType = {
   CASH: "cash",
   CREDIT: "credit",
 } as const;
-
-// ==========================================
-// SCHEMA DE VALIDACIÓN CON ZOD
-// ==========================================
 
 const orderItemSchema = z.object({
   product: z.string().min(1, "Producto requerido"),
@@ -124,19 +123,32 @@ type OrderFormData = z.infer<typeof orderFormSchema>;
 // ==========================================
 
 interface OrderFormProps {
+  orderId?: string;
   onSuccess?: () => void;
 }
 
-export function OrderForm({ onSuccess }: OrderFormProps) {
+export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const orderId = propOrderId || paramId; // Soporta prop o URL param
+
+  const isEditing = !!orderId;
+
   const { products, fetchProducts } = useProductStore();
   const { activeSuppliers, fetchActiveSuppliers } = useSupplierStore();
-  const { createOrder } = useOrderStore();
+  const {
+    createOrder,
+    updateOrder,
+    fetchOrderById,
+    currentOrder,
+    isLoading: storeLoading,
+  } = useOrderStore();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [quantity, setQuantity] = useState<number | "">(1);
   const [showProductList, setShowProductList] = useState(false);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
 
   const {
     register,
@@ -173,14 +185,58 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
   const watchType = watch("type");
   const watchPaymentType = watch("paymentType");
 
+  // Cargar orden existente si estamos editando
+  useEffect(() => {
+    if (isEditing && orderId) {
+      setIsLoadingOrder(true);
+      fetchOrderById(orderId).finally(() => {
+        setIsLoadingOrder(false);
+      });
+    }
+  }, [isEditing, orderId, fetchOrderById]);
+
+  // Precargar datos de la orden en el formulario
+  useEffect(() => {
+    if (isEditing && currentOrder && orderId === currentOrder._id) {
+      // Verificar si es editable (solo pending)
+      if (currentOrder.status !== OrderStatus.PENDING) {
+        return; // No precargar si no es editable, mostrará alerta abajo
+      }
+
+      // Precargar items
+      const items = currentOrder.items.map((item: any) => ({
+        product: item.product._id || item.product,
+        productName: item.product.name || item.productName,
+        sku: item.product.sku || item.sku,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        stock: item.product.stock,
+      }));
+
+      reset({
+        type: currentOrder.type,
+        paymentType: currentOrder.paymentType,
+        supplier: isSupplierObject(currentOrder.supplier)
+          ? currentOrder.supplier?._id
+          : currentOrder.supplier,
+        customerName: currentOrder.customerName || "",
+        customerEmail: currentOrder.customerEmail || "",
+        customerPhone: currentOrder.customerPhone || "",
+        items: items,
+        tax: currentOrder.tax || 0,
+        discount: currentOrder.discount || 0,
+        notes: currentOrder.notes || "",
+      });
+    }
+  }, [isEditing, currentOrder, orderId, reset]);
+
+  // Payment type effect (sin cambios)
   useEffect(() => {
     if (watchType === "sale") {
-      // Si cambia a venta y no hay paymentType, establecer "cash" por defecto
       if (!watchPaymentType) {
         setValue("paymentType", "cash");
       }
     } else {
-      // Si no es venta, limpiar paymentType (undefined)
       setValue("paymentType", undefined);
     }
   }, [watchType, watchPaymentType, setValue]);
@@ -207,6 +263,12 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
         p.sku.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, products, showProductList]);
+
+  const isEditable = useMemo(() => {
+    if (!isEditing) return true;
+    if (!currentOrder) return false;
+    return currentOrder.status === OrderStatus.PENDING;
+  }, [isEditing, currentOrder]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -319,23 +381,27 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
         orderPayload.paymentType = data.paymentType;
       }
 
-      // Capturar la respuesta que ahora retorna el store
-      const createdOrder = await createOrder(orderPayload);
-
-      toast.success("Orden creada exitosamente");
-
-      console.log({ createdOrder });
-
-      // Redirigir a la página de detalles de la orden
-      if (createdOrder && createdOrder._id) {
-        navigate(`/orders/${createdOrder._id}`);
+      if (isEditing && orderId) {
+        // ACTUALIZAR
+        await updateOrder(orderId, orderPayload);
+        toast.success("Orden actualizada exitosamente");
+        navigate(`/orders/${orderId}`);
       } else {
-        // Fallback: si no hay ID en la respuesta, solo resetear y llamar onSuccess
-        reset();
-        onSuccess?.();
+        // CREAR NUEVA
+        const createdOrder = await createOrder(orderPayload);
+        toast.success("Orden creada exitosamente");
+
+        if (createdOrder && createdOrder._id) {
+          navigate(`/orders/${createdOrder._id}`);
+        } else {
+          reset();
+          onSuccess?.();
+        }
       }
     } catch (error) {
-      toast.error("Error al crear la orden");
+      toast.error(
+        isEditing ? "Error al actualizar la orden" : "Error al crear la orden",
+      );
     }
   };
 
@@ -364,6 +430,59 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
     }
   };
 
+  // Loading state
+  if (isLoadingOrder || storeLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  // Si está editando y no es editable, mostrar mensaje
+  if (isEditing && currentOrder && !isEditable) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/orders")}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Editar Orden</h1>
+            <p className="text-gray-500">Orden #{orderId?.slice(-6)}</p>
+          </div>
+        </div>
+
+        <Alert variant="destructive" className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              Esta orden no puede ser editada porque su estado es{" "}
+              <strong>
+                {currentOrder.status === OrderStatus.COMPLETED
+                  ? "Completada"
+                  : currentOrder.status === OrderStatus.CANCELLED
+                    ? "Cancelada"
+                    : currentOrder.status}
+              </strong>
+              . Solo las órdenes en estado "Pendiente" pueden editarse.
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/orders/${orderId}`)}
+            >
+              Ver Detalles
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -377,12 +496,26 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Nueva Orden</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditing ? "Editar Orden" : "Nueva Orden"}
+            </h1>
             <p className="text-gray-500">
-              Crea una nueva orden de compra, venta o devolución
+              {isEditing
+                ? `Modificando orden #${orderId?.slice(-6)}`
+                : "Crea una nueva orden de compra, venta o devolución"}
             </p>
           </div>
         </div>
+
+        {isEditing && (
+          <Badge
+            variant="outline"
+            className="bg-yellow-50 border-yellow-200 text-yellow-700"
+          >
+            <Edit className="w-3 h-3 mr-1" />
+            Modo Edición
+          </Badge>
+        )}
       </div>
 
       <form
@@ -411,6 +544,7 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
+                        disabled={isEditing} // No permitir cambiar tipo en edición
                       >
                         <SelectTrigger
                           className={errors.type ? "border-red-500" : ""}
@@ -430,12 +564,6 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                               Compra
                             </div>
                           </SelectItem>
-                          {/* <SelectItem value={MovementType.RETURN}>
-                            <div className="flex items-center gap-2">
-                              <ArrowRightLeft className="w-4 h-4 text-orange-500" />
-                              Devolución
-                            </div>
-                          </SelectItem> */}
                         </SelectContent>
                       </Select>
                     )}
@@ -443,6 +571,11 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                   {errors.type && (
                     <p className="text-sm text-red-500">
                       {errors.type.message}
+                    </p>
+                  )}
+                  {isEditing && (
+                    <p className="text-xs text-gray-400">
+                      El tipo de orden no se puede modificar en edición
                     </p>
                   )}
                 </div>
@@ -711,7 +844,6 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                                   min={1}
                                   className="w-20 text-right ml-auto"
                                   {...field}
-                                  disabled
                                   onChange={(e) =>
                                     field.onChange(
                                       parseInt(e.target.value) || 1,
@@ -827,48 +959,6 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                 </span>
               </div>
 
-              {/* Tax */}
-              {/* <div className="space-y-2">
-                <Label className="text-sm text-gray-600">Impuestos</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    {...register("tax", { valueAsNumber: true })}
-                    className={`pl-7 ${errors.tax ? "border-red-500" : ""}`}
-                  />
-                </div>
-                {errors.tax && (
-                  <p className="text-xs text-red-500">{errors.tax.message}</p>
-                )}
-              </div> */}
-
-              {/* Discount */}
-              {/* <div className="space-y-2">
-                <Label className="text-sm text-gray-600">Descuento</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    {...register("discount", { valueAsNumber: true })}
-                    className={`pl-7 ${errors.discount ? "border-red-500" : ""}`}
-                  />
-                </div>
-                {errors.discount && (
-                  <p className="text-xs text-red-500">
-                    {errors.discount.message}
-                  </p>
-                )}
-              </div> */}
-
               <Separator />
 
               {/* Total */}
@@ -893,19 +983,20 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Creando...
+                    {isEditing ? "Actualizando..." : "Creando..."}
                   </>
                 ) : (
                   <>
                     <Receipt className="w-4 h-4 mr-2" />
-                    Crear Orden
+                    {isEditing ? "Actualizar Orden" : "Crear Orden"}
                   </>
                 )}
               </Button>
 
               {fields.length === 0 && (
                 <p className="text-xs text-center text-gray-500">
-                  Agrega al menos un producto para crear la orden
+                  Agrega al menos un producto para{" "}
+                  {isEditing ? "actualizar" : "crear"} la orden
                 </p>
               )}
             </CardContent>

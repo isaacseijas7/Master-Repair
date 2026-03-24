@@ -24,6 +24,7 @@ export async function orderRoutes(fastify: FastifyInstance): Promise<void> {
   );
   fastify.get("/:id", orderController.getOrderById.bind(orderController));
   fastify.post("/", orderController.createOrder.bind(orderController));
+  fastify.put("/:id/update", orderController.updateOrder.bind(orderController));
   fastify.patch(
     "/:id/status",
     orderController.updateOrderStatus.bind(orderController),

@@ -83,6 +83,7 @@ function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/new" element={<OrderForm />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/orders/:id/edit" element={<OrderForm />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
 

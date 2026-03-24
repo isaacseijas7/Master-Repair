@@ -14,6 +14,11 @@ interface CreateOrderRoute extends RouteGenericInterface {
   Body: any;
 }
 
+interface UpdateOrderRoute extends RouteGenericInterface {
+  Params: { id: string };
+  Body: { status: string };
+}
+
 interface UpdateOrderStatusRoute extends RouteGenericInterface {
   Params: { id: string };
   Body: { status: string };
@@ -70,13 +75,34 @@ export class OrderController {
         request.body,
         request.user.userId,
       );
-      reply
-        .status(201)
-        .send({
-          success: true,
-          message: "Orden creada exitosamente",
-          data: { order },
-        });
+      reply.status(201).send({
+        success: true,
+        message: "Orden creada exitosamente",
+        data: { order },
+      });
+    } catch (error: any) {
+      reply.status(400).send({ success: false, message: error.message });
+    }
+  }
+
+  async updateOrder(
+    request: FastifyRequest<UpdateOrderRoute>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      if (!request.user) throw new Error("No autenticado");
+
+      const order = await orderService.updateOrder(
+        request.params.id,
+        request.body,
+        request.user.userId,
+      );
+
+      reply.send({
+        success: true,
+        message: "Orden actualizada exitosamente",
+        data: { order },
+      });
     } catch (error: any) {
       reply.status(400).send({ success: false, message: error.message });
     }
