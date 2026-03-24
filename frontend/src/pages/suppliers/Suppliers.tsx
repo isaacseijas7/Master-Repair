@@ -31,11 +31,8 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Truck,
-  ChevronLeft,
-  ChevronRight,
-  Mail,
-  Phone,
+  Truck, Mail,
+  Phone
 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useForm } from "react-hook-form";
@@ -50,6 +47,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
+import { Pagination } from "@/components/Pagination";
 
 const supplierSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -81,6 +79,10 @@ export function Suppliers() {
   useEffect(() => {
     fetchSuppliers({ search: debouncedSearch });
   }, [debouncedSearch, fetchSuppliers]);
+
+  const onPageChange = (page: number) => {
+    fetchSuppliers({ page });
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de eliminar este proveedor?")) {
@@ -229,35 +231,8 @@ export function Suppliers() {
             </Table>
           </div>
 
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
-              <p className="text-sm text-gray-500">
-                Página {pagination.page} de {pagination.totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    fetchSuppliers({ page: Number(pagination.page) - 1 })
-                  }
-                  disabled={!pagination.hasPrev}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    fetchSuppliers({ page: Number(pagination.page) + 1 })
-                  }
-                  disabled={!pagination.hasNext}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Pagination */}
+          <Pagination pagination={pagination} onPageChange={onPageChange} />
         </CardContent>
       </Card>
 

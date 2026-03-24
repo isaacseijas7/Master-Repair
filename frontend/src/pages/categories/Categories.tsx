@@ -1,3 +1,4 @@
+import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -35,8 +36,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useCategoryStore } from "@/stores/category.store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ChevronLeft,
-  ChevronRight,
   Edit,
   Loader2,
   MoreHorizontal,
@@ -89,6 +88,10 @@ export function Categories() {
   useEffect(() => {
     fetchCategories({ search: debouncedSearch });
   }, [debouncedSearch, fetchCategories]);
+
+  const onPageChange = (page: number) => {
+    fetchCategories({ page });
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de eliminar esta categoría?")) {
@@ -217,35 +220,8 @@ export function Categories() {
             </Table>
           </div>
 
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
-              <p className="text-sm text-gray-500">
-                Página {pagination.page} de {pagination.totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    fetchCategories({ page: Number(pagination.page) - 1 })
-                  }
-                  disabled={!pagination.hasPrev}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    fetchCategories({ page: Number(pagination.page) + 1 })
-                  }
-                  disabled={!pagination.hasNext}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Pagination */}
+          <Pagination pagination={pagination} onPageChange={onPageChange} />
         </CardContent>
       </Card>
 

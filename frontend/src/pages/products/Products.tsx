@@ -4,7 +4,7 @@ import { useProductStore } from "@/stores/product.store";
 import { useEffect, useState } from "react";
 import { ProductFilters } from "./components/ProductFilters";
 import { ProductsHeader } from "./components/ProductsHeader";
-import { ProductsPagination } from "./components/ProductsPagination";
+import { Pagination } from "../../components/Pagination";
 import { ProductsTable } from "./components/ProductsTable";
 
 export function Products() {
@@ -72,7 +72,7 @@ export function Products() {
           onDelete={handleDelete}
         />
 
-        <ProductsPagination
+        <Pagination
           pagination={pagination}
           onPageChange={handlePageChange}
         />

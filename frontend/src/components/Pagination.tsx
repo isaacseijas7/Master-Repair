@@ -10,15 +10,15 @@ interface Pagination {
   hasPrev: boolean;
 }
 
-interface ProductsPaginationProps {
+interface PaginationProps {
   pagination: Pagination;
   onPageChange: (page: number) => void;
 }
 
-export function ProductsPagination({
+export function Pagination({
   pagination,
   onPageChange,
-}: ProductsPaginationProps) {
+}: PaginationProps) {
   if (pagination.totalPages <= 1) return null;
 
   const startItem = (pagination.page - 1) * pagination.limit + 1;
@@ -30,7 +30,7 @@ export function ProductsPagination({
   return (
     <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
       <p className="text-sm text-gray-500">
-        Mostrando {startItem} a {endItem} de {pagination.total} productos
+        Mostrando {startItem} a {endItem} de {pagination.total}
       </p>
       <div className="flex items-center gap-2">
         <Button
