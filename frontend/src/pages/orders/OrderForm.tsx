@@ -319,11 +319,21 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
         orderPayload.paymentType = data.paymentType;
       }
 
-      await createOrder(orderPayload);
+      // Capturar la respuesta que ahora retorna el store
+      const createdOrder = await createOrder(orderPayload);
 
       toast.success("Orden creada exitosamente");
-      reset();
-      onSuccess?.();
+
+      console.log({ createdOrder });
+
+      // Redirigir a la página de detalles de la orden
+      if (createdOrder && createdOrder._id) {
+        navigate(`/orders/${createdOrder._id}`);
+      } else {
+        // Fallback: si no hay ID en la respuesta, solo resetear y llamar onSuccess
+        reset();
+        onSuccess?.();
+      }
     } catch (error) {
       toast.error("Error al crear la orden");
     }

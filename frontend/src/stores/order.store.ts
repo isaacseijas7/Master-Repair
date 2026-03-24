@@ -1,6 +1,12 @@
-import { create } from 'zustand';
-import { type Order, type CreateOrderInput, type OrderFilters, OrderStatus, type PaymentTypeType } from '@/types';
-import { orderService } from '@/services/order.service';
+import { create } from "zustand";
+import {
+  type Order,
+  type CreateOrderInput,
+  type OrderFilters,
+  OrderStatus,
+  type PaymentTypeType,
+} from "@/types";
+import { orderService } from "@/services/order.service";
 
 interface OrderState {
   orders: Order[];
@@ -23,8 +29,11 @@ interface OrderState {
 
   fetchOrders: (filters?: OrderFilters) => Promise<void>;
   fetchOrderById: (id: string) => Promise<void>;
-  createOrder: (data: CreateOrderInput) => Promise<void>;
-  updateOrderStatus: (id: string, status: typeof OrderStatus[keyof typeof OrderStatus]) => Promise<void>;
+  createOrder: (data: CreateOrderInput) => Promise<Order>;
+  updateOrderStatus: (
+    id: string,
+    status: (typeof OrderStatus)[keyof typeof OrderStatus],
+  ) => Promise<void>;
   cancelOrder: (id: string) => Promise<void>;
   fetchTodaySales: () => Promise<void>;
   fetchTopProducts: (limit?: number) => Promise<void>;
@@ -62,7 +71,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al cargar órdenes',
+        error: error.response?.data?.message || "Error al cargar órdenes",
         isLoading: false,
       });
     }
@@ -78,23 +87,24 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al cargar la orden',
+        error: error.response?.data?.message || "Error al cargar la orden",
         isLoading: false,
       });
     }
   },
 
-  createOrder: async (data) => {
+  createOrder: async (data: CreateOrderInput): Promise<Order> => {
     set({ isLoading: true, error: null });
     try {
-      await orderService.createOrder(data);
+      const response = await orderService.createOrder(data);
       await get().fetchOrders();
       await get().fetchTodaySales();
       await get().fetchPendingCount();
       set({ isLoading: false });
+      return response; // Retorna la orden con el _id
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al crear la orden',
+        error: error.response?.data?.message || "Error al crear la orden",
         isLoading: false,
       });
       throw error;
@@ -110,7 +120,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al actualizar el estado',
+        error: error.response?.data?.message || "Error al actualizar el estado",
         isLoading: false,
       });
       throw error;
@@ -126,7 +136,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al cancelar la orden',
+        error: error.response?.data?.message || "Error al cancelar la orden",
         isLoading: false,
       });
       throw error;
@@ -138,7 +148,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const response = await orderService.getTodaySales();
       set({ todaySales: response });
     } catch (error: any) {
-      console.error('Error fetching today sales:', error);
+      console.error("Error fetching today sales:", error);
     }
   },
 
@@ -147,7 +157,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const response = await orderService.getTopSellingProducts(limit);
       set({ topProducts: response });
     } catch (error: any) {
-      console.error('Error fetching top products:', error);
+      console.error("Error fetching top products:", error);
     }
   },
 
@@ -156,7 +166,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const response = await orderService.getMonthlyRevenue(months);
       set({ monthlyRevenue: response });
     } catch (error: any) {
-      console.error('Error fetching monthly revenue:', error);
+      console.error("Error fetching monthly revenue:", error);
     }
   },
 
@@ -165,7 +175,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const response = await orderService.getPendingCount();
       set({ pendingCount: response });
     } catch (error: any) {
-      console.error('Error fetching pending count:', error);
+      console.error("Error fetching pending count:", error);
     }
   },
 
