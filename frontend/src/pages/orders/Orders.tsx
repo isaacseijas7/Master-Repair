@@ -288,9 +288,9 @@ export function Orders() {
                 <SelectItem value="all">Todos los tipos</SelectItem>
                 <SelectItem value={MovementType.SALE}>Ventas</SelectItem>
                 <SelectItem value={MovementType.PURCHASE}>Compras</SelectItem>
-                <SelectItem value={MovementType.RETURN}>
+                {/* <SelectItem value={MovementType.RETURN}>
                   Devoluciones
-                </SelectItem>
+                </SelectItem> */}
               </SelectContent>
             </Select>
             <Select

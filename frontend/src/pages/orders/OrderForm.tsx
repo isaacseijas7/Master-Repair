@@ -818,7 +818,7 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
               </div>
 
               {/* Tax */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label className="text-sm text-gray-600">Impuestos</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -835,10 +835,10 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                 {errors.tax && (
                   <p className="text-xs text-red-500">{errors.tax.message}</p>
                 )}
-              </div>
+              </div> */}
 
               {/* Discount */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label className="text-sm text-gray-600">Descuento</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -857,7 +857,7 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
                     {errors.discount.message}
                   </p>
                 )}
-              </div>
+              </div> */}
 
               <Separator />
 
