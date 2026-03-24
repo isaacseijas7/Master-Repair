@@ -30,6 +30,7 @@ import {
   XCircle,
   Banknote,
   CreditCard,
+  MessageSquare,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -74,6 +75,38 @@ export function OrderDetail() {
         toast.error("Error al cancelar la orden");
       }
     }
+  };
+
+  const handleCopyWhatsAppMessage = () => {
+    if (!currentOrder) return;
+
+    // 1. Saludo inicial
+    let message = `Hola, me gustaría solicitar la compra de los siguientes productos:\n\n`;
+
+    // 2. Listado de productos (Nombre, Detalles/SKU y Cantidad)
+    currentOrder.items.forEach((item) => {
+      const productName = isProductObject(item.product)
+        ? item.product.name
+        : "Producto desconocido";
+
+      message += `• *${productName}*\n`;
+      message += `  Cantidad: ${item.quantity}\n\n`;
+    });
+
+    // 3. Nota (si existe)
+    if (currentOrder.notes) {
+      message += `*Nota:* ${currentOrder.notes}\n`;
+    }
+
+    // Copiar al portapapeles
+    navigator.clipboard
+      .writeText(message.trim())
+      .then(() => {
+        toast.success("Mensaje copiado para WhatsApp");
+      })
+      .catch(() => {
+        toast.error("Error al copiar el mensaje");
+      });
   };
 
   const getStatusBadge = (status: string) => {
@@ -214,6 +247,20 @@ export function OrderDetail() {
             <Printer className="w-4 h-4 mr-2" />
             Imprimir
           </Button>
+
+          {/* NUEVO BOTÓN PARA WHATSAPP */}
+          {currentOrder.type === MovementType.PURCHASE &&
+            currentOrder.status === OrderStatus.PENDING && (
+              <Button
+                variant="outline"
+                onClick={handleCopyWhatsAppMessage}
+                className="border-green-600 text-green-600 hover:bg-green-50"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Copiar mensaje para WhatsApp
+              </Button>
+            )}
+
           {currentOrder.status === OrderStatus.PENDING && (
             <>
               <Button
