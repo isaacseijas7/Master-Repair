@@ -66,6 +66,7 @@ export function Orders() {
     updateOrderStatus,
     cancelOrder,
     pendingCount,
+    fetchPendingCount,
   } = useOrderStore();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +83,10 @@ export function Orders() {
     };
     fetchOrders(orderFilters);
   }, [debouncedSearch, filters]);
+
+  useEffect(() => {
+    fetchPendingCount();
+  }, []);
 
   const handlePageChange = (page: number) => {
     const orderFilters: OrderFilters = {
