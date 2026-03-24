@@ -12,6 +12,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
     return {
       success: true,
       message: "API funcionando correctamente",
+      status: "ok",
       timestamp: new Date().toISOString(),
     };
   });
