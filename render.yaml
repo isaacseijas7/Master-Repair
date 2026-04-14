@@ -1,0 +1,28 @@
+
+render_yaml = """services:
+  - type: web
+    name: master-repair-api
+    runtime: node
+    repo: https://github.com/isaacseijas7/Master-Repair
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        sync: false  # La configurarás manualmente en el dashboard
+      - key: JWT_SECRET
+        generateValue: true  # Render generará un valor aleatorio seguro
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN
+        value: https://tu-frontend-en-vercel.vercel.app  # Ajusta cuando sepas la URL
+"""
+
+print(render_yaml)
+print("\n" + "="*60)
+print("Guarda este contenido como 'render.yaml' en la raíz de tu repo")
