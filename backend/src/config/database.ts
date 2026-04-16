@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 export const connectDatabase = async (): Promise<void> => {
   try {
     const mongoUri =
-      process.env.MONGODB_URI || "mongodb+srv://isaacseijas7_db_user:UcAFO6i0pkcEHKA0@cluster0.kmdthdj.mongodb.net/?appName=Cluster0/master-repair";
+      process.env.MONGODB_URI || "mongodb://localhost:27017/master-repair";
 
     await mongoose.connect(mongoUri);
 
