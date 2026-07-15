@@ -110,7 +110,7 @@ export function Suppliers() {
               Nuevo Proveedor
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Proveedor</DialogTitle>
             </DialogHeader>
@@ -251,7 +251,7 @@ export function Suppliers() {
         open={!!editingSupplier}
         onOpenChange={() => setEditingSupplier(null)}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Proveedor</DialogTitle>
           </DialogHeader>
@@ -302,7 +302,7 @@ function SupplierForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="name"
@@ -330,7 +330,7 @@ function SupplierForm({
             )}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="email"
@@ -391,8 +391,8 @@ function SupplierForm({
             </FormItem>
           )}
         />
-        <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={isSubmitting}>
+        <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-white pt-4">
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -524,7 +524,6 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       >
         {/* Main Form - Left Column (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Order Type & Client/Supplier */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -885,7 +884,6 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
             </CardContent>
           </Card>
 
-          {/* Notes */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -904,7 +902,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         </div>
 
         {/* Sidebar - Right Column (1/3) */}
-        <div className="space-y-6">
+        <div className="hidden space-y-6 lg:block">
           {/* Order Summary */}
           <Card className="sticky top-6">
             <CardHeader>
@@ -1003,6 +1001,26 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
           </Card>
         </div>
       </form>
+
+      <div className="fixed inset-x-0 bottom-16 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Total</p>
+            <p className="text-xl font-bold text-gray-900">{formatCurrency(totals.total)}</p>
+          </div>
+          <Button
+            type="submit"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting || fields.length === 0}
+            className="min-w-40"
+          >
+            {isEditing ? "Actualizar" : "Crear orden"}
+          </Button>
+        </div>
+        {fields.length === 0 && (
+          <p className="mt-2 text-xs text-gray-500">Agrega al menos un producto para continuar.</p>
+        )}
+      </div>
     </div>
   );
 }

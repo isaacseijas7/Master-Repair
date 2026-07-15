@@ -3,6 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -226,6 +234,42 @@ export function Orders() {
     }
   };
 
+  const filtersContent = (
+    <div className="flex flex-col gap-4 sm:flex-row">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Input
+          placeholder="Buscar por número de orden o cliente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+      <Select value={filters.type || "all"} onValueChange={handleTypeChange}>
+        <SelectTrigger className="w-full sm:w-40">
+          <Filter className="w-4 h-4 mr-2" />
+          <SelectValue placeholder="Tipo" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los tipos</SelectItem>
+          <SelectItem value={MovementType.SALE}>Ventas</SelectItem>
+          <SelectItem value={MovementType.PURCHASE}>Compras</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={filters.status || "all"} onValueChange={handleStatusChange}>
+        <SelectTrigger className="w-full sm:w-40">
+          <SelectValue placeholder="Estado" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los estados</SelectItem>
+          <SelectItem value={OrderStatus.PENDING}>Pendientes</SelectItem>
+          <SelectItem value={OrderStatus.COMPLETED}>Completadas</SelectItem>
+          <SelectItem value={OrderStatus.CANCELLED}>Canceladas</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -264,61 +308,120 @@ export function Orders() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Buscar por número de orden o cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select
-              value={filters.type || "all"}
-              onValueChange={handleTypeChange}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value={MovementType.SALE}>Ventas</SelectItem>
-                <SelectItem value={MovementType.PURCHASE}>Compras</SelectItem>
-                {/* <SelectItem value={MovementType.RETURN}>
-                  Devoluciones
-                </SelectItem> */}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.status || "all"}
-              onValueChange={handleStatusChange}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value={OrderStatus.PENDING}>Pendientes</SelectItem>
-                <SelectItem value={OrderStatus.COMPLETED}>
-                  Completadas
-                </SelectItem>
-                <SelectItem value={OrderStatus.CANCELLED}>
-                  Canceladas
-                </SelectItem>
-              </SelectContent>
-            </Select>
+      <Card className="sm:hidden">
+        <CardContent className="flex items-center gap-3 p-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar órdenes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Abrir filtros de órdenes">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>Filtrar órdenes</DrawerTitle>
+                <DrawerDescription>Busca, filtra por tipo y por estado.</DrawerDescription>
+              </DrawerHeader>
+              <div className="px-4 pb-6">{filtersContent}</div>
+            </DrawerContent>
+          </Drawer>
         </CardContent>
+      </Card>
+
+      <Card className="hidden sm:block">
+        <CardContent className="p-4">{filtersContent}</CardContent>
       </Card>
 
       {/* Orders Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="space-y-3 p-4 md:hidden">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="rounded-2xl border border-gray-200 p-4">
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              ))
+            ) : orders.length === 0 ? (
+              <div className="py-8 text-center">
+                <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No se encontraron órdenes</p>
+              </div>
+            ) : (
+              orders.map((order) => (
+                <article key={order._id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        {getTypeIcon(order.type)}
+                        <p className="font-semibold text-gray-900">{order.orderNumber}</p>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                    </div>
+                    {getStatusBadge(order.status)}
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-xl bg-gray-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Tipo</p>
+                      <p className="mt-1 font-medium text-gray-900">{getTypeLabel(order.type)}</p>
+                      {order.type === MovementType.SALE && order.paymentType && (
+                        <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                          {getPaymentIcon(order.paymentType)}
+                          <span>{getPaymentLabel(order.paymentType)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="rounded-xl bg-gray-50 p-3 text-right">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Total</p>
+                      <p className="mt-1 text-lg font-bold text-gray-900">{formatCurrency(order.total)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-xl bg-gray-50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Cliente / proveedor</p>
+                    <p className="mt-1 font-medium text-gray-900">
+                      {order.customerName ||
+                        (isSupplierObject(order.supplier) && order.supplier?.name) ||
+                        "N/A"}
+                    </p>
+                    {order.customerEmail && (
+                      <p className="mt-1 text-xs text-gray-500">{order.customerEmail}</p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button className="flex-1 min-w-32" variant="outline" onClick={() => navigate(`/orders/${order._id}`)}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver detalle
+                    </Button>
+                    {order.status === OrderStatus.PENDING && (
+                      <>
+                        <Button className="flex-1 min-w-32" onClick={() => handleCompleteOrder(order._id)}>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Completar
+                        </Button>
+                        <Button className="flex-1 min-w-32" variant="destructive" onClick={() => handleCancelOrder(order._id)}>
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -33,6 +33,14 @@ const navigation = [
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
 ];
 
+const mobileNavigation = [
+  { name: 'Inicio', href: '/', icon: LayoutDashboard },
+  { name: 'Productos', href: '/products', icon: Package },
+  { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
+  { name: 'Proveedores', href: '/suppliers', icon: Truck },
+  { name: 'Perfil', href: '/profile', icon: BarChart3 },
+];
+
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -175,10 +183,34 @@ export function MainLayout() {
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 pb-24 sm:p-6 sm:pb-6 lg:p-8">
           <Outlet />
         </main>
       </div>
+
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden">
+        <div className="grid grid-cols-5 gap-1 px-2 py-2">
+          {mobileNavigation.map((item) => {
+            const isActive =
+              location.pathname === item.href ||
+              (item.href !== '/' && location.pathname.startsWith(`${item.href}/`));
+
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  'flex min-h-14 flex-col items-center justify-center rounded-xl px-2 text-[11px] font-medium transition-colors',
+                  isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
+                )}
+              >
+                <item.icon className="mb-1 h-5 w-5" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
