@@ -331,7 +331,7 @@ export function ProductDetail() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="hidden gap-2 sm:flex">
           {isEditMode && (
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="w-4 h-4 mr-2" />
@@ -360,7 +360,6 @@ export function ProductDetail() {
       >
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Basic Info */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -514,7 +513,6 @@ export function ProductDetail() {
             </CardContent>
           </Card>
 
-          {/* Pricing */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -541,24 +539,6 @@ export function ProductDetail() {
                     </p>
                   )}
                 </div>
-
-                {/* Precio Mayorista */}
-                {/* <div className="space-y-2">
-                  <Label htmlFor="wholesalePrice">Precio Mayorista</Label>
-                  <Input
-                    id="wholesalePrice"
-                    type="number"
-                    step="0.01"
-                    min={0}
-                    {...register("wholesalePrice", { valueAsNumber: true })}
-                    className={errors.wholesalePrice ? "border-red-500" : ""}
-                  />
-                  {errors.wholesalePrice && (
-                    <p className="text-sm text-red-500">
-                      {errors.wholesalePrice.message}
-                    </p>
-                  )}
-                </div> */}
               </div>
 
               {/* Price Tiers */}
@@ -633,7 +613,6 @@ export function ProductDetail() {
             </CardContent>
           </Card>
 
-          {/* Inventory */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -732,9 +711,9 @@ export function ProductDetail() {
                     </p>
                   )}
                 </div> */}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
         </div>
 
         {/* Sidebar */}
@@ -827,6 +806,25 @@ export function ProductDetail() {
           )}
         </div>
       </form>
+
+      <div className="fixed inset-x-0 bottom-16 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur sm:hidden">
+        <div className="flex gap-2">
+          {isEditMode && (
+            <Button variant="destructive" onClick={handleDelete} className="flex-1">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar
+            </Button>
+          )}
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting || (!isDirty && isEditMode)}
+            className="flex-1"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isEditMode ? "Guardar" : "Crear"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

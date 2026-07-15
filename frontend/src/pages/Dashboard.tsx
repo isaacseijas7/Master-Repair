@@ -68,6 +68,14 @@ export function Dashboard() {
           href="/products"
         />
         <MetricCard
+          title="Unidades en Existencia"
+          value={formatNumber(metrics.totalStock)}
+          icon={Package}
+          trend="Suma total de inventario"
+          trendType="neutral"
+          href="/products"
+        />
+        <MetricCard
           title="Ventas Hoy"
           value={formatCurrency(metrics.todaySales)}
           icon={DollarSign}

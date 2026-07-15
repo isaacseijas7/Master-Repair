@@ -21,9 +21,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useOrderStore } from "@/stores/order.store";
-import { useProductStore } from "@/stores/product.store";
 import { useSupplierStore } from "@/stores/supplier.store";
+import { productService } from "@/services/product.service";
 import { MovementType, OrderStatus, type MovementTypeType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -46,11 +47,12 @@ import {
   Edit,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useNavigate, useParams } from "react-router-dom";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
+import type { Product } from "@/types";
 
 // ==========================================
 // TIPOS Y SCHEMA (sin cambios)
@@ -134,7 +136,6 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
 
   const isEditing = !!orderId;
 
-  const { products, fetchProducts } = useProductStore();
   const { activeSuppliers, fetchActiveSuppliers } = useSupplierStore();
   const {
     createOrder,
@@ -149,6 +150,11 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
   const [quantity, setQuantity] = useState<number | "">(1);
   const [showProductList, setShowProductList] = useState(false);
   const [isLoadingOrder, setIsLoadingOrder] = useState(false);
+  const [productResults, setProductResults] = useState<Product[]>([]);
+  const [selectedProductPreview, setSelectedProductPreview] = useState<Product | null>(null);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
+
+  const debouncedSearchTerm = useDebounce(searchTerm.trim(), 250);
 
   const {
     register,
@@ -179,7 +185,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
     name: "items",
   });
 
-  const watchItems = watch("items");
+  const watchItems = useWatch({ control, name: "items" }) ?? [];
   const watchTax = watch("tax") ?? 0;
   const watchDiscount = watch("discount") ?? 0;
   const watchType = watch("type");
@@ -251,18 +257,55 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
   }, [watchItems, watchTax, watchDiscount]);
 
   useEffect(() => {
-    fetchProducts({ limit: 100 });
     fetchActiveSuppliers();
-  }, [fetchProducts, fetchActiveSuppliers]);
+  }, [fetchActiveSuppliers]);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm || !showProductList) return [];
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [searchTerm, products, showProductList]);
+  useEffect(() => {
+    let isCurrent = true;
+
+    const searchProducts = async () => {
+      const query = debouncedSearchTerm;
+
+      if (!showProductList || query.length < 2) {
+        if (isCurrent) {
+          setProductResults([]);
+          setIsSearchingProducts(false);
+        }
+        return;
+      }
+
+      setIsSearchingProducts(true);
+
+      try {
+        const response = await productService.getProducts({
+          search: query,
+          limit: 8,
+          page: 1,
+          sortBy: "name",
+          sortOrder: "asc",
+          isActive: true,
+        });
+
+        if (isCurrent) {
+          setProductResults(response.data);
+        }
+      } catch {
+        if (isCurrent) {
+          setProductResults([]);
+        }
+      } finally {
+        if (isCurrent) {
+          setIsSearchingProducts(false);
+        }
+      }
+    };
+
+    void searchProducts();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [debouncedSearchTerm, showProductList]);
 
   const isEditable = useMemo(() => {
     if (!isEditing) return true;
@@ -320,21 +363,13 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (!selectedProduct) {
       toast.error("Selecciona un producto");
       return;
     }
 
-    const product = products.find((p) => p._id === selectedProduct);
-    if (!product) return;
-
     const qty = quantity === "" ? 1 : quantity;
-
-    if (watchType === "sale" && product.stock < qty) {
-      toast.error(`Stock insuficiente. Disponible: ${product.stock}`);
-      return;
-    }
 
     const existingIndex = fields.findIndex(
       (item) => item.product === selectedProduct,
@@ -344,19 +379,37 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       return;
     }
 
-    append({
-      product: product._id,
-      productName: product.name,
-      sku: product.sku,
-      quantity: qty,
-      unitPrice: product.unitPrice,
-      stock: product.stock,
-    });
+    try {
+      const product = await productService.getProductById(selectedProduct);
 
-    setSelectedProduct("");
-    setQuantity(1);
-    setSearchTerm("");
-    setShowProductList(false);
+      if (!product.isActive) {
+        toast.error("El producto ya no está activo");
+        return;
+      }
+
+      if (watchType === "sale" && product.stock < qty) {
+        toast.error(`Stock insuficiente. Disponible: ${product.stock}`);
+        return;
+      }
+
+      append({
+        product: product._id,
+        productName: product.name,
+        sku: product.sku,
+        quantity: qty,
+        unitPrice: product.unitPrice,
+        stock: product.stock,
+      });
+
+      setSelectedProduct("");
+      setSelectedProductPreview(null);
+      setQuantity(1);
+      setSearchTerm("");
+      setShowProductList(false);
+      setProductResults([]);
+    } catch {
+      toast.error("No se pudo validar la disponibilidad del producto");
+    }
   };
 
   const onSubmit = async (data: OrderFormData) => {
@@ -405,18 +458,21 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
     }
   };
 
-  const handleProductSelect = (product: (typeof products)[0]) => {
+  const handleProductSelect = (product: Product) => {
     setSelectedProduct(product._id);
     setSearchTerm(product.name);
+    setSelectedProductPreview(product);
     setShowProductList(false);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
+    setSelectedProduct("");
+    setSelectedProductPreview(null);
     setShowProductList(true);
     if (value === "") {
-      setSelectedProduct("");
+      setProductResults([]);
     }
   };
 
@@ -429,6 +485,12 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       setQuantity(isNaN(numValue) ? 1 : numValue);
     }
   };
+
+  const selectedQuantity = quantity === "" ? 1 : quantity;
+  const isSelectionInvalid =
+    watchType === "sale" &&
+    !!selectedProductPreview &&
+    selectedProductPreview.stock < selectedQuantity;
 
   // Loading state
   if (isLoadingOrder || storeLoading) {
@@ -524,7 +586,6 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       >
         {/* Main Form - Left Column (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Order Type & Client/Supplier */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -734,33 +795,54 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                       onChange={handleSearchChange}
                       className="pl-10 bg-white"
                     />
-                    {searchTerm &&
-                      showProductList &&
-                      filteredProducts.length > 0 && (
-                        <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg mt-1 max-h-48 overflow-auto">
-                          {filteredProducts.map((product) => (
-                            <button
-                              key={product._id}
-                              type="button"
-                              className="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center border-b last:border-0"
-                              onClick={() => handleProductSelect(product)}
-                            >
-                              <div>
-                                <p className="font-medium text-sm">
-                                  {product.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Stock: {product.stock} |{" "}
-                                  {formatCurrency(product.unitPrice)}
-                                </p>
-                              </div>
-                              <span className="text-xs font-mono text-gray-400">
-                                {product.sku}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                    {searchTerm && showProductList && (
+                      <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border bg-white shadow-lg">
+                        {isSearchingProducts ? (
+                          <div className="px-4 py-3 text-sm text-gray-500">
+                            Buscando productos...
+                          </div>
+                        ) : productResults.length > 0 ? (
+                          <div className="max-h-72 overflow-auto">
+                            {productResults.map((product) => (
+                              <button
+                                key={product._id}
+                                type="button"
+                                className="w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 last:border-b-0"
+                                onClick={() => handleProductSelect(product)}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-gray-900">
+                                      {product.name}
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      SKU: {product.sku}
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      {product.category && typeof product.category === "object"
+                                        ? product.category.name
+                                        : "Sin categoría"}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-semibold text-gray-900">
+                                      {formatCurrency(product.unitPrice)}
+                                    </p>
+                                    <p className={`text-xs ${product.stock <= product.minStock ? "text-amber-600" : "text-gray-500"}`}>
+                                      Stock: {product.stock}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-gray-500">
+                            No hay coincidencias. Prueba con otro nombre o SKU.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <Input
@@ -777,13 +859,65 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                       type="button"
                       onClick={handleAddItem}
                       className="w-full"
-                      disabled={!selectedProduct}
+                      disabled={!selectedProduct || isSelectionInvalid}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Agregar Producto
                     </Button>
                   </div>
                 </div>
+
+                {selectedProductPreview && (
+                  <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 md:grid-cols-[1.2fr_0.8fr]">
+                    <div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {selectedProductPreview.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            SKU: {selectedProductPreview.sku}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={selectedProductPreview.isActive ? "default" : "secondary"}
+                          className={selectedProductPreview.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}
+                        >
+                          {selectedProductPreview.isActive ? "Activo" : "Inactivo"}
+                        </Badge>
+                      </div>
+                      {selectedProductPreview.description && (
+                        <p className="mt-2 max-h-10 overflow-hidden text-sm text-gray-600">
+                          {selectedProductPreview.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-lg bg-white p-3">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Precio</p>
+                        <p className="mt-1 font-semibold text-gray-900">
+                          {formatCurrency(selectedProductPreview.unitPrice)}
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Stock</p>
+                        <p className={`mt-1 font-semibold ${selectedProductPreview.stock <= selectedProductPreview.minStock ? "text-amber-600" : "text-gray-900"}`}>
+                          {selectedProductPreview.stock} uds.
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3 col-span-2">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Disponibilidad para esta orden</p>
+                        <p className={`mt-1 font-medium ${watchType === "sale" && isSelectionInvalid ? "text-red-600" : "text-green-700"}`}>
+                          {watchType === "sale"
+                            ? isSelectionInvalid
+                              ? `Stock insuficiente para ${selectedQuantity} unidades`
+                              : `Disponible para ${selectedQuantity} unidades`
+                            : "Disponible para compra"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {errors.items && !Array.isArray(errors.items) && (
@@ -842,13 +976,39 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                                 <Input
                                   type="number"
                                   min={1}
+                                  max={watchType === "sale" ? watchItems[index]?.stock : undefined}
                                   className="w-20 text-right ml-auto"
                                   {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseInt(e.target.value) || 1,
-                                    )
-                                  }
+                                  onChange={(e) => {
+                                    const rawValue = e.target.value;
+                                    const availableStock = watchItems[index]?.stock ?? undefined;
+
+                                    if (rawValue === "") {
+                                      field.onChange(1);
+                                      return;
+                                    }
+
+                                    const nextQuantity = parseInt(rawValue, 10);
+
+                                    if (Number.isNaN(nextQuantity) || nextQuantity < 1) {
+                                      field.onChange(1);
+                                      return;
+                                    }
+
+                                    if (
+                                      watchType === "sale" &&
+                                      availableStock !== undefined &&
+                                      nextQuantity > availableStock
+                                    ) {
+                                      toast.error(
+                                        `Solo hay ${availableStock} unidades disponibles para ${watchItems[index]?.sku ?? "este producto"}`,
+                                      );
+                                      field.onChange(availableStock);
+                                      return;
+                                    }
+
+                                    field.onChange(nextQuantity);
+                                  }}
                                 />
                               )}
                             />
@@ -857,7 +1017,9 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                             {formatCurrency(field.unitPrice)}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {formatCurrency(field.unitPrice * field.quantity)}
+                            {formatCurrency(
+                              field.unitPrice * (watchItems[index]?.quantity ?? field.quantity),
+                            )}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -885,7 +1047,6 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
             </CardContent>
           </Card>
 
-          {/* Notes */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -904,7 +1065,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         </div>
 
         {/* Sidebar - Right Column (1/3) */}
-        <div className="space-y-6">
+        <div className="hidden space-y-6 lg:block">
           {/* Order Summary */}
           <Card className="sticky top-6">
             <CardHeader>
@@ -1003,6 +1164,26 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
           </Card>
         </div>
       </form>
+
+      <div className="fixed inset-x-0 bottom-16 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Total</p>
+            <p className="text-xl font-bold text-gray-900">{formatCurrency(totals.total)}</p>
+          </div>
+          <Button
+            type="submit"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting || fields.length === 0}
+            className="min-w-40"
+          >
+            {isEditing ? "Actualizar" : "Crear orden"}
+          </Button>
+        </div>
+        {fields.length === 0 && (
+          <p className="mt-2 text-xs text-gray-500">Agrega al menos un producto para continuar.</p>
+        )}
+      </div>
     </div>
   );
 }

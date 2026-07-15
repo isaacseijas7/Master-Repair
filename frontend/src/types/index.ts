@@ -230,6 +230,7 @@ export interface DashboardMetrics {
   lowStockProducts: number;
   totalCategories: number;
   totalSuppliers: number;
+  totalStock: number;
   todaySales: number;
   monthSales: number;
   monthRevenue: number;
