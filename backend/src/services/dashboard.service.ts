@@ -48,6 +48,7 @@ export class DashboardService {
       lowStockProducts,
       totalCategories,
       totalSuppliers,
+      totalStockResult,
       todaySales,
       monthSales,
       pendingOrders,
@@ -56,6 +57,10 @@ export class DashboardService {
       Product.countDocuments({ $expr: { $lte: ['$stock', '$minStock'] }, isActive: true }),
       Category.countDocuments({ isActive: true }),
       Supplier.countDocuments({ isActive: true }),
+      Product.aggregate([
+        { $match: { isActive: true } },
+        { $group: { _id: null, totalStock: { $sum: '$stock' } } },
+      ]),
       Order.aggregate([
         { $match: { type: MovementType.SALE, status: OrderStatus.COMPLETED, completedAt: { $gte: today, $lt: tomorrow } } },
         { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$total' } } },
@@ -69,12 +74,14 @@ export class DashboardService {
 
     const todayResult = todaySales[0] || { count: 0, total: 0 };
     const monthResult = monthSales[0] || { count: 0, total: 0 };
+    const totalStock = totalStockResult[0]?.totalStock || 0;
 
     return {
       totalProducts,
       lowStockProducts,
       totalCategories,
       totalSuppliers,
+      totalStock,
       todaySales: todayResult.total,
       monthSales: monthResult.count,
       monthRevenue: monthResult.total,
