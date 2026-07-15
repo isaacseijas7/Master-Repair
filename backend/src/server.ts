@@ -9,7 +9,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { authService } from './services/auth.service';
 
 dotenv.config();
-
+// test
 const PORT = parseInt(process.env.PORT || '3001');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
