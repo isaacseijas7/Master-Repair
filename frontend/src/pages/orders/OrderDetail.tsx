@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { isClientObject } from "@/helpers/isClientObject";
 import { isProductObject } from "@/helpers/isProductObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
 import { isUserObject } from "@/helpers/isUserObject";
@@ -529,7 +530,33 @@ export function OrderDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4 sm:px-6 space-y-2">
-                {currentOrder.customerName ? (
+                {isClientObject(currentOrder.client) ? (
+                  <div className="space-y-2">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">
+                      {currentOrder.client.name}
+                    </p>
+                    <div className="space-y-1.5">
+                      {currentOrder.client.email && (
+                        <a
+                          href={`mailto:${currentOrder.client.email}`}
+                          className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                          <Mail className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{currentOrder.client.email}</span>
+                        </a>
+                      )}
+                      {currentOrder.client.phone && (
+                        <a
+                          href={`tel:${currentOrder.client.phone}`}
+                          className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
+                          <span>{currentOrder.client.phone}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : currentOrder.customerName ? (
                   <div className="space-y-2">
                     <p className="font-medium text-gray-900 text-sm sm:text-base">
                       {currentOrder.customerName}

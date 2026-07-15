@@ -45,6 +45,12 @@ export interface Order {
     email?: string;
     phone?: string;
   };
+  client?: {
+    _id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+  };
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -70,6 +76,7 @@ export interface CreateOrderInput {
   tax?: number;
   discount?: number;
   supplier?: string;
+  client?: string;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;

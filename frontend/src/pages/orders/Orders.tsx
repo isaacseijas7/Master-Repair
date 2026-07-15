@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { isClientObject } from "@/helpers/isClientObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -78,6 +79,27 @@ export function Orders() {
   } = useOrderStore();
 
   const [searchTerm, setSearchTerm] = useState("");
+
+  const getOrderCounterparty = (order: (typeof orders)[number]) => {
+    if (isClientObject(order.client)) {
+      return {
+        name: order.client.name,
+        email: order.client.email,
+      };
+    }
+
+    if (isSupplierObject(order.supplier)) {
+      return {
+        name: order.supplier.name,
+        email: order.supplier.email,
+      };
+    }
+
+    return {
+      name: order.customerName || "N/A",
+      email: order.customerEmail,
+    };
+  };
   const [filters, setFilters] = useState<FilterState>({
     type: undefined,
     status: undefined,
@@ -356,7 +378,10 @@ export function Orders() {
                 <p className="text-gray-500">No se encontraron órdenes</p>
               </div>
             ) : (
-              orders.map((order) => (
+              orders.map((order) => {
+                const counterparty = getOrderCounterparty(order);
+
+                return (
                 <article key={order._id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -388,13 +413,9 @@ export function Orders() {
 
                   <div className="mt-3 rounded-xl bg-gray-50 p-3">
                     <p className="text-xs uppercase tracking-wide text-gray-500">Cliente / proveedor</p>
-                    <p className="mt-1 font-medium text-gray-900">
-                      {order.customerName ||
-                        (isSupplierObject(order.supplier) && order.supplier?.name) ||
-                        "N/A"}
-                    </p>
-                    {order.customerEmail && (
-                      <p className="mt-1 text-xs text-gray-500">{order.customerEmail}</p>
+                    <p className="mt-1 font-medium text-gray-900">{counterparty.name}</p>
+                    {counterparty.email && (
+                      <p className="mt-1 text-xs text-gray-500">{counterparty.email}</p>
                     )}
                   </div>
 
@@ -417,7 +438,8 @@ export function Orders() {
                     )}
                   </div>
                 </article>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -451,7 +473,10 @@ export function Orders() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  orders.map((order) => {
+                    const counterparty = getOrderCounterparty(order);
+
+                    return (
                     <TableRow key={order._id} className="hover:bg-gray-50">
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -485,16 +510,9 @@ export function Orders() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium text-gray-900">
-                            {order.customerName ||
-                              (isSupplierObject(order.supplier) &&
-                                order.supplier?.name) ||
-                              "N/A"}
-                          </p>
-                          {order.customerEmail && (
-                            <p className="text-xs text-gray-500">
-                              {order.customerEmail}
-                            </p>
+                          <p className="font-medium text-gray-900">{counterparty.name}</p>
+                          {counterparty.email && (
+                            <p className="text-xs text-gray-500">{counterparty.email}</p>
                           )}
                         </div>
                       </TableCell>
@@ -541,7 +559,8 @@ export function Orders() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

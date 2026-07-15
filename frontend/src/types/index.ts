@@ -138,6 +138,16 @@ export interface OrderItem {
   totalPrice: number;
 }
 
+export interface Client {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Order {
   _id: string;
   orderNumber: string;
@@ -150,6 +160,7 @@ export interface Order {
   discount: number;
   total: number;
   supplier?: Supplier | string;
+  client?: Client | string;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -175,6 +186,12 @@ export type PaymentTypeType = (typeof PaymentType)[keyof typeof PaymentType];
 
 export type MovementTypeType = (typeof MovementType)[keyof typeof MovementType];
 
+export interface CreateClientInput {
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
 export interface CreateOrderInput {
   type: MovementTypeType;
   paymentType?: PaymentTypeType;
@@ -186,6 +203,7 @@ export interface CreateOrderInput {
   tax?: number;
   discount?: number;
   supplier?: string;
+  client?: string;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;

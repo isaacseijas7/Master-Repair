@@ -22,8 +22,11 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
+import { isClientObject } from "@/helpers/isClientObject";
 import { useOrderStore } from "@/stores/order.store";
 import { useSupplierStore } from "@/stores/supplier.store";
+import { ClientCreateDialog } from "@/pages/orders/components/ClientCreateDialog";
+import { ClientSelector } from "@/pages/orders/components/ClientSelector";
 import { productService } from "@/services/product.service";
 import { MovementType, OrderStatus, type MovementTypeType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,7 +55,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useNavigate, useParams } from "react-router-dom";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
-import type { Product } from "@/types";
+import type { Client, Product } from "@/types";
 
 // ==========================================
 // TIPOS Y SCHEMA (sin cambios)
@@ -77,13 +80,7 @@ const orderFormSchema = z
     type: z.enum(["purchase", "sale", "return", "adjustment"] as const),
     paymentType: z.enum(["cash", "credit"] as const).optional(),
     supplier: z.string().optional(),
-    customerName: z.string().optional(),
-    customerEmail: z
-      .string()
-      .email("Email inválido")
-      .optional()
-      .or(z.literal("")),
-    customerPhone: z.string().optional(),
+    client: z.string().optional(),
     items: z.array(orderItemSchema).min(1, "Agrega al menos un producto"),
     tax: z.number().min(0),
     discount: z.number().min(0),
@@ -100,12 +97,12 @@ const orderFormSchema = z
 
     if (
       (data.type === "sale" || data.type === "return") &&
-      !data.customerName
+      !data.client
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Ingresa el nombre del cliente",
-        path: ["customerName"],
+        message: "Selecciona un cliente",
+        path: ["client"],
       });
     }
 
@@ -153,6 +150,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
   const [productResults, setProductResults] = useState<Product[]>([]);
   const [selectedProductPreview, setSelectedProductPreview] = useState<Product | null>(null);
   const [isSearchingProducts, setIsSearchingProducts] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const debouncedSearchTerm = useDebounce(searchTerm.trim(), 250);
 
@@ -173,9 +171,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       tax: 0,
       discount: 0,
       supplier: undefined,
-      customerName: "",
-      customerEmail: "",
-      customerPhone: "",
+      client: undefined,
       notes: "",
     },
   });
@@ -225,14 +221,18 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         supplier: isSupplierObject(currentOrder.supplier)
           ? currentOrder.supplier?._id
           : currentOrder.supplier,
-        customerName: currentOrder.customerName || "",
-        customerEmail: currentOrder.customerEmail || "",
-        customerPhone: currentOrder.customerPhone || "",
+        client: isClientObject(currentOrder.client)
+          ? currentOrder.client._id
+          : typeof currentOrder.client === "string"
+            ? currentOrder.client
+            : undefined,
         items: items,
         tax: currentOrder.tax || 0,
         discount: currentOrder.discount || 0,
         notes: currentOrder.notes || "",
       });
+
+      setSelectedClient(isClientObject(currentOrder.client) ? currentOrder.client : null);
     }
   }, [isEditing, currentOrder, orderId, reset]);
 
@@ -246,6 +246,13 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       setValue("paymentType", undefined);
     }
   }, [watchType, watchPaymentType, setValue]);
+
+  useEffect(() => {
+    if (watchType === MovementType.PURCHASE) {
+      setSelectedClient(null);
+      setValue("client", undefined);
+    }
+  }, [watchType, setValue]);
 
   const totals = useMemo(() => {
     const subtotal = watchItems.reduce(
@@ -424,9 +431,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         tax: data.tax,
         discount: data.discount,
         supplier: data.supplier,
-        customerName: data.customerName || undefined,
-        customerEmail: data.customerEmail || undefined,
-        customerPhone: data.customerPhone || undefined,
+        client: data.client || undefined,
         notes: data.notes || undefined,
       };
 
@@ -491,6 +496,16 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
     watchType === "sale" &&
     !!selectedProductPreview &&
     selectedProductPreview.stock < selectedQuantity;
+
+  const handleClientSelect = (client: Client) => {
+    setSelectedClient(client);
+    setValue("client", client._id, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const handleClientClear = () => {
+    setSelectedClient(null);
+    setValue("client", undefined, { shouldDirty: true, shouldValidate: true });
+  };
 
   // Loading state
   if (isLoadingOrder || storeLoading) {
@@ -727,51 +742,28 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <Label className="flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      Nombre del Cliente *
+                      Cliente *
                     </Label>
-                    <Input
-                      {...register("customerName")}
-                      placeholder="Nombre completo"
-                      className={errors.customerName ? "border-red-500" : ""}
-                    />
-                    {errors.customerName && (
-                      <p className="text-sm text-red-500">
-                        {errors.customerName.message}
+                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                      <ClientSelector
+                        selectedClient={selectedClient}
+                        onSelectClient={handleClientSelect}
+                        onClearSelection={handleClientClear}
+                        error={errors.client?.message}
+                      />
+                      <ClientCreateDialog onClientCreated={handleClientSelect} />
+                    </div>
+                    {isEditing && currentOrder?.customerName && !selectedClient && (
+                      <p className="text-xs text-amber-600">
+                        Esta orden usa un cliente legado. Selecciona un cliente normalizado para guardar cambios.
                       </p>
                     )}
                   </div>
                 )}
               </div>
-
-              {/* Customer Contact Info (for sales/returns) */}
-              {watchType !== MovementType.PURCHASE && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <Label>Email (opcional)</Label>
-                    <Input
-                      type="email"
-                      {...register("customerEmail")}
-                      placeholder="cliente@email.com"
-                      className={errors.customerEmail ? "border-red-500" : ""}
-                    />
-                    {errors.customerEmail && (
-                      <p className="text-sm text-red-500">
-                        {errors.customerEmail.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Teléfono (opcional)</Label>
-                    <Input
-                      {...register("customerPhone")}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
