@@ -4,7 +4,6 @@ import { authenticate, authorize } from "../middleware/auth.middleware";
 
 export async function clientRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.addHook("preHandler", authenticate);
-
   fastify.get("/", clientController.getClients.bind(clientController));
   fastify.get("/:id", clientController.getClientById.bind(clientController));
   fastify.post("/", clientController.createClient.bind(clientController));
