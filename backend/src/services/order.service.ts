@@ -1,5 +1,6 @@
 import { Order, IOrder, MovementType, OrderStatus } from "../models/Order";
 import { Product } from "../models/Product";
+import { clientService } from "./client.service";
 
 export class OrderService {
   async getOrders(
@@ -45,6 +46,7 @@ export class OrderService {
       Order.find(query)
         .populate("items.product", "name sku unitPrice")
         .populate("supplier", "name")
+        .populate("client", "name email phone")
         .populate("createdBy", "firstName lastName")
         .sort(sort)
         .skip(skip)
@@ -72,12 +74,29 @@ export class OrderService {
     const order = await Order.findById(id)
       .populate("items.product", "name sku unitPrice stock")
       .populate("supplier", "name contactName email phone")
+      .populate("client", "name email phone")
       .populate("createdBy", "firstName lastName email");
     if (!order) throw new Error("Orden no encontrada");
     return order;
   }
 
   async createOrder(orderData: any, userId: string): Promise<IOrder> {
+    if (orderData.type === MovementType.SALE) {
+      if (!orderData.client) {
+        throw new Error("Selecciona un cliente");
+      }
+
+      const client = await clientService.assertClientExists(orderData.client);
+      orderData.customerName = client.name;
+      orderData.customerEmail = client.email;
+      orderData.customerPhone = client.phone;
+    } else {
+      orderData.client = undefined;
+      orderData.customerName = undefined;
+      orderData.customerEmail = undefined;
+      orderData.customerPhone = undefined;
+    }
+
     const processedItems = [];
     let subtotal = 0;
 
@@ -201,6 +220,22 @@ export class OrderService {
     // Actualizar campos permitidos
     if (orderData.supplier !== undefined)
       existingOrder.supplier = orderData.supplier;
+    if (
+      (orderData.type ?? existingOrder.type) === MovementType.SALE &&
+      orderData.client !== undefined
+    ) {
+      const client = await clientService.assertClientExists(orderData.client);
+      existingOrder.client = client._id;
+      existingOrder.customerName = client.name;
+      existingOrder.customerEmail = client.email;
+      existingOrder.customerPhone = client.phone;
+    }
+    if ((orderData.type ?? existingOrder.type) !== MovementType.SALE) {
+      existingOrder.client = undefined;
+      existingOrder.customerName = undefined;
+      existingOrder.customerEmail = undefined;
+      existingOrder.customerPhone = undefined;
+    }
     if (orderData.customerName !== undefined)
       existingOrder.customerName = orderData.customerName;
     if (orderData.customerEmail !== undefined)
@@ -214,7 +249,7 @@ export class OrderService {
     existingOrder.updatedAt = new Date();
     await existingOrder.save();
 
-    return existingOrder.populate(["items.product", "supplier", "createdBy"]);
+    return existingOrder.populate(["items.product", "supplier", "client", "createdBy"]);
   }
 
   async updateOrderStatus(id: string, status: string): Promise<IOrder> {
@@ -232,7 +267,7 @@ export class OrderService {
     }
 
     await order.save();
-    return order.populate(["items.product", "supplier", "createdBy"]);
+    return order.populate(["items.product", "supplier", "client", "createdBy"]);
   }
 
   private async updateStockForOrder(order: IOrder): Promise<void> {
