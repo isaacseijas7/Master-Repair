@@ -37,6 +37,7 @@ export interface IOrder extends Document {
   discount: number;
   total: number;
   supplier?: mongoose.Types.ObjectId;
+  client?: mongoose.Types.ObjectId;
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -123,6 +124,10 @@ const OrderSchema = new Schema<IOrder>(
       type: Schema.Types.ObjectId,
       ref: "Supplier",
     },
+    client: {
+      type: Schema.Types.ObjectId,
+      ref: "Client",
+    },
     customerName: {
       type: String,
       trim: true,
@@ -165,6 +170,7 @@ const OrderSchema = new Schema<IOrder>(
 OrderSchema.index({ type: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ paymentType: 1 });
+OrderSchema.index({ client: 1 });
 OrderSchema.index({ createdAt: -1 });
 
 OrderSchema.pre("save", async function (next) {
