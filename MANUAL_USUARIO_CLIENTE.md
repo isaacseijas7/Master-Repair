@@ -195,7 +195,9 @@ Este módulo le permite crear y controlar movimientos de inventario como ventas,
    - Devolución
 4. Complete datos según tipo:
    - Para compras: proveedor
-   - Para ventas/devoluciones: nombre del cliente
+   - Para ventas/devoluciones:
+     - Seleccione un cliente existente
+     - O cree un cliente nuevo si no está registrado
    - Para ventas: tipo de pago (contado o crédito)
 5. Agregue productos:
    - Busque el producto
