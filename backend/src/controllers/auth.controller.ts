@@ -1,8 +1,16 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify';
 import { authService } from '../services/auth.service';
 
+interface LoginRoute extends RouteGenericInterface {
+  Body: any;
+}
+
+interface RegisterRoute extends RouteGenericInterface {
+  Body: any;
+}
+
 export class AuthController {
-  async login(request: FastifyRequest<{ Body: any }>, reply: FastifyReply): Promise<void> {
+  async login(request: FastifyRequest<LoginRoute>, reply: FastifyReply): Promise<void> {
     try {
       const result = await authService.login(request.body);
       reply.send({ success: true, message: 'Inicio de sesión exitoso', data: result });
@@ -11,7 +19,7 @@ export class AuthController {
     }
   }
 
-  async register(request: FastifyRequest<{ Body: any }>, reply: FastifyReply): Promise<void> {
+  async register(request: FastifyRequest<RegisterRoute>, reply: FastifyReply): Promise<void> {
     try {
       const result = await authService.register(request.body);
       reply.status(201).send({ success: true, message: 'Usuario registrado exitosamente', data: result });
