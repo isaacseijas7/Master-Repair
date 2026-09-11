@@ -6,7 +6,7 @@ export function ProductSkeleton() {
     <>
       {[...Array(5)].map((_, i) => (
         <TableRow key={i}>
-          <TableCell colSpan={7}>
+          <TableCell colSpan={8}>
             <Skeleton className="h-12" />
           </TableCell>
         </TableRow>

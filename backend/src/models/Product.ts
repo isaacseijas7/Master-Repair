@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   sku: string;
   name: string;
   description?: string;
+  brand?: string;
   category: mongoose.Types.ObjectId;
   supplier?: mongoose.Types.ObjectId;
   unitPrice: number;
@@ -80,6 +81,10 @@ const ProductSchema = new Schema<IProduct>(
       trim: true,
     },
     description: {
+      type: String,
+      trim: true,
+    },
+    brand: {
       type: String,
       trim: true,
     },
@@ -161,7 +166,8 @@ ProductSchema.virtual('isLowStock').get(function () {
   return this.stock <= this.minStock;
 });
 
-ProductSchema.index({ name: 'text', description: 'text', sku: 'text' });
+ProductSchema.index({ name: 'text', description: 'text', sku: 'text', brand: 'text' });
+ProductSchema.index({ brand: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ supplier: 1 });
 ProductSchema.index({ isActive: 1 });

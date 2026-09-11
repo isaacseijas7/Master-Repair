@@ -13,6 +13,7 @@ export class ProductService {
       search,
       category,
       supplier,
+      brand,
       minStock,
       isActive,
       minPrice,
@@ -26,11 +27,13 @@ export class ProductService {
         { name: { $regex: search, $options: "i" } },
         { sku: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
       ];
     }
 
     if (category) query.category = category;
     if (supplier) query.supplier = supplier;
+    if (brand) query.brand = { $regex: `^${brand}$`, $options: "i" };
     if (minStock === true) query.$expr = { $lte: ["$stock", "$minStock"] };
     if (isActive !== undefined) query.isActive = isActive;
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -155,6 +158,7 @@ export class ProductService {
       search,
       category,
       supplier,
+      brand,
       minStock,
       isActive,
       minPrice,
@@ -170,11 +174,13 @@ export class ProductService {
         { name: { $regex: search, $options: "i" } },
         { sku: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
       ];
     }
 
     if (category) query.category = category;
     if (supplier) query.supplier = supplier;
+    if (brand) query.brand = { $regex: `^${brand}$`, $options: "i" };
     if (minStock === true) query.$expr = { $lte: ["$stock", "$minStock"] };
     if (isActive !== undefined) query.isActive = isActive;
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -202,6 +208,7 @@ export class ProductService {
       sku: { header: "SKU", key: "sku", width: 20 },
       name: { header: "Nombre", key: "name", width: 40 },
       description: { header: "Descripción", key: "description", width: 50 },
+      brand: { header: "Marca", key: "brand", width: 20 },
       category: { header: "Categoría", key: "category", width: 20 },
       unitPrice: { header: "Precio Unitario", key: "unitPrice", width: 15 },
       wholesalePrice: {

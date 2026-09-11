@@ -53,6 +53,11 @@ const productFormSchema = z.object({
     .max(500, "Máximo 500 caracteres")
     .optional()
     .or(z.literal("")),
+  brand: z
+    .string()
+    .max(100, "Máximo 100 caracteres")
+    .optional()
+    .or(z.literal("")),
   category: z.string().min(1, "Debes seleccionar una categoría"),
   supplier: z.string().min(1, "Debes seleccionar un proveedor"),
   unitPrice: z.number().min(0.01, "El precio unitario debe ser mayor a 0"),
@@ -89,6 +94,7 @@ type ProductFormData = {
   name: string;
   sku?: string;
   description?: string;
+  brand?: string;
   category: string;
   supplier: string;
   unitPrice: number;
@@ -109,6 +115,7 @@ type ProductFormData = {
 const DEFAULT_VALUES: ProductFormData = {
   name: "",
   description: "",
+  brand: "",
   category: "",
   supplier: "",
   unitPrice: 0,
@@ -198,6 +205,7 @@ export function ProductDetail() {
         name: currentProduct.name,
         sku: currentProduct.sku,
         description: currentProduct.description || "",
+        brand: currentProduct.brand || "",
         category:
           typeof currentProduct.category === "object"
             ? currentProduct.category._id
@@ -441,6 +449,26 @@ export function ProductDetail() {
                     {errors.description.message}
                   </p>
                 )}
+              </div>
+
+              {/* Marca */}
+              <div className="space-y-2">
+                <Label htmlFor="brand">Marca</Label>
+                <Input
+                  id="brand"
+                  {...register("brand")}
+                  placeholder="Ej: Apple, Samsung, Xiaomi, Universal..."
+                  className={errors.brand ? "border-red-500" : ""}
+                />
+                {errors.brand && (
+                  <p className="text-sm text-red-500">
+                    {errors.brand.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Útil para distinguir piezas del mismo modelo pero de
+                  distinta marca o fabricante.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

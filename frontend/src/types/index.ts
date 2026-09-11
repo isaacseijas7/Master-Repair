@@ -97,6 +97,7 @@ export interface Product {
   sku: string;
   name: string;
   description?: string;
+  brand?: string;
   category: Category | string;
   supplier?: Supplier | string;
   unitPrice: number;
@@ -117,6 +118,7 @@ export interface CreateProductInput {
   sku?: string;
   name: string;
   description?: string;
+  brand?: string;
   category: string;
   supplier?: string;
   unitPrice: number;
@@ -305,6 +307,7 @@ export interface DashboardData {
 export interface ProductFilters extends PaginationParams {
   category?: string;
   supplier?: string;
+  brand?: string;
   minStock?: boolean;
   isActive?: boolean;
   minPrice?: number;

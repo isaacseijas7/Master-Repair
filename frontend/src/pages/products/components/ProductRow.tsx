@@ -22,6 +22,7 @@ interface Product {
   name: string;
   description?: string;
   sku: string;
+  brand?: string;
   category?: Category | string;
   unitPrice: number;
   stock: number;
@@ -59,6 +60,8 @@ export function ProductRow({ product, onDelete }: ProductRowProps) {
           {product.sku}
         </code>
       </TableCell>
+
+      <TableCell>{product.brand || "-"}</TableCell>
 
       <TableCell>
         {category ? (
