@@ -206,10 +206,11 @@ export function ProductDetail() {
         sku: currentProduct.sku,
         description: currentProduct.description || "",
         brand: currentProduct.brand || "",
-        category:
-          typeof currentProduct.category === "object"
+        category: currentProduct.category
+          ? typeof currentProduct.category === "object"
             ? currentProduct.category._id
-            : currentProduct.category,
+            : currentProduct.category
+          : "",
         supplier: currentProduct.supplier
           ? typeof currentProduct.supplier === "object"
             ? currentProduct.supplier._id
