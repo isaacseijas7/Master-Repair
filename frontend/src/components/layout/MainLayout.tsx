@@ -67,11 +67,16 @@ export function MainLayout() {
   // Estas rutas ya muestran su propia barra de acción fija en mobile
   // (total + enviar, o guardar/eliminar); mantener también la bottom nav
   // global apilaba dos barras fijas una encima de la otra.
+  // Los 4 useMatch se guardan en variables separadas (no encadenados con
+  // ||) porque || cortocircuita: si uno ya matchea, los siguientes no se
+  // evaluarían, lo que cambia la cantidad de hooks llamados entre renders
+  // y rompe las Rules of Hooks ("Rendered fewer hooks than expected").
+  const matchOrdersNew = useMatch('/orders/new');
+  const matchOrdersEdit = useMatch('/orders/:id/edit');
+  const matchProductsNew = useMatch('/products/new');
+  const matchProductsId = useMatch('/products/:id');
   const isLongFormRoute = !!(
-    useMatch('/orders/new') ||
-    useMatch('/orders/:id/edit') ||
-    useMatch('/products/new') ||
-    useMatch('/products/:id')
+    matchOrdersNew || matchOrdersEdit || matchProductsNew || matchProductsId
   );
 
   const handleLogout = () => {
