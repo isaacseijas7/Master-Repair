@@ -49,6 +49,12 @@ const defaultPagination = {
   hasPrev: false,
 };
 
+// Cuenta la petición de listado más reciente. Antes, si dos llamadas a
+// fetchProducts se solapaban (ej. tecleando rápido en el buscador), la que
+// respondiera más tarde podía pisar el estado con resultados de una
+// búsqueda más vieja, sin importar cuál se disparó último.
+let latestProductsRequestId = 0;
+
 export const useProductStore = create<ProductState>((set, get) => ({
   // Initial state
   products: [],
@@ -66,12 +72,14 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   // Fetch products with filters
   fetchProducts: async (filters = {}) => {
+    const requestId = ++latestProductsRequestId;
     set({ isLoading: true, error: null });
     try {
       const currentFilters = get().filters;
       const mergedFilters = { ...currentFilters, ...filters };
 
       const response = await productService.getProducts(mergedFilters);
+      if (requestId !== latestProductsRequestId) return; // respuesta obsoleta
 
       set({
         products: response.data,
@@ -80,6 +88,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
         isLoading: false,
       });
     } catch (error: any) {
+      if (requestId !== latestProductsRequestId) return;
       set({
         error: error.response?.data?.message || "Error al cargar productos",
         isLoading: false,

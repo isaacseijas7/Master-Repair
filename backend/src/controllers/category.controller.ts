@@ -1,5 +1,9 @@
 import { FastifyRequest, FastifyReply, RouteGenericInterface } from "fastify";
 import { categoryService } from "../services/category.service";
+import {
+  createCategorySchema,
+  updateCategorySchema,
+} from "../schemas/category.schema";
 
 interface GetCategoriesRoute extends RouteGenericInterface {
   Querystring: Record<string, any>;
@@ -76,13 +80,22 @@ export class CategoryController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const category = await categoryService.createCategory(request.body);
+      const validatedData = createCategorySchema.parse(request.body);
+      const category = await categoryService.createCategory(validatedData);
       reply.status(201).send({
         success: true,
         message: "Categoría creada exitosamente",
         data: { category },
       });
     } catch (error: any) {
+      if (error.name === "ZodError") {
+        reply.status(400).send({
+          success: false,
+          message: "Error de validación",
+          errors: error.errors,
+        });
+        return;
+      }
       reply.status(400).send({ success: false, message: error.message });
     }
   }
@@ -92,9 +105,10 @@ export class CategoryController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
+      const validatedData = updateCategorySchema.parse(request.body);
       const category = await categoryService.updateCategory(
         request.params.id,
-        request.body,
+        validatedData,
       );
       reply.send({
         success: true,
@@ -102,6 +116,14 @@ export class CategoryController {
         data: { category },
       });
     } catch (error: any) {
+      if (error.name === "ZodError") {
+        reply.status(400).send({
+          success: false,
+          message: "Error de validación",
+          errors: error.errors,
+        });
+        return;
+      }
       reply.status(400).send({ success: false, message: error.message });
     }
   }

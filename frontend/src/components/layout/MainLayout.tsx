@@ -17,6 +17,7 @@ import {
   Package,
   Tags,
   Truck,
+  Users,
   ShoppingCart,
   BarChart3, LogOut,
   Menu,
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Productos', href: '/products', icon: Package },
   { name: 'Categorías', href: '/categories', icon: Tags },
   { name: 'Proveedores', href: '/suppliers', icon: Truck },
+  { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
 ];
 

@@ -34,6 +34,17 @@ export const authenticate = async (
       return;
     }
 
+    // Si el usuario cambió su contraseña después de que se emitió este
+    // token, tokenVersion ya no coincide y el token queda invalidado aunque
+    // no haya expirado (ver User.ts). Los tokens emitidos antes de este
+    // campo no lo traen (undefined), se tratan como versión 0 para no cerrar
+    // sesión a todos los usuarios ya autenticados al desplegar este cambio.
+    const tokenVersion = decoded.tokenVersion ?? 0;
+    if (tokenVersion !== (user.tokenVersion ?? 0)) {
+      reply.status(401).send({ success: false, message: 'Token inválido o expirado' });
+      return;
+    }
+
     // Asignar a request.user (que ahora tiene el tipo correcto de @fastify/jwt)
     request.user = decoded;
   } catch (error) {

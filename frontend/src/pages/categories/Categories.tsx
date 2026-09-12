@@ -33,6 +33,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
+import { useAuthStore } from "@/stores/auth.store";
 import { useCategoryStore } from "@/stores/category.store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -74,11 +76,21 @@ export function Categories() {
     categories,
     pagination,
     isLoading,
+    error,
     fetchCategories,
     createCategory,
     updateCategory,
     deleteCategory,
+    clearError,
   } = useCategoryStore();
+
+  useStoreErrorToast(error, clearError);
+
+  const { user } = useAuthStore();
+  // El backend ya exige admin/manager para crear, editar y eliminar
+  // categorías; antes el frontend mostraba estas acciones a cualquier rol
+  // autenticado (ej. Cashier), que luego recibía un 403 al intentarlo.
+  const canManage = user?.role === "admin" || user?.role === "manager";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -111,25 +123,27 @@ export function Categories() {
           <h1 className="text-2xl font-bold text-gray-900">Categorías</h1>
           <p className="text-gray-500">Gestiona las categorías de productos</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva Categoría
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Crear Nueva Categoría</DialogTitle>
-            </DialogHeader>
-            <CategoryForm
-              onSubmit={async (data) => {
-                await createCategory(data);
-                setIsCreateDialogOpen(false);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        {canManage && (
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Nueva Categoría
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Crear Nueva Categoría</DialogTitle>
+              </DialogHeader>
+              <CategoryForm
+                onSubmit={async (data) => {
+                  await createCategory(data);
+                  setIsCreateDialogOpen(false);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Card>
@@ -195,28 +209,30 @@ export function Categories() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => setEditingCategory(category)}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(category._id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {canManage ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" aria-label="Más opciones">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => setEditingCategory(category)}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(category._id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))

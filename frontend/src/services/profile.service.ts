@@ -31,7 +31,11 @@ export const profileService = {
     return response.data.data!.user;
   },
 
-  async changePassword(data: PasswordFormData): Promise<void> {
-    await apiClient.put<ApiResponse<void>>("/profile/password", data);
+  async changePassword(data: PasswordFormData): Promise<{ token: string }> {
+    const response = await apiClient.put<ApiResponse<{ token: string }>>(
+      "/profile/password",
+      data,
+    );
+    return response.data.data!;
   },
 };

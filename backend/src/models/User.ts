@@ -14,6 +14,11 @@ export interface IUser extends Document {
   lastName: string;
   role: typeof UserRole[keyof typeof UserRole];
   isActive: boolean;
+  // Se incrementa cada vez que cambia la contraseña; los tokens firmados
+  // antes de ese incremento dejan de ser válidos aunque no hayan expirado
+  // (ver auth.middleware.ts). Así, cambiar la contraseña por sospecha de
+  // robo de credenciales cierra también las sesiones ya abiertas.
+  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
   __v?: any;
@@ -54,12 +59,16 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: true,
     },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
     toJSON: {
       transform: (_, ret) => {
-        // delete ret.password;
+        delete ret.password;
         delete ret.__v;
         return ret;
       },

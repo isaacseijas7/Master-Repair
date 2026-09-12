@@ -20,6 +20,7 @@ interface Product {
   name: string;
   description?: string;
   sku: string;
+  brand?: string;
   category?: any;
   unitPrice: number;
   stock: number;
@@ -31,12 +32,14 @@ interface ProductsTableProps {
   products: Product[];
   isLoading: boolean;
   onDelete: (id: string) => void;
+  canManage: boolean;
 }
 
 export function ProductsTable({
   products,
   isLoading,
   onDelete,
+  canManage,
 }: ProductsTableProps) {
   const navigate = useNavigate();
 
@@ -69,6 +72,9 @@ export function ProductsTable({
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-semibold text-gray-900">{product.name}</h3>
                       <p className="mt-1 text-xs text-gray-500">SKU: {product.sku}</p>
+                      {product.brand && (
+                        <p className="mt-0.5 text-xs text-gray-500">Marca: {product.brand}</p>
+                      )}
                     </div>
                     <Badge
                       variant={product.isActive ? "default" : "secondary"}
@@ -107,16 +113,18 @@ export function ProductsTable({
                     </div>
                   )}
 
-                  <div className="mt-4 flex gap-2">
-                    <Button className="flex-1" variant="outline" onClick={() => navigate(`/products/${product._id}`)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Editar
-                    </Button>
-                    <Button className="flex-1" variant="destructive" onClick={() => onDelete(product._id)}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar
-                    </Button>
-                  </div>
+                  {canManage && (
+                    <div className="mt-4 flex gap-2">
+                      <Button className="flex-1" variant="outline" onClick={() => navigate(`/products/${product._id}`)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button className="flex-1" variant="destructive" onClick={() => onDelete(product._id)}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  )}
                 </article>
               );
             })
@@ -129,6 +137,7 @@ export function ProductsTable({
               <TableRow>
                 <TableHead>Producto</TableHead>
                 <TableHead>SKU</TableHead>
+                <TableHead>Marca</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
@@ -141,7 +150,7 @@ export function ProductsTable({
                 <ProductSkeleton />
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500">No se encontraron productos</p>
                   </TableCell>
@@ -152,6 +161,7 @@ export function ProductsTable({
                     key={product._id}
                     product={product}
                     onDelete={onDelete}
+                    canManage={canManage}
                   />
                 ))
               )}

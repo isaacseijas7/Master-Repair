@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useProductStore } from "@/stores/product.store";
@@ -28,7 +28,8 @@ import {
   Boxes,
   Tag,
   Building,
-  MapPin, Trash2
+  MapPin, Trash2,
+  Plus,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
@@ -51,6 +52,11 @@ const productFormSchema = z.object({
   description: z
     .string()
     .max(500, "Máximo 500 caracteres")
+    .optional()
+    .or(z.literal("")),
+  brand: z
+    .string()
+    .max(100, "Máximo 100 caracteres")
     .optional()
     .or(z.literal("")),
   category: z.string().min(1, "Debes seleccionar una categoría"),
@@ -89,6 +95,7 @@ type ProductFormData = {
   name: string;
   sku?: string;
   description?: string;
+  brand?: string;
   category: string;
   supplier: string;
   unitPrice: number;
@@ -109,6 +116,7 @@ type ProductFormData = {
 const DEFAULT_VALUES: ProductFormData = {
   name: "",
   description: "",
+  brand: "",
   category: "",
   supplier: "",
   unitPrice: 0,
@@ -165,10 +173,10 @@ export function ProductDetail() {
   });
 
   // Field array para escalas de precio
-  // const { fields, append, remove } = useFieldArray({
-  //   control,
-  //   name: "priceTiers",
-  // });
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "priceTiers",
+  });
 
   // Watch para mostrar estado de stock en tiempo real
   const watchedStock = watch("stock");
@@ -198,10 +206,12 @@ export function ProductDetail() {
         name: currentProduct.name,
         sku: currentProduct.sku,
         description: currentProduct.description || "",
-        category:
-          typeof currentProduct.category === "object"
+        brand: currentProduct.brand || "",
+        category: currentProduct.category
+          ? typeof currentProduct.category === "object"
             ? currentProduct.category._id
-            : currentProduct.category,
+            : currentProduct.category
+          : "",
         supplier: currentProduct.supplier
           ? typeof currentProduct.supplier === "object"
             ? currentProduct.supplier._id
@@ -282,9 +292,9 @@ export function ProductDetail() {
     }
   };
 
-  // const handleAddPriceTier = () => {
-  //   append({ minQuantity: 1, price: 0 });
-  // };
+  const handleAddPriceTier = () => {
+    append({ minQuantity: 1, price: 0 });
+  };
 
   // ==========================================
   // 8. RENDERIZADO CONDICIONAL (LOADING)
@@ -443,6 +453,26 @@ export function ProductDetail() {
                 )}
               </div>
 
+              {/* Marca */}
+              <div className="space-y-2">
+                <Label htmlFor="brand">Marca</Label>
+                <Input
+                  id="brand"
+                  {...register("brand")}
+                  placeholder="Ej: Apple, Samsung, Xiaomi, Universal..."
+                  className={errors.brand ? "border-red-500" : ""}
+                />
+                {errors.brand && (
+                  <p className="text-sm text-red-500">
+                    {errors.brand.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Útil para distinguir piezas del mismo modelo pero de
+                  distinta marca o fabricante.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Categoría */}
                 <div className="space-y-2">
@@ -539,10 +569,39 @@ export function ProductDetail() {
                     </p>
                   )}
                 </div>
+
+                {/* Precio Mayorista: antes este campo existía en el modelo y
+                    se exportaba a Excel, pero no tenía ningún input en este
+                    formulario, así que nunca se podía configurar desde la
+                    interfaz. */}
+                <div className="space-y-2">
+                  <Label htmlFor="wholesalePrice">Precio Mayorista</Label>
+                  <Input
+                    id="wholesalePrice"
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    placeholder="Opcional"
+                    {...register("wholesalePrice", { valueAsNumber: true })}
+                    className={errors.wholesalePrice ? "border-red-500" : ""}
+                  />
+                  {errors.wholesalePrice && (
+                    <p className="text-sm text-red-500">
+                      {errors.wholesalePrice.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Se puede aplicar manualmente al vender por mayor.
+                  </p>
+                </div>
               </div>
 
-              {/* Price Tiers */}
-              {/* <div className="space-y-3">
+              {/* Escalas de Precio: existían en el modelo y se llegaban a
+                  usar en datos de ejemplo, pero este editor estaba
+                  comentado, así que no había forma de configurarlas desde
+                  la interfaz. El formulario de venta (OrderForm) ahora las
+                  aplica automáticamente según la cantidad. */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Escalas de Precio</Label>
                   <Button
@@ -555,6 +614,13 @@ export function ProductDetail() {
                     Agregar Escala
                   </Button>
                 </div>
+
+                {fields.length === 0 && (
+                  <p className="text-xs text-gray-500">
+                    Sin escalas configuradas. Se usará el precio unitario para
+                    cualquier cantidad.
+                  </p>
+                )}
 
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex gap-3 items-end">
@@ -609,7 +675,7 @@ export function ProductDetail() {
                     </Button>
                   </div>
                 ))}
-              </div> */}
+              </div>
             </CardContent>
           </Card>
 

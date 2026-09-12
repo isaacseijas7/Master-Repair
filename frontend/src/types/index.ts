@@ -97,6 +97,7 @@ export interface Product {
   sku: string;
   name: string;
   description?: string;
+  brand?: string;
   category: Category | string;
   supplier?: Supplier | string;
   unitPrice: number;
@@ -117,6 +118,7 @@ export interface CreateProductInput {
   sku?: string;
   name: string;
   description?: string;
+  brand?: string;
   category: string;
   supplier?: string;
   unitPrice: number;
@@ -192,6 +194,18 @@ export interface CreateClientInput {
   phone?: string;
 }
 
+export interface UpdateClientInput {
+  name?: string;
+  email?: string;
+  phone?: string;
+  isActive?: boolean;
+}
+
+export interface ClientStats {
+  totalOrders: number;
+  totalSpent: number;
+}
+
 export interface CreateOrderInput {
   type: MovementTypeType;
   paymentType?: PaymentTypeType;
@@ -249,10 +263,14 @@ export interface DashboardMetrics {
   totalCategories: number;
   totalSuppliers: number;
   totalStock: number;
-  todaySales: number;
-  monthSales: number;
-  monthRevenue: number;
   pendingOrders: number;
+  // Antes se llamaban "todaySales" (un monto en dinero) y "monthSales" (un
+  // conteo de órdenes), pese al mismo patrón de nombre "Sales" para dos
+  // tipos de dato distintos. Además, ahora son opcionales porque el
+  // backend ya no las envía para roles sin permisos financieros (Cashier).
+  todayRevenue?: number;
+  monthOrders?: number;
+  monthRevenue?: number;
 }
 
 export interface TopProduct {
@@ -280,7 +298,6 @@ export interface StockAlert {
 
 export interface InventoryValue {
   totalValue: number;
-  totalCost: number;
 }
 
 export interface SalesByCategory {
@@ -293,18 +310,21 @@ export interface SalesByCategory {
 
 export interface DashboardData {
   metrics: DashboardMetrics;
-  topProducts: TopProduct[];
-  monthlyRevenue: MonthlyRevenue[];
   stockAlerts: StockAlert[];
   recentOrders: Order[];
-  inventoryValue: InventoryValue;
-  salesByCategory: SalesByCategory[];
+  // Ausentes en la respuesta para roles sin permisos financieros (Cashier):
+  // el backend ya no calcula ni envía estas secciones para ellos.
+  topProducts?: TopProduct[];
+  monthlyRevenue?: MonthlyRevenue[];
+  inventoryValue?: InventoryValue;
+  salesByCategory?: SalesByCategory[];
 }
 
 // ==================== FILTER TYPES ====================
 export interface ProductFilters extends PaginationParams {
   category?: string;
   supplier?: string;
+  brand?: string;
   minStock?: boolean;
   isActive?: boolean;
   minPrice?: number;
@@ -316,6 +336,7 @@ export interface OrderFilters extends PaginationParams {
   type?: (typeof MovementType)[keyof typeof MovementType];
   status?: (typeof OrderStatus)[keyof typeof OrderStatus];
   supplier?: string;
+  client?: string;
   startDate?: string;
   endDate?: string;
 }

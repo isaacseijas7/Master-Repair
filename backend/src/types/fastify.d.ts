@@ -8,11 +8,13 @@ declare module "@fastify/jwt" {
       userId: string;
       email: string;
       role: string;
+      tokenVersion: number;
     };
     user: {
       userId: string;
       email: string;
       role: string;
+      tokenVersion: number;
     };
   }
 }
@@ -30,4 +32,5 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
+  tokenVersion: number;
 }

@@ -16,7 +16,7 @@ export class DashboardController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const data = await dashboardService.getDashboardData();
+      const data = await dashboardService.getDashboardData(request.user?.role);
       reply.send({
         success: true,
         message: "Datos del dashboard obtenidos exitosamente",
@@ -32,7 +32,7 @@ export class DashboardController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const metrics = await dashboardService.getMetrics();
+      const metrics = await dashboardService.getMetrics(request.user?.role);
       reply.send({
         success: true,
         message: "Métricas obtenidas exitosamente",

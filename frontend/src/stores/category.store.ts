@@ -26,6 +26,10 @@ interface CategoryState {
   clearError: () => void;
 }
 
+// Ver product.store.ts: evita que una respuesta de fetchCategories llegada
+// tarde pise resultados de una búsqueda más reciente.
+let latestCategoriesRequestId = 0;
+
 export const useCategoryStore = create<CategoryState>((set, get) => ({
   categories: [],
   activeCategories: [],
@@ -42,15 +46,18 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   error: null,
 
   fetchCategories: async (params = {}) => {
+    const requestId = ++latestCategoriesRequestId;
     set({ isLoading: true, error: null });
     try {
       const response = await categoryService.getCategories(params);
+      if (requestId !== latestCategoriesRequestId) return;
       set({
         categories: response.data,
         pagination: response.pagination,
         isLoading: false,
       });
     } catch (error: any) {
+      if (requestId !== latestCategoriesRequestId) return;
       set({
         error: error.response?.data?.message || 'Error al cargar categorías',
         isLoading: false,

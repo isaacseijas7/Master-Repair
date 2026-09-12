@@ -2,9 +2,11 @@ import apiClient from "./api.service";
 import type {
   ApiResponse,
   Client,
+  ClientStats,
   CreateClientInput,
   PaginatedResponse,
   PaginationParams,
+  UpdateClientInput,
 } from "@/types";
 
 export const clientService = {
@@ -35,5 +37,24 @@ export const clientService = {
       data,
     );
     return response.data.data!.client;
+  },
+
+  async updateClient(id: string, data: UpdateClientInput): Promise<Client> {
+    const response = await apiClient.put<ApiResponse<{ client: Client }>>(
+      `/clients/${id}`,
+      data,
+    );
+    return response.data.data!.client;
+  },
+
+  async deleteClient(id: string): Promise<void> {
+    await apiClient.delete(`/clients/${id}`);
+  },
+
+  async getClientStats(id: string): Promise<ClientStats> {
+    const response = await apiClient.get<ApiResponse<ClientStats>>(
+      `/clients/${id}/stats`,
+    );
+    return response.data.data!;
   },
 };

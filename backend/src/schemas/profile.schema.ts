@@ -17,7 +17,11 @@ export const changePasswordSchema = z
     currentPassword: z.string().min(6, "La contraseña actual es requerida"),
     newPassword: z
       .string()
-      .min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+      .min(6, "La nueva contraseña debe tener al menos 6 caracteres")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+        "La nueva contraseña debe incluir al menos una mayúscula, una minúscula y un número",
+      ),
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

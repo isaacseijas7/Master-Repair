@@ -10,7 +10,8 @@ import {
   Clock,
   DollarSign,
   Package,
-  TrendingUp
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -30,15 +31,16 @@ import {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 export function Dashboard() {
-  const { 
-    metrics, 
-    topProducts, 
-    monthlyRevenue, 
-    stockAlerts, 
-    recentOrders, 
+  const {
+    metrics,
+    topProducts,
+    monthlyRevenue,
+    stockAlerts,
+    recentOrders,
+    inventoryValue,
     salesByCategory,
-    isLoading, 
-    fetchDashboardData 
+    isLoading,
+    fetchDashboardData
   } = useDashboardStore();
 
   useEffect(() => {
@@ -48,6 +50,11 @@ export function Dashboard() {
   if (isLoading || !metrics) {
     return <DashboardSkeleton />;
   }
+
+  // Único punto de verdad para saber si este usuario ve datos financieros:
+  // el backend simplemente omite estos campos para roles sin permiso
+  // (Cashier), en vez de enviarlos vacíos.
+  const hasFinancialAccess = metrics.todayRevenue !== undefined;
 
   return (
     <div className="space-y-6">
@@ -75,22 +82,26 @@ export function Dashboard() {
           trendType="neutral"
           href="/products"
         />
-        <MetricCard
-          title="Ventas Hoy"
-          value={formatCurrency(metrics.todaySales)}
-          icon={DollarSign}
-          trend={`${metrics.monthSales} este mes`}
-          trendType="positive"
-          href="/orders"
-        />
-        <MetricCard
-          title="Ingresos del Mes"
-          value={formatCurrency(metrics.monthRevenue)}
-          icon={TrendingUp}
-          trend="vs mes anterior"
-          trendType="positive"
-          href="/orders"
-        />
+        {hasFinancialAccess && (
+          <>
+            <MetricCard
+              title="Ventas Hoy"
+              value={formatCurrency(metrics.todayRevenue!)}
+              icon={DollarSign}
+              trend={`${metrics.monthOrders} este mes`}
+              trendType="positive"
+              href="/orders"
+            />
+            <MetricCard
+              title="Ingresos del Mes"
+              value={formatCurrency(metrics.monthRevenue!)}
+              icon={TrendingUp}
+              trend="vs mes anterior"
+              trendType="positive"
+              href="/orders"
+            />
+          </>
+        )}
         <MetricCard
           title="Órdenes Pendientes"
           value={formatNumber(metrics.pendingOrders)}
@@ -99,9 +110,21 @@ export function Dashboard() {
           trendType="neutral"
           href="/orders"
         />
+        {hasFinancialAccess && inventoryValue && (
+          <MetricCard
+            title="Valor de Inventario"
+            value={formatCurrency(inventoryValue.totalValue)}
+            icon={Wallet}
+            trend="A precio de venta"
+            trendType="neutral"
+            href="/products"
+          />
+        )}
       </div>
 
-      {/* Charts Row */}
+      {/* Charts Row: ingresos mensuales y ventas por categoría son datos
+          financieros, ocultos para roles sin permiso (ver hasFinancialAccess) */}
+      {hasFinancialAccess && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Revenue Chart */}
         <Card>
@@ -165,10 +188,12 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products */}
+      <div className={`grid grid-cols-1 gap-6 ${hasFinancialAccess ? 'lg:grid-cols-2' : ''}`}>
+        {/* Top Products: dato financiero, oculto para roles sin permiso */}
+        {hasFinancialAccess && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Productos Más Vendidos</CardTitle>
@@ -201,6 +226,7 @@ export function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Stock Alerts */}
         <Card>

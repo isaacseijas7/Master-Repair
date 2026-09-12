@@ -68,6 +68,11 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
                     variant="ghost"
                     size="icon"
                     className="absolute right-0 top-0 h-9 w-9"
+                    aria-label={
+                      showCurrentPassword
+                        ? "Ocultar contraseña actual"
+                        : "Mostrar contraseña actual"
+                    }
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   >
                     {showCurrentPassword ? (
@@ -104,6 +109,11 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
                       variant="ghost"
                       size="icon"
                       className="absolute right-0 top-0 h-9 w-9"
+                      aria-label={
+                        showNewPassword
+                          ? "Ocultar nueva contraseña"
+                          : "Mostrar nueva contraseña"
+                      }
                       onClick={() => setShowNewPassword(!showNewPassword)}
                     >
                       {showNewPassword ? (
@@ -139,6 +149,11 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
                       variant="ghost"
                       size="icon"
                       className="absolute right-0 top-0 h-9 w-9"
+                      aria-label={
+                        showConfirmPassword
+                          ? "Ocultar confirmación de contraseña"
+                          : "Mostrar confirmación de contraseña"
+                      }
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }

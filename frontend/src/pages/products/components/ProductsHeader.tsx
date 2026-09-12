@@ -7,9 +7,14 @@ import { useNavigate } from "react-router-dom";
 interface ProductsHeaderProps {
   filters: ProductFilters;
   totalCount: number;
+  canManage: boolean;
 }
 
-export function ProductsHeader({ filters, totalCount }: ProductsHeaderProps) {
+export function ProductsHeader({
+  filters,
+  totalCount,
+  canManage,
+}: ProductsHeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -18,13 +23,15 @@ export function ProductsHeader({ filters, totalCount }: ProductsHeaderProps) {
         <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
         <p className="text-gray-500">Gestiona tu inventario de productos</p>
       </div>
-      <div>
-        <ExportExcelDialog filters={filters} totalCount={totalCount} />
-        <Button className="ml-6" onClick={() => navigate("/products/new")}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo Producto
-        </Button>
-      </div>
+      {canManage && (
+        <div>
+          <ExportExcelDialog filters={filters} totalCount={totalCount} />
+          <Button className="ml-6" onClick={() => navigate("/products/new")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Producto
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

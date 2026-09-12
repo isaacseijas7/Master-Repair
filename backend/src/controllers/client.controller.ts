@@ -1,5 +1,7 @@
 import { FastifyReply, FastifyRequest, RouteGenericInterface } from "fastify";
 import { clientService } from "../services/client.service";
+import { orderService } from "../services/order.service";
+import { createClientSchema, updateClientSchema } from "../schemas/client.schema";
 
 interface GetClientsRoute extends RouteGenericInterface {
   Querystring: Record<string, any>;
@@ -13,7 +15,16 @@ interface CreateClientRoute extends RouteGenericInterface {
   Body: any;
 }
 
+interface UpdateClientRoute extends RouteGenericInterface {
+  Params: { id: string };
+  Body: any;
+}
+
 interface DeleteClientRoute extends RouteGenericInterface {
+  Params: { id: string };
+}
+
+interface GetClientStatsRoute extends RouteGenericInterface {
   Params: { id: string };
 }
 
@@ -55,14 +66,67 @@ export class ClientController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const client = await clientService.createClient(request.body);
+      const validatedData = createClientSchema.parse(request.body);
+      const client = await clientService.createClient(validatedData);
       reply.status(201).send({
         success: true,
         message: "Cliente creado exitosamente",
         data: { client },
       });
     } catch (error: any) {
+      if (error.name === "ZodError") {
+        reply.status(400).send({
+          success: false,
+          message: "Error de validación",
+          errors: error.errors,
+        });
+        return;
+      }
       reply.status(400).send({ success: false, message: error.message });
+    }
+  }
+
+  async updateClient(
+    request: FastifyRequest<UpdateClientRoute>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const validatedData = updateClientSchema.parse(request.body);
+      const client = await clientService.updateClient(
+        request.params.id,
+        validatedData,
+      );
+      reply.send({
+        success: true,
+        message: "Cliente actualizado exitosamente",
+        data: { client },
+      });
+    } catch (error: any) {
+      if (error.name === "ZodError") {
+        reply.status(400).send({
+          success: false,
+          message: "Error de validación",
+          errors: error.errors,
+        });
+        return;
+      }
+      reply.status(400).send({ success: false, message: error.message });
+    }
+  }
+
+  async getClientStats(
+    request: FastifyRequest<GetClientStatsRoute>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const stats = await orderService.getClientStats(request.params.id);
+      reply.send({
+        success: true,
+        message: "Estadísticas del cliente obtenidas exitosamente",
+        data: stats,
+      });
+    } catch (error: any) {
+      reply.status(500).send({ success: false, message: error.message });
     }
   }
 

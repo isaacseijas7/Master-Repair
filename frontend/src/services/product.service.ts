@@ -21,6 +21,7 @@ export const productService = {
     if (filters.search) params.append("search", filters.search);
     if (filters.category) params.append("category", filters.category);
     if (filters.supplier) params.append("supplier", filters.supplier);
+    if (filters.brand) params.append("brand", filters.brand);
     if (filters.minStock) params.append("minStock", "true");
     if (filters.isActive !== undefined)
       params.append("isActive", filters.isActive.toString());

@@ -74,6 +74,7 @@ export class OrderController {
       const order = await orderService.createOrder(
         request.body,
         request.user.userId,
+        request.user.role,
       );
       reply.status(201).send({
         success: true,
@@ -113,9 +114,11 @@ export class OrderController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
+      if (!request.user) throw new Error("No autenticado");
       const order = await orderService.updateOrderStatus(
         request.params.id,
         request.body.status,
+        request.user.role,
       );
       reply.send({
         success: true,

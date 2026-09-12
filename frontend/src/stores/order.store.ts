@@ -12,9 +12,6 @@ interface OrderState {
   orders: Order[];
   paymentType?: PaymentTypeType;
   currentOrder: Order | null;
-  todaySales: { count: number; total: number };
-  topProducts: any[];
-  monthlyRevenue: any[];
   pendingCount: number;
   pagination: {
     page: number;
@@ -36,19 +33,17 @@ interface OrderState {
     status: (typeof OrderStatus)[keyof typeof OrderStatus],
   ) => Promise<void>;
   cancelOrder: (id: string) => Promise<void>;
-  fetchTodaySales: () => Promise<void>;
-  fetchTopProducts: (limit?: number) => Promise<void>;
-  fetchMonthlyRevenue: (months?: number) => Promise<void>;
   fetchPendingCount: () => Promise<void>;
   clearError: () => void;
 }
 
+// Ver product.store.ts: evita que una respuesta de fetchOrders llegada
+// tarde pise resultados de una búsqueda/filtro más reciente.
+let latestOrdersRequestId = 0;
+
 export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
   currentOrder: null,
-  todaySales: { count: 0, total: 0 },
-  topProducts: [],
-  monthlyRevenue: [],
   pendingCount: 0,
   pagination: {
     page: 1,
@@ -62,15 +57,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   error: null,
 
   fetchOrders: async (filters = {}) => {
+    const requestId = ++latestOrdersRequestId;
     set({ isLoading: true, error: null });
     try {
       const response = await orderService.getOrders(filters);
+      if (requestId !== latestOrdersRequestId) return;
       set({
         orders: response.data,
         pagination: response.pagination,
         isLoading: false,
       });
     } catch (error: any) {
+      if (requestId !== latestOrdersRequestId) return;
       set({
         error: error.response?.data?.message || "Error al cargar órdenes",
         isLoading: false,
@@ -99,7 +97,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     try {
       const response = await orderService.createOrder(data);
       await get().fetchOrders();
-      await get().fetchTodaySales();
       await get().fetchPendingCount();
       set({ isLoading: false });
       return response; // Retorna la orden con el _id
@@ -117,7 +114,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     try {
       const response = await orderService.updateOrder(id, data);
       await get().fetchOrders();
-      await get().fetchTodaySales();
       set({ isLoading: false });
       return response;
     } catch (error: any) {
@@ -158,33 +154,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         isLoading: false,
       });
       throw error;
-    }
-  },
-
-  fetchTodaySales: async () => {
-    try {
-      const response = await orderService.getTodaySales();
-      set({ todaySales: response });
-    } catch (error: any) {
-      console.error("Error fetching today sales:", error);
-    }
-  },
-
-  fetchTopProducts: async (limit = 5) => {
-    try {
-      const response = await orderService.getTopSellingProducts(limit);
-      set({ topProducts: response });
-    } catch (error: any) {
-      console.error("Error fetching top products:", error);
-    }
-  },
-
-  fetchMonthlyRevenue: async (months = 12) => {
-    try {
-      const response = await orderService.getMonthlyRevenue(months);
-      set({ monthlyRevenue: response });
-    } catch (error: any) {
-      console.error("Error fetching monthly revenue:", error);
     }
   },
 

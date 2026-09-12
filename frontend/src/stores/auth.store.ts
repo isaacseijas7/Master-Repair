@@ -17,6 +17,7 @@ interface AuthState {
   logout: () => void;
   clearError: () => void;
   updateUser: (user: User) => void;
+  setToken: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -87,6 +88,14 @@ export const useAuthStore = create<AuthState>()(
       // Update user
       updateUser: (user) => {
         set({ user });
+      },
+
+      // Reemplaza el token tras cambiar la contraseña: el backend invalida
+      // los tokens emitidos antes del cambio (ver auth.middleware.ts), así
+      // que sin esto la propia sesión que hizo el cambio quedaría
+      // deslogueada en la siguiente petición.
+      setToken: (token) => {
+        set({ token });
       },
     }),
     {

@@ -1,4 +1,5 @@
 import { User } from "../models/User";
+import { authService } from "./auth.service";
 import {
   UpdateProfileInput,
   ChangePasswordInput,
@@ -54,11 +55,20 @@ export class ProfileService {
       throw new Error("La contraseña actual es incorrecta");
     }
 
-    // Actualizar contraseña
+    // Actualizar contraseña. tokenVersion sube para invalidar cualquier
+    // token ya emitido (ver auth.middleware.ts) — si esta contraseña se
+    // cambió por sospecha de robo de credenciales, cierra también las
+    // sesiones que ya estuvieran abiertas con la contraseña anterior.
     user.password = data.newPassword;
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     await user.save();
 
-    return { message: "Contraseña actualizada exitosamente" };
+    // Reemitimos el token de esta misma sesión con la tokenVersion nueva
+    // para que quien acaba de cambiar su propia contraseña no quede
+    // deslogueado de inmediato por el chequeo que él mismo activó.
+    const token = authService.generateToken(user);
+
+    return { message: "Contraseña actualizada exitosamente", token };
   }
 }
 

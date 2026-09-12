@@ -91,6 +91,7 @@ export class ProfileController {
       reply.send({
         success: true,
         message: result.message,
+        data: { token: result.token },
       });
     } catch (error: any) {
       if (error.name === "ZodError") {

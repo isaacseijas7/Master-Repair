@@ -24,6 +24,7 @@ interface ExportExcelDialogProps {
 const AVAILABLE_COLUMNS = [
   { id: "sku", label: "SKU", default: true },
   { id: "name", label: "Nombre del Producto", default: true },
+  { id: "brand", label: "Marca", default: true },
   { id: "category", label: "Categoría", default: true },
   { id: "description", label: "Descripción", default: true },
   { id: "unitPrice", label: "Precio Unitario", default: true },

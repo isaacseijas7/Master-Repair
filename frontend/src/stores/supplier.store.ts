@@ -26,6 +26,10 @@ interface SupplierState {
   clearError: () => void;
 }
 
+// Ver product.store.ts: evita que una respuesta de fetchSuppliers llegada
+// tarde pise resultados de una búsqueda más reciente.
+let latestSuppliersRequestId = 0;
+
 export const useSupplierStore = create<SupplierState>((set, get) => ({
   suppliers: [],
   activeSuppliers: [],
@@ -42,15 +46,18 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
   error: null,
 
   fetchSuppliers: async (params = {}) => {
+    const requestId = ++latestSuppliersRequestId;
     set({ isLoading: true, error: null });
     try {
       const response = await supplierService.getSuppliers(params);
+      if (requestId !== latestSuppliersRequestId) return;
       set({
         suppliers: response.data,
         pagination: response.pagination,
         isLoading: false,
       });
     } catch (error: any) {
+      if (requestId !== latestSuppliersRequestId) return;
       set({
         error: error.response?.data?.message || 'Error al cargar proveedores',
         isLoading: false,

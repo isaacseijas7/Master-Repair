@@ -57,6 +57,15 @@ const SupplierSchema = new Schema<ISupplier>(
   }
 );
 
+// Antes no existía ningún índice único sobre "name": la única protección
+// contra duplicados era un findOne() en el servicio antes de guardar, con
+// condición de carrera (dos altas concurrentes con el mismo nombre podían
+// pasar ambas). Este índice, igual al de Client.ts y Category.ts, hace la
+// restricción real e insensible a mayúsculas a nivel de base de datos.
+SupplierSchema.index(
+  { name: 1 },
+  { unique: true, collation: { locale: 'en', strength: 2 } },
+);
 SupplierSchema.index({ name: 'text', contactName: 'text', email: 'text' });
 
 export const Supplier = mongoose.model<ISupplier>('Supplier', SupplierSchema);
