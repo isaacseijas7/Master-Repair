@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,7 +56,7 @@ import {
   AlertCircle,
   Edit,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -151,6 +158,49 @@ type OrderFormData = z.infer<typeof orderFormSchema>;
 interface OrderFormProps {
   orderId?: string;
   onSuccess?: () => void;
+}
+
+// En móvil cada sección se muestra como un AccordionItem colapsable (para
+// no forzar un scroll larguísimo); en desktop se mantiene como Card
+// siempre expandida, igual que antes.
+function OrderFormSection({
+  id,
+  icon,
+  title,
+  isMobile,
+  children,
+}: {
+  id: string;
+  icon: ReactNode;
+  title: string;
+  isMobile: boolean;
+  children: ReactNode;
+}) {
+  if (isMobile) {
+    return (
+      <AccordionItem value={id} className="rounded-lg border bg-white px-4">
+        <AccordionTrigger className="text-base font-semibold hover:no-underline">
+          <span className="flex items-center gap-2">
+            {icon}
+            {title}
+          </span>
+        </AccordionTrigger>
+        <AccordionContent className="space-y-4">{children}</AccordionContent>
+      </AccordionItem>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          {icon}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">{children}</CardContent>
+    </Card>
+  );
 }
 
 export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
@@ -351,6 +401,8 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
     if (!currentOrder) return false;
     return currentOrder.status === OrderStatus.PENDING;
   }, [isEditing, currentOrder]);
+
+  const isMobile = useIsMobile();
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -602,7 +654,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 lg:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -642,14 +694,15 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
       >
         {/* Main Form - Left Column (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                {getTypeIcon(watchType)}
-                Información de la Orden
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {(() => {
+            const sections = (
+              <>
+                <OrderFormSection
+                  id="info"
+                  icon={getTypeIcon(watchType)}
+                  title="Información de la Orden"
+                  isMobile={isMobile}
+                >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Order Type */}
                 <div className="space-y-2">
@@ -805,18 +858,13 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Products Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="w-5 h-5" />
-                Productos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+                </OrderFormSection>
+                <OrderFormSection
+                  id="products"
+                  icon={<Package className="w-5 h-5" />}
+                  title="Productos"
+                  isMobile={isMobile}
+                >
               {/* Add Product */}
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -1128,24 +1176,34 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                   <p className="text-xs">Busca y agrega productos a la orden</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="w-5 h-5" />
-                Notas Adicionales
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+                </OrderFormSection>
+                <OrderFormSection
+                  id="notes"
+                  icon={<FileText className="w-5 h-5" />}
+                  title="Notas Adicionales"
+                  isMobile={isMobile}
+                >
               <textarea
                 {...register("notes")}
                 className="w-full min-h-[100px] p-3 border rounded-md text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Agrega notas o comentarios sobre esta orden..."
               />
-            </CardContent>
-          </Card>
+                </OrderFormSection>
+              </>
+            );
+
+            return isMobile ? (
+              <Accordion
+                type="multiple"
+                defaultValue={["info", "products"]}
+                className="space-y-3"
+              >
+                {sections}
+              </Accordion>
+            ) : (
+              sections
+            );
+          })()}
         </div>
 
         {/* Sidebar - Right Column (1/3) */}
@@ -1249,7 +1307,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         </div>
       </form>
 
-      <div className="fixed inset-x-0 bottom-16 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Total</p>

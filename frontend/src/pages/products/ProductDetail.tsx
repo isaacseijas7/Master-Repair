@@ -319,7 +319,7 @@ export function ProductDetail() {
   // ==========================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 sm:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -873,7 +873,7 @@ export function ProductDetail() {
         </div>
       </form>
 
-      <div className="fixed inset-x-0 bottom-16 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur sm:hidden">
         <div className="flex gap-2">
           {isEditMode && (
             <Button variant="destructive" onClick={handleDelete} className="flex-1">

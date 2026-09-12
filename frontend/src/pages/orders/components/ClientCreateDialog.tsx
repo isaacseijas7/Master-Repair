@@ -5,15 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { clientService } from "@/services/client.service";
@@ -84,70 +77,69 @@ export function ClientCreateDialog({ onClientCreated }: ClientCreateDialogProps)
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
         <Button type="button" variant="outline" className="w-full gap-2 md:w-auto">
           <Plus className="h-4 w-4" />
           Registrar nuevo cliente
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-blue-600" />
-            Registrar cliente
-          </DialogTitle>
-          <DialogDescription>
-            Crea un cliente y selecciónalo automáticamente para la orden en curso.
-          </DialogDescription>
-        </DialogHeader>
+      }
+      title={
+        <span className="flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-blue-600" />
+          Registrar cliente
+        </span>
+      }
+      description="Crea un cliente y selecciónalo automáticamente para la orden en curso."
+      contentClassName="sm:max-w-lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="client-name">Nombre *</Label>
+          <Input
+            id="client-name"
+            {...register("name")}
+            placeholder="Nombre completo del cliente"
+            className={errors.name ? "border-red-500" : ""}
+          />
+          {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="client-name">Nombre *</Label>
+            <Label htmlFor="client-email">Email</Label>
             <Input
-              id="client-name"
-              {...register("name")}
-              placeholder="Nombre completo del cliente"
-              className={errors.name ? "border-red-500" : ""}
+              id="client-email"
+              type="email"
+              {...register("email")}
+              placeholder="cliente@email.com"
+              className={errors.email ? "border-red-500" : ""}
             />
-            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+            {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="client-email">Email</Label>
-              <Input
-                id="client-email"
-                type="email"
-                {...register("email")}
-                placeholder="cliente@email.com"
-                className={errors.email ? "border-red-500" : ""}
-              />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client-phone">Teléfono</Label>
-              <Input
-                id="client-phone"
-                {...register("phone")}
-                placeholder="(555) 123-4567"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-phone">Teléfono</Label>
+            <Input
+              id="client-phone"
+              {...register("phone")}
+              placeholder="(555) 123-4567"
+            />
           </div>
+        </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Guardar cliente
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Guardar cliente
+          </Button>
+        </DialogFooter>
+      </form>
+    </ResponsiveDialog>
   );
 }

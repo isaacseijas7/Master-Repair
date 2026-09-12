@@ -11,13 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,25 +110,25 @@ export function Suppliers() {
           <p className="text-gray-500">Gestiona tus proveedores</p>
         </div>
         {canManage && (
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
+          <ResponsiveDialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+            trigger={
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 Nuevo Proveedor
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Proveedor</DialogTitle>
-              </DialogHeader>
-              <SupplierForm
-                onSubmit={async (data) => {
-                  await createSupplier(data);
-                  setIsCreateDialogOpen(false);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+            }
+            title="Crear Nuevo Proveedor"
+            contentClassName="max-w-lg"
+          >
+            <SupplierForm
+              onSubmit={async (data) => {
+                await createSupplier(data);
+                setIsCreateDialogOpen(false);
+              }}
+            />
+          </ResponsiveDialog>
         )}
       </div>
 
@@ -154,7 +148,79 @@ export function Suppliers() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Mobile: card list */}
+          <div className="space-y-3 p-4 md:hidden">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 rounded-2xl" />
+              ))
+            ) : suppliers.length === 0 ? (
+              <div className="py-8 text-center">
+                <Truck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No se encontraron proveedores</p>
+              </div>
+            ) : (
+              suppliers.map((supplier) => (
+                <article
+                  key={supplier._id}
+                  className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-semibold text-gray-900">
+                        {supplier.name}
+                      </h3>
+                      {supplier.taxId && (
+                        <p className="text-xs text-gray-500">RUC: {supplier.taxId}</p>
+                      )}
+                      <div className="mt-1 space-y-1 text-sm text-gray-600">
+                        {supplier.contactName && <p>{supplier.contactName}</p>}
+                        {supplier.email && (
+                          <div className="flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{supplier.email}</span>
+                          </div>
+                        )}
+                        {supplier.phone && (
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            {supplier.phone}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {canManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Más opciones">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setEditingSupplier(supplier)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(supplier._id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -263,25 +329,22 @@ export function Suppliers() {
       </Card>
 
       {/* Edit Dialog */}
-      <Dialog
+      <ResponsiveDialog
         open={!!editingSupplier}
         onOpenChange={() => setEditingSupplier(null)}
+        title="Editar Proveedor"
+        contentClassName="max-w-lg"
       >
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Proveedor</DialogTitle>
-          </DialogHeader>
-          {editingSupplier && (
-            <SupplierForm
-              initialData={editingSupplier}
-              onSubmit={async (data) => {
-                await updateSupplier(editingSupplier._id, data);
-                setEditingSupplier(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {editingSupplier && (
+          <SupplierForm
+            initialData={editingSupplier}
+            onSubmit={async (data) => {
+              await updateSupplier(editingSupplier._id, data);
+              setEditingSupplier(null);
+            }}
+          />
+        )}
+      </ResponsiveDialog>
     </div>
   );
 }

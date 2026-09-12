@@ -1,13 +1,7 @@
 import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,25 +118,24 @@ export function Categories() {
           <p className="text-gray-500">Gestiona las categorías de productos</p>
         </div>
         {canManage && (
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
+          <ResponsiveDialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+            trigger={
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 Nueva Categoría
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Crear Nueva Categoría</DialogTitle>
-              </DialogHeader>
-              <CategoryForm
-                onSubmit={async (data) => {
-                  await createCategory(data);
-                  setIsCreateDialogOpen(false);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+            }
+            title="Crear Nueva Categoría"
+          >
+            <CategoryForm
+              onSubmit={async (data) => {
+                await createCategory(data);
+                setIsCreateDialogOpen(false);
+              }}
+            />
+          </ResponsiveDialog>
         )}
       </div>
 
@@ -162,7 +155,70 @@ export function Categories() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Mobile: card list */}
+          <div className="space-y-3 p-4 md:hidden">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 rounded-2xl" />
+              ))
+            ) : categories.length === 0 ? (
+              <div className="py-8 text-center">
+                <Tags className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No se encontraron categorías</p>
+              </div>
+            ) : (
+              categories.map((category) => (
+                <article
+                  key={category._id}
+                  className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-4 w-4 shrink-0 rounded"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <h3 className="truncate text-base font-semibold text-gray-900">
+                          {category.name}
+                        </h3>
+                      </div>
+                      {category.description && (
+                        <p className="mt-1 text-sm text-gray-600">{category.description}</p>
+                      )}
+                    </div>
+                    {canManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Más opciones">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setEditingCategory(category)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(category._id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -251,25 +307,21 @@ export function Categories() {
       </Card>
 
       {/* Edit Dialog */}
-      <Dialog
+      <ResponsiveDialog
         open={!!editingCategory}
         onOpenChange={() => setEditingCategory(null)}
+        title="Editar Categoría"
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Categoría</DialogTitle>
-          </DialogHeader>
-          {editingCategory && (
-            <CategoryForm
-              initialData={editingCategory}
-              onSubmit={async (data) => {
-                await updateCategory(editingCategory._id, data);
-                setEditingCategory(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {editingCategory && (
+          <CategoryForm
+            initialData={editingCategory}
+            onSubmit={async (data) => {
+              await updateCategory(editingCategory._id, data);
+              setEditingCategory(null);
+            }}
+          />
+        )}
+      </ResponsiveDialog>
     </div>
   );
 }
