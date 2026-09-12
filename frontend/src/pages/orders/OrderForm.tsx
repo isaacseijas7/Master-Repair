@@ -717,6 +717,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                         disabled={isEditing} // No permitir cambiar tipo en edición
                       >
                         <SelectTrigger
+                          data-tour="orders.form.type-select"
                           className={errors.type ? "border-red-500" : ""}
                         >
                           <SelectValue placeholder="Seleccionar tipo" />
@@ -766,6 +767,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger
+                            data-tour="orders.form.payment-type-select"
                             className={
                               errors.paymentType ? "border-red-500" : ""
                             }
@@ -815,6 +817,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                           }
                         >
                           <SelectTrigger
+                            data-tour="orders.form.supplier-select"
                             className={errors.supplier ? "border-red-500" : ""}
                           >
                             <SelectValue placeholder="Seleccionar proveedor" />
@@ -841,7 +844,10 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                       <User className="w-4 h-4" />
                       Cliente *
                     </Label>
-                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                    <div
+                      data-tour="orders.form.client-selector"
+                      className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
+                    >
                       <ClientSelector
                         selectedClient={selectedClient}
                         onSelectClient={handleClientSelect}
@@ -871,6 +877,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                   <div className="md:col-span-6 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
+                      data-tour="orders.form.product-search-input"
                       placeholder="Buscar producto por nombre o SKU..."
                       value={searchTerm}
                       onChange={handleSearchChange}
@@ -927,6 +934,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                   </div>
                   <div className="md:col-span-2">
                     <Input
+                      data-tour="orders.form.product-quantity-input"
                       type="number"
                       min={1}
                       value={quantity}
@@ -937,6 +945,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                   </div>
                   <div className="md:col-span-4">
                     <Button
+                      data-tour="orders.form.add-product-button"
                       type="button"
                       onClick={handleAddItem}
                       className="w-full"
@@ -1029,7 +1038,10 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
 
               {/* Items Table */}
               {fields.length > 0 ? (
-                <div className="border rounded-lg overflow-hidden">
+                <div
+                  data-tour="orders.form.items-table"
+                  className="border rounded-lg overflow-hidden"
+                >
                   <Table>
                     <TableHeader className="bg-gray-50">
                       <TableRow>
@@ -1184,6 +1196,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                   isMobile={isMobile}
                 >
               <textarea
+                data-tour="orders.form.notes-textarea"
                 {...register("notes")}
                 className="w-full min-h-[100px] p-3 border rounded-md text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Agrega notas o comentarios sobre esta orden..."
@@ -1278,6 +1291,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
 
               {/* Submit Button */}
               <Button
+                data-tour="orders.form.submit-button"
                 type="submit"
                 className="w-full"
                 size="lg"
@@ -1314,6 +1328,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
             <p className="text-xl font-bold text-gray-900">{formatCurrency(totals.total)}</p>
           </div>
           <Button
+            data-tour="orders.form.submit-button"
             type="submit"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting || fields.length === 0}
