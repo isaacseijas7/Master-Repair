@@ -8,6 +8,7 @@ Aquí encontrará:
 - Cómo usar el Dashboard
 - Cómo trabajar con Productos, Categorías, Proveedores, Clientes y Órdenes
 - Cómo actualizar su Perfil y contraseña
+- Cómo administrar las cuentas y los roles de otros usuarios (solo Administrador)
 - Qué puede hacer cada tipo de usuario (Administrador, Gerente o Cajero) dentro del sistema
 
 > El sistema tiene tres roles de usuario: **Administrador**, **Gerente** y **Cajero**. Los dos primeros tienen acceso completo; el rol Cajero tiene una vista más simple, pensada para el día a día de mostrador (ventas y consulta). A lo largo del manual se incluyen notas donde la vista o las acciones cambian según el rol. También puede consultar el resumen completo en el **Apéndice A: Roles y permisos**, al final de este documento.
@@ -36,8 +37,8 @@ Aquí encontrará:
 ## 3. Estructura general de la aplicación
 
 Después de ingresar, verá:
-- **Menú lateral** (en computadora) con: Dashboard, Productos, Categorías, Proveedores, Clientes y Órdenes.
-- **Menú inferior** (en celular) con los accesos más usados y un botón **Más** para el resto de módulos.
+- **Menú lateral** (en computadora) con: Dashboard, Productos, Categorías, Proveedores, Clientes y Órdenes. Si su usuario es **Administrador**, además verá **Usuarios**.
+- **Menú inferior** (en celular) con los accesos más usados y un botón **Más** para el resto de módulos (incluyendo **Usuarios** si es Administrador).
 - **Menú de usuario** (arriba a la derecha) con su nombre y rol, para ir a Perfil o cerrar sesión.
 
 ### En celular
@@ -338,10 +339,72 @@ Dentro del detalle verá:
 
 ---
 
-## 10. Perfil de usuario
+## 10. Módulo de Usuarios
+
+> **Este módulo es exclusivo para el rol Administrador.** Gerente y Cajero no ven "Usuarios" en el menú y, si intentan entrar escribiendo la dirección directamente, el sistema los redirige al Dashboard.
+
+Aquí el Administrador gestiona las cuentas de acceso al sistema: quién puede entrar, con qué rol y si su cuenta está activa.
+
+![Listado de usuarios](screenshots/35-usuarios-listado.png)
+
+### 10.1. Acciones disponibles
+- **Nuevo Usuario**
+- **Buscar** por nombre o email
+- **Filtrar por rol** (Administrador/Gerente/Cajero)
+- **Filtrar por estado** (Activo/Inactivo)
+- **Editar** un usuario, incluyendo su rol
+- **Inhabilitar/activar** un usuario (mediante el interruptor "Usuario activo" en su edición)
+- **Eliminar** un usuario
+
+### 10.2. Crear un usuario
+1. Entre a **Usuarios**.
+2. Pulse **Nuevo Usuario**.
+3. Complete nombre, apellido, email, contraseña y el **rol** (Administrador, Gerente o Cajero).
+4. Deje activado el interruptor **Usuario activo** para que la cuenta pueda iniciar sesión de inmediato, o desactívelo si quiere crearla pero habilitarla más adelante.
+5. Pulse **Guardar**.
+
+![Formulario para crear un nuevo usuario](screenshots/36-usuarios-nuevo.png)
+
+> **Requisito de contraseña:** igual que en Perfil > Seguridad, debe tener al menos 6 caracteres, con una mayúscula, una minúscula y un número.
+
+### 10.3. Editar un usuario y cambiar su rol
+1. En el listado, abra el menú de acciones ("Más opciones") de la fila del usuario.
+2. Pulse **Editar**.
+3. Puede actualizar nombre, apellido, email, **rol** y el interruptor **Usuario activo**.
+4. Pulse **Guardar**.
+
+Cambiar el rol de un usuario surte efecto de inmediato: por ejemplo, si convierte a un Cajero en Gerente, la próxima vez que esa persona use el sistema (o recargue la página) ya verá las opciones de su nuevo rol.
+
+![Formulario de edición con el selector de rol abierto](screenshots/37-usuarios-editar-rol.png)
+
+### 10.4. Inhabilitar o eliminar un usuario
+- Para **inhabilitar** un usuario: edítelo y apague el interruptor **Usuario activo**. Un usuario inactivo no puede iniciar sesión, pero su historial (órdenes creadas, etc.) se conserva.
+- Para **eliminar** un usuario: en el menú de acciones, pulse **Eliminar** y confirme en el mensaje emergente del navegador.
+
+### 10.5. Protecciones de seguridad
+El sistema no permite dejar el negocio sin control de acceso ni que un Administrador se bloquee a sí mismo por error:
+
+- **No puede editar su propio rol ni desactivar su propia cuenta** desde este módulo. Si abre su propia ficha, el selector de rol y el interruptor de activo aparecen bloqueados, con una nota explicando por qué.
+- **No puede eliminar su propia cuenta**: la opción "Eliminar" no aparece en su propia fila.
+- **No puede quedar el sistema sin al menos un Administrador activo**: si intenta desactivar, eliminar o cambiarle el rol al único Administrador activo restante (que no sea usted), el sistema rechaza la acción con un mensaje de error.
+
+![Formulario de edición mostrando las restricciones al editar su propia cuenta](screenshots/38-usuarios-auto-proteccion.png)
+
+![Menú de acciones de su propia cuenta, sin la opción "Eliminar"](screenshots/39-usuarios-sin-eliminar-propia-cuenta.png)
+
+> **Nota:** este módulo no permite restablecer la contraseña de otro usuario. Cada persona cambia su propia contraseña desde **Perfil > Seguridad**.
+
+### 10.6. Vista de otros roles
+Un usuario con rol Gerente o Cajero simplemente no ve "Usuarios" en su menú lateral ni en el menú "Más" de celular:
+
+![Menú lateral de un usuario Gerente, sin la opción "Usuarios"](screenshots/40-sidebar-gerente-sin-usuarios.png)
+
+---
+
+## 11. Perfil de usuario
 En el módulo **Perfil** puede gestionar su información personal y seguridad.
 
-### 10.1. Información General
+### 11.1. Información General
 Permite actualizar:
 - Nombre
 - Apellido
@@ -354,7 +417,7 @@ Pasos:
 
 ![Pestaña de Información General en el perfil](screenshots/32-perfil-informacion-general.png)
 
-### 10.2. Seguridad (cambio de contraseña)
+### 11.2. Seguridad (cambio de contraseña)
 Pasos:
 1. Abra la pestaña **Seguridad**.
 2. Escriba:
@@ -371,7 +434,7 @@ También puede usar el ícono de ojo para mostrar/ocultar cada contraseña.
 >
 > **Importante:** al cambiar su contraseña, el sistema cierra automáticamente cualquier otra sesión abierta en otros dispositivos, por seguridad. Deberá volver a iniciar sesión en esos dispositivos con la nueva contraseña.
 
-### 10.3. Información visible en el perfil
+### 11.3. Información visible en el perfil
 - Nombre completo
 - Rol de usuario (Administrador, Gerente o Cajero)
 - Email
@@ -380,8 +443,8 @@ También puede usar el ícono de ojo para mostrar/ocultar cada contraseña.
 
 ---
 
-## 11. Búsqueda, filtros y paginación (aplica a varios módulos)
-En Productos, Categorías, Proveedores, Clientes y Órdenes encontrará funciones comunes:
+## 12. Búsqueda, filtros y paginación (aplica a varios módulos)
+En Productos, Categorías, Proveedores, Clientes, Órdenes y Usuarios encontrará funciones comunes:
 
 - **Buscador**: para encontrar registros más rápido.
 - **Filtros**: para acotar resultados.
@@ -392,7 +455,7 @@ En Productos, Categorías, Proveedores, Clientes y Órdenes encontrará funcione
 
 ---
 
-## 12. Consejos rápidos para uso diario
+## 13. Consejos rápidos para uso diario
 - Revise el **Dashboard** al iniciar su jornada.
 - Mantenga productos y stock actualizados para evitar errores en ventas.
 - Registre a sus clientes frecuentes para llevar su historial de compras.
@@ -402,7 +465,7 @@ En Productos, Categorías, Proveedores, Clientes y Órdenes encontrará funcione
 
 ---
 
-## 13. Flujo recomendado de trabajo (resumen)
+## 14. Flujo recomendado de trabajo (resumen)
 1. Iniciar sesión.
 2. Revisar Dashboard (estado general).
 3. Validar categorías y proveedores (si hay cambios).
@@ -411,11 +474,12 @@ En Productos, Categorías, Proveedores, Clientes y Órdenes encontrará funcione
 6. Registrar órdenes (ventas o compras).
 7. Gestionar órdenes pendientes hasta completarlas o cancelarlas.
 8. Revisar perfil y mantener datos actualizados.
-9. Cerrar sesión al terminar.
+9. Si es Administrador: revisar periódicamente los usuarios activos del sistema.
+10. Cerrar sesión al terminar.
 
 ---
 
-## 14. Soporte
+## 15. Soporte
 Si alguna acción no funciona como espera:
 - Verifique que todos los campos obligatorios estén completos.
 - Revise mensajes en pantalla (normalmente indican qué corregir).
@@ -439,11 +503,13 @@ El sistema cuenta con tres roles de usuario, cada uno con un nivel de acceso dis
 | Crear Órdenes (ventas) | Sí | Sí | Sí |
 | Editar Órdenes | Sí | Sí | No |
 | Completar/Cancelar Órdenes pendientes | Sí | Sí | Sí |
-| Registrar nuevos usuarios del sistema | Sí | No | No |
+| Ver y administrar el módulo de Usuarios (crear, editar, roles, inhabilitar, eliminar) | Sí | No | No |
 
 Notas adicionales:
-- Un usuario que intenta acceder por dirección web directa a una pantalla que no le corresponde (por ejemplo, la edición de un producto siendo Cajero) es redirigido automáticamente al Dashboard.
+- Un usuario que intenta acceder por dirección web directa a una pantalla que no le corresponde (por ejemplo, la edición de un producto siendo Cajero, o el módulo de Usuarios siendo Gerente o Cajero) es redirigido automáticamente al Dashboard.
 - La opción **Configuración** del menú y el ícono de **notificaciones** se muestran en la interfaz, pero todavía no tienen funcionalidad activa; quedan reservados para una futura actualización.
+- Ningún Administrador puede desactivar, eliminar o cambiarse el rol a sí mismo desde el módulo de Usuarios, ni dejar el sistema sin al menos un Administrador activo (ver sección 10.5).
+- El reseteo de contraseña de otro usuario no está disponible en ningún rol; cada persona cambia la suya propia desde Perfil > Seguridad.
 
 ---
 

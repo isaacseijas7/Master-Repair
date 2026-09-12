@@ -7,6 +7,7 @@ import { supplierRoutes } from "./supplier.routes";
 import { orderRoutes } from "./order.routes";
 import { dashboardRoutes } from "./dashboard.routes";
 import { profileRoutes } from "./profile.routes";
+import { userRoutes } from "./user.routes";
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get("/health", async () => {
@@ -28,4 +29,5 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   await fastify.register(supplierRoutes, { prefix: `${apiPrefix}/suppliers` });
   await fastify.register(orderRoutes, { prefix: `${apiPrefix}/orders` });
   await fastify.register(dashboardRoutes, { prefix: `${apiPrefix}/dashboard` });
+  await fastify.register(userRoutes, { prefix: `${apiPrefix}/users` });
 }

@@ -44,6 +44,16 @@ export interface CreateUserInput {
   isActive?: boolean;
 }
 
+// Sin password: el reseteo de contraseña de otros usuarios queda fuera de
+// alcance del módulo de administración de usuarios.
+export interface UpdateUserInput {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: (typeof UserRole)[keyof typeof UserRole];
+  isActive?: boolean;
+}
+
 // ==================== CATEGORY TYPES ====================
 export interface Category {
   _id: string;

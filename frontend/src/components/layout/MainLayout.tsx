@@ -33,6 +33,7 @@ import {
   Bell,
   MoreHorizontal,
   User,
+  UserCog,
 } from 'lucide-react';
 
 const navigation = [
@@ -43,6 +44,13 @@ const navigation = [
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
 ];
+
+// Solo visible para admin: administrar usuarios y roles es la única acción
+// del sistema restringida exclusivamente a ese rol (mismo precedente que
+// /auth/register en el backend), por eso es el único ítem de navegación que
+// necesita ocultarse según el rol en vez de solo ocultar botones dentro de
+// una página ya visible para todos.
+const adminNavigation = { name: 'Usuarios', href: '/users', icon: UserCog };
 
 const mobileNavigation = [
   { name: 'Inicio', href: '/', icon: LayoutDashboard },
@@ -63,6 +71,11 @@ export function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
+  const visibleNavigation = isAdmin ? [...navigation, adminNavigation] : navigation;
+  const visibleMoreNavigation = isAdmin
+    ? [...moreNavigation, adminNavigation]
+    : moreNavigation;
 
   // Estas rutas ya muestran su propia barra de acción fija en mobile
   // (total + enviar, o guardar/eliminar); mantener también la bottom nav
@@ -119,7 +132,7 @@ export function MainLayout() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const isActive = location.pathname === item.href || 
                            location.pathname.startsWith(`${item.href}/`);
             return (
@@ -252,7 +265,7 @@ export function MainLayout() {
             );
           })}
           {(() => {
-            const isMoreActive = moreNavigation.some(
+            const isMoreActive = visibleMoreNavigation.some(
               (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
             );
             return (
@@ -279,7 +292,7 @@ export function MainLayout() {
             <DrawerTitle>Más opciones</DrawerTitle>
           </DrawerHeader>
           <nav className="space-y-1 px-4 pb-6">
-            {moreNavigation.map((item) => {
+            {visibleMoreNavigation.map((item) => {
               const isActive =
                 location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
               return (
