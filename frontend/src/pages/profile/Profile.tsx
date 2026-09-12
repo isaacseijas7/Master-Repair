@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useProfileStore } from "@/stores/profile.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -28,12 +29,7 @@ export function Profile() {
     fetchProfile();
   }, [fetchProfile]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      clearError();
-    }
-  }, [error, clearError]);
+  useStoreErrorToast(error, clearError);
 
   const handleProfileUpdateSuccess = (updatedUser: UserType) => {
     // Actualizar también el usuario en el store de auth para mantener sincronización

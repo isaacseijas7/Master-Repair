@@ -65,40 +65,12 @@ export const orderService = {
     await apiClient.patch(`/orders/${id}/status`, { status: "cancelled" });
   },
 
-  async getTodaySales(): Promise<{ count: number; total: number }> {
-    const response = await apiClient.get<
-      ApiResponse<{ count: number; total: number }>
-    >("/orders/stats/today");
-    return response.data.data!;
-  },
-
-  async getMonthlySales(
-    year?: number,
-    month?: number,
-  ): Promise<{ count: number; total: number }> {
-    const params = new URLSearchParams();
-    if (year) params.append("year", year.toString());
-    if (month) params.append("month", month.toString());
-
-    const response = await apiClient.get<
-      ApiResponse<{ count: number; total: number }>
-    >(`/orders/stats/monthly?${params}`);
-    return response.data.data!;
-  },
-
-  async getTopSellingProducts(limit: number = 5): Promise<any[]> {
-    const response = await apiClient.get<ApiResponse<{ products: any[] }>>(
-      `/orders/stats/top-products?limit=${limit}`,
-    );
-    return response.data.data!.products;
-  },
-
-  async getMonthlyRevenue(months: number = 12): Promise<any[]> {
-    const response = await apiClient.get<ApiResponse<{ revenue: any[] }>>(
-      `/orders/stats/monthly-revenue?months=${months}`,
-    );
-    return response.data.data!.revenue;
-  },
+  // getTodaySales, getMonthlySales y getTopSellingProducts/getMonthlyRevenue
+  // (de aquí) se eliminaron: reimplementaban lo que ya hace
+  // dashboard.service.ts/dashboard.store.ts desde la Fase 5, ninguna página
+  // los llamaba, y getMonthlySales apuntaba a /orders/stats/monthly, una
+  // ruta que nunca se implementó en el backend (solo existe
+  // /orders/stats/monthly-revenue).
 
   async getPendingCount(): Promise<number> {
     const response = await apiClient.get<ApiResponse<{ count: number }>>(

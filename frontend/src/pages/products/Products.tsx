@@ -1,4 +1,6 @@
 import { useDebounce } from "@/hooks/useDebounce";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
+import { useAuthStore } from "@/stores/auth.store";
 import { useCategoryStore } from "@/stores/category.store";
 import { useProductStore } from "@/stores/product.store";
 import { useEffect, useState } from "react";
@@ -12,11 +14,22 @@ export function Products() {
     products,
     pagination,
     isLoading,
+    error,
     fetchProducts,
     deleteProduct,
     filters,
     setFilters,
+    clearError,
   } = useProductStore();
+
+  useStoreErrorToast(error, clearError);
+
+  const { user } = useAuthStore();
+  // El backend ya exige admin/manager para crear, editar, eliminar y
+  // exportar productos (product.routes.ts); igual que en Categorías,
+  // Proveedores y Clientes, el frontend antes mostraba estas acciones a
+  // cualquier rol autenticado (ej. Cashier), que luego recibía un 403.
+  const canManage = user?.role === "admin" || user?.role === "manager";
 
   const { activeCategories, fetchActiveCategories } = useCategoryStore();
 
@@ -37,10 +50,12 @@ export function Products() {
     fetchProducts({ ...filters, page });
   };
 
-  // Nuevo handler para cambiar el límite
+  // Nuevo handler para cambiar el límite. Antes también llamaba a
+  // fetchProducts directamente además de setFilters, y como el efecto de
+  // arriba ya reacciona a cambios en `filters`, cada cambio de límite
+  // disparaba dos peticiones idénticas.
   const handleLimitChange = (limit: number) => {
     setFilters({ limit, page: 1 });
-    fetchProducts({ ...filters, limit, page: 1, search: debouncedSearch });
   };
 
   const handleDelete = async (id: string) => {
@@ -59,7 +74,11 @@ export function Products() {
 
   return (
     <div className="space-y-6">
-      <ProductsHeader filters={filters} totalCount={pagination.total} />
+      <ProductsHeader
+        filters={filters}
+        totalCount={pagination.total}
+        canManage={canManage}
+      />
 
       <ProductFilters
         searchTerm={searchTerm}
@@ -76,6 +95,7 @@ export function Products() {
           products={products}
           isLoading={isLoading}
           onDelete={handleDelete}
+          canManage={canManage}
         />
 
         <Pagination

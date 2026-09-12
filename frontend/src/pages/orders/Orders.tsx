@@ -36,6 +36,7 @@ import {
 import { isClientObject } from "@/helpers/isClientObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useOrderStore } from "@/stores/order.store";
 import { MovementType, OrderStatus, type OrderFilters } from "@/types";
@@ -71,12 +72,16 @@ export function Orders() {
     orders,
     pagination,
     isLoading,
+    error,
     fetchOrders,
     updateOrderStatus,
     cancelOrder,
     pendingCount,
     fetchPendingCount,
+    clearError,
   } = useOrderStore();
+
+  useStoreErrorToast(error, clearError);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -526,7 +531,7 @@ export function Orders() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Más opciones">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

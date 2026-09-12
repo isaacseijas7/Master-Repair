@@ -32,12 +32,14 @@ interface ProductsTableProps {
   products: Product[];
   isLoading: boolean;
   onDelete: (id: string) => void;
+  canManage: boolean;
 }
 
 export function ProductsTable({
   products,
   isLoading,
   onDelete,
+  canManage,
 }: ProductsTableProps) {
   const navigate = useNavigate();
 
@@ -111,16 +113,18 @@ export function ProductsTable({
                     </div>
                   )}
 
-                  <div className="mt-4 flex gap-2">
-                    <Button className="flex-1" variant="outline" onClick={() => navigate(`/products/${product._id}`)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Editar
-                    </Button>
-                    <Button className="flex-1" variant="destructive" onClick={() => onDelete(product._id)}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar
-                    </Button>
-                  </div>
+                  {canManage && (
+                    <div className="mt-4 flex gap-2">
+                      <Button className="flex-1" variant="outline" onClick={() => navigate(`/products/${product._id}`)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button className="flex-1" variant="destructive" onClick={() => onDelete(product._id)}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  )}
                 </article>
               );
             })
@@ -157,6 +161,7 @@ export function ProductsTable({
                     key={product._id}
                     product={product}
                     onDelete={onDelete}
+                    canManage={canManage}
                   />
                 ))
               )}

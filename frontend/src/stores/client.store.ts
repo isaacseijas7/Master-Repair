@@ -33,6 +33,10 @@ interface ClientState {
   clearError: () => void;
 }
 
+// Ver product.store.ts: evita que una respuesta de fetchClients llegada
+// tarde pise resultados de una búsqueda más reciente.
+let latestClientsRequestId = 0;
+
 export const useClientStore = create<ClientState>((set, get) => ({
   clients: [],
   currentClient: null,
@@ -49,15 +53,18 @@ export const useClientStore = create<ClientState>((set, get) => ({
   error: null,
 
   fetchClients: async (params = {}) => {
+    const requestId = ++latestClientsRequestId;
     set({ isLoading: true, error: null });
     try {
       const response = await clientService.getClients(params);
+      if (requestId !== latestClientsRequestId) return;
       set({
         clients: response.data,
         pagination: response.pagination,
         isLoading: false,
       });
     } catch (error: any) {
+      if (requestId !== latestClientsRequestId) return;
       set({
         error: error.response?.data?.message || "Error al cargar clientes",
         isLoading: false,

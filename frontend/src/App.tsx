@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { RoleRoute } from "@/components/RoleRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Login } from "@/pages/Login";
 import { Dashboard } from "@/pages/Dashboard";
 import { Products } from "@/pages/products/Products";
@@ -55,7 +57,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <>
+    <ErrorBoundary>
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
@@ -78,8 +80,22 @@ function App() {
           >
             <Route path="/" element={<Dashboard />} />
             <Route path="/products" element={<Products />} />
-            <Route path="/products/new" element={<ProductDetail />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route
+              path="/products/new"
+              element={
+                <RoleRoute roles={["admin", "manager"]}>
+                  <ProductDetail />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/products/:id"
+              element={
+                <RoleRoute roles={["admin", "manager"]}>
+                  <ProductDetail />
+                </RoleRoute>
+              }
+            />
             <Route path="/categories" element={<Categories />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/clients" element={<Clients />} />
@@ -87,7 +103,14 @@ function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/new" element={<OrderForm />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
-            <Route path="/orders/:id/edit" element={<OrderForm />} />
+            <Route
+              path="/orders/:id/edit"
+              element={
+                <RoleRoute roles={["admin", "manager"]}>
+                  <OrderForm />
+                </RoleRoute>
+              }
+            />
             <Route path="/profile" element={<Profile />} />
           </Route>
 
@@ -96,7 +119,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster />
-    </>
+    </ErrorBoundary>
   );
 }
 

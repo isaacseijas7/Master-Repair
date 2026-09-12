@@ -36,6 +36,7 @@ import {
   Phone,
 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useAuthStore } from "@/stores/auth.store";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,11 +68,15 @@ export function Suppliers() {
     suppliers,
     pagination,
     isLoading,
+    error,
     fetchSuppliers,
     createSupplier,
     updateSupplier,
     deleteSupplier,
+    clearError,
   } = useSupplierStore();
+
+  useStoreErrorToast(error, clearError);
 
   const { user } = useAuthStore();
   // El backend ya exige admin/manager para crear, editar y eliminar
@@ -219,7 +224,7 @@ export function Suppliers() {
                         {canManage ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" aria-label="Más opciones">
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>

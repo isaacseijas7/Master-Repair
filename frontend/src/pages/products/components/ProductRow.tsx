@@ -33,9 +33,10 @@ interface Product {
 interface ProductRowProps {
   product: Product;
   onDelete: (id: string) => void;
+  canManage: boolean;
 }
 
-export function ProductRow({ product, onDelete }: ProductRowProps) {
+export function ProductRow({ product, onDelete, canManage }: ProductRowProps) {
   const navigate = useNavigate();
 
   const isLowStock = product.stock <= product.minStock;
@@ -107,28 +108,30 @@ export function ProductRow({ product, onDelete }: ProductRowProps) {
       </TableCell>
 
       <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => navigate(`/products/${product._id}`)}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(product._id)}
-              className="text-red-600"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {canManage && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Más opciones">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => navigate(`/products/${product._id}`)}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(product._id)}
+                className="text-red-600"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </TableCell>
     </TableRow>
   );

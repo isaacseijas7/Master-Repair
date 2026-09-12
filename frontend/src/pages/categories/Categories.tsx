@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useAuthStore } from "@/stores/auth.store";
 import { useCategoryStore } from "@/stores/category.store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,11 +76,15 @@ export function Categories() {
     categories,
     pagination,
     isLoading,
+    error,
     fetchCategories,
     createCategory,
     updateCategory,
     deleteCategory,
+    clearError,
   } = useCategoryStore();
+
+  useStoreErrorToast(error, clearError);
 
   const { user } = useAuthStore();
   // El backend ya exige admin/manager para crear, editar y eliminar
@@ -207,7 +212,7 @@ export function Categories() {
                         {canManage ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" aria-label="Más opciones">
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>

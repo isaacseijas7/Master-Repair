@@ -39,6 +39,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { Search, Plus, MoreHorizontal, Eye, Trash2, Users, Mail, Phone } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -73,10 +74,14 @@ export function Clients() {
     clients,
     pagination,
     isLoading,
+    error,
     fetchClients,
     createClient,
     deleteClient,
+    clearError,
   } = useClientStore();
+
+  useStoreErrorToast(error, clearError);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -311,7 +316,7 @@ export function Clients() {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Más opciones">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
