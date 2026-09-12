@@ -232,17 +232,18 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         return; // No precargar si no es editable, mostrará alerta abajo
       }
 
-      // Precargar items. Nota: al editar una orden existente no se vuelven
-      // a traer las escalas de precio del producto (baseUnitPrice/
-      // priceTiers quedan undefined), así que cambiar la cantidad aquí
-      // conserva el precio unitario ya guardado en vez de recalcularlo por
-      // escala. El recálculo automático aplica al crear una orden nueva.
+      // Precargar items. getOrderById ahora incluye priceTiers/wholesalePrice
+      // del producto en el populate, así que también se puede recalcular el
+      // precio por escala al cambiar la cantidad de una orden ya existente
+      // (antes solo funcionaba al crear una orden nueva).
       const items = currentOrder.items.map((item: any) => ({
         product: item.product._id || item.product,
         productName: item.product.name || item.productName,
         sku: item.product.sku || item.sku,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        baseUnitPrice: item.product?.unitPrice,
+        priceTiers: item.product?.priceTiers,
         stock: item.product.stock,
       }));
 

@@ -118,8 +118,12 @@ export class OrderService {
   }
 
   async getOrderById(id: string): Promise<IOrder> {
+    // Se incluyen priceTiers y wholesalePrice en el populate para que el
+    // formulario de edición pueda recalcular el precio por escala al
+    // cambiar la cantidad (antes solo se traía name/sku/unitPrice/stock,
+    // así que al editar una orden no había forma de aplicar escalas).
     const order = await Order.findById(id)
-      .populate("items.product", "name sku unitPrice stock")
+      .populate("items.product", "name sku unitPrice stock priceTiers wholesalePrice")
       .populate("supplier", "name contactName email phone")
       .populate("client", "name email phone")
       .populate("createdBy", "firstName lastName email");
