@@ -1,5 +1,6 @@
 import { Supplier } from "../models/Supplier";
 import { Product } from "../models/Product";
+import { Order } from "../models/Order";
 import { LeanSupplier, SupplierDocument } from "../types/supplier.types";
 
 export class SupplierService {
@@ -14,6 +15,8 @@ export class SupplierService {
         { name: { $regex: search, $options: "i" } },
         { contactName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
+        { taxId: { $regex: search, $options: "i" } },
+        { address: { $regex: search, $options: "i" } },
       ];
     }
     if (isActive !== undefined) query.isActive = isActive;
@@ -90,6 +93,17 @@ export class SupplierService {
     if (productCount > 0) {
       throw new Error(
         `No se puede eliminar el proveedor porque tiene ${productCount} productos asociados`,
+      );
+    }
+
+    // Antes solo se validaban productos asociados. Un proveedor sin
+    // productos activos pero con órdenes de compra históricas (Order.supplier
+    // referencia al proveedor directamente) podía eliminarse igual, dejando
+    // esas órdenes con una referencia rota.
+    const orderCount = await Order.countDocuments({ supplier: id });
+    if (orderCount > 0) {
+      throw new Error(
+        `No se puede eliminar el proveedor porque tiene ${orderCount} órdenes asociadas`,
       );
     }
 

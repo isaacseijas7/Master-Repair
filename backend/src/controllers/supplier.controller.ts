@@ -1,6 +1,10 @@
 // backend/src/controllers/supplier.controller.ts
 import { FastifyRequest, FastifyReply, RouteGenericInterface } from "fastify";
 import { supplierService } from "../services/supplier.service";
+import {
+  createSupplierSchema,
+  updateSupplierSchema,
+} from "../schemas/supplier.schema";
 
 // ==========================================
 // INTERFACES DE TIPO PARA LAS RUTAS
@@ -85,13 +89,22 @@ export class SupplierController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const supplier = await supplierService.createSupplier(request.body);
+      const validatedData = createSupplierSchema.parse(request.body);
+      const supplier = await supplierService.createSupplier(validatedData);
       reply.status(201).send({
         success: true,
         message: "Proveedor creado exitosamente",
         data: { supplier },
       });
     } catch (error: any) {
+      if (error.name === "ZodError") {
+        reply.status(400).send({
+          success: false,
+          message: "Error de validación",
+          errors: error.errors,
+        });
+        return;
+      }
       reply.status(400).send({ success: false, message: error.message });
     }
   }
@@ -101,9 +114,10 @@ export class SupplierController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
+      const validatedData = updateSupplierSchema.parse(request.body);
       const supplier = await supplierService.updateSupplier(
         request.params.id,
-        request.body,
+        validatedData,
       );
       reply.send({
         success: true,
@@ -111,6 +125,14 @@ export class SupplierController {
         data: { supplier },
       });
     } catch (error: any) {
+      if (error.name === "ZodError") {
+        reply.status(400).send({
+          success: false,
+          message: "Error de validación",
+          errors: error.errors,
+        });
+        return;
+      }
       reply.status(400).send({ success: false, message: error.message });
     }
   }

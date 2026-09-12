@@ -15,7 +15,6 @@ const CategorySchema = new Schema<ICategory>(
     name: {
       type: String,
       required: [true, 'El nombre de la categoría es requerido'],
-      unique: true,
       trim: true,
     },
     description: {
@@ -43,6 +42,16 @@ const CategorySchema = new Schema<ICategory>(
   }
 );
 
+// Antes el campo tenía "unique: true" a nivel de esquema, que en MongoDB es
+// sensible a mayúsculas/minúsculas. El chequeo manual del servicio (regex
+// case-insensitive) no coincidía con esa restricción, así que dos altas
+// concurrentes con distinta capitalización (ej. "Accesorios" / "accesorios")
+// podían colarse como duplicados. Este índice con collation replica al de
+// Client.ts: único e insensible a mayúsculas, a nivel de base de datos.
+CategorySchema.index(
+  { name: 1 },
+  { unique: true, collation: { locale: 'en', strength: 2 } },
+);
 CategorySchema.index({ name: 'text', description: 'text' });
 
 export const Category = mongoose.model<ICategory>('Category', CategorySchema);

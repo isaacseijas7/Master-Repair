@@ -72,8 +72,35 @@ const orderItemSchema = z.object({
   sku: z.string(),
   quantity: z.number().min(1, "Cantidad mínima 1"),
   unitPrice: z.number().min(0, "Precio no puede ser negativo"),
+  // Precio base del producto (sin escalas aplicadas) y sus escalas de
+  // precio por cantidad, guardados en el propio ítem para poder recalcular
+  // el precio efectivo cuando cambia la cantidad, sin volver a pedir el
+  // producto al backend. No se envían al crear/actualizar la orden (ver
+  // onSubmit), son solo para el cálculo en pantalla.
+  baseUnitPrice: z.number().optional(),
+  priceTiers: z
+    .array(z.object({ minQuantity: z.number(), price: z.number() }))
+    .optional(),
   stock: z.number().optional(),
 });
+
+// Antes el precio mayorista y las escalas de precio por cantidad del
+// producto no se usaban en ningún punto del flujo de venta: siempre se
+// tomaba product.unitPrice sin importar la cantidad. Esta función busca,
+// entre las escalas cuya cantidad mínima ya se alcanzó, la de mayor
+// "minQuantity" (el mejor descuento aplicable) y devuelve su precio; si
+// ninguna aplica, devuelve el precio base.
+function getApplicablePrice(
+  basePrice: number,
+  priceTiers: Array<{ minQuantity: number; price: number }> | undefined,
+  quantity: number,
+): number {
+  if (!priceTiers || priceTiers.length === 0) return basePrice;
+  const applicableTier = [...priceTiers]
+    .filter((tier) => quantity >= tier.minQuantity)
+    .sort((a, b) => b.minQuantity - a.minQuantity)[0];
+  return applicableTier ? applicableTier.price : basePrice;
+}
 
 const orderFormSchema = z
   .object({
@@ -205,7 +232,11 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         return; // No precargar si no es editable, mostrará alerta abajo
       }
 
-      // Precargar items
+      // Precargar items. Nota: al editar una orden existente no se vuelven
+      // a traer las escalas de precio del producto (baseUnitPrice/
+      // priceTiers quedan undefined), así que cambiar la cantidad aquí
+      // conserva el precio unitario ya guardado en vez de recalcularlo por
+      // escala. El recálculo automático aplica al crear una orden nueva.
       const items = currentOrder.items.map((item: any) => ({
         product: item.product._id || item.product,
         productName: item.product.name || item.productName,
@@ -399,12 +430,21 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
         return;
       }
 
+      // Las escalas de precio por cantidad solo aplican a ventas: para
+      // compras/ajustes se usa el precio base del producto tal cual.
+      const effectiveUnitPrice =
+        watchType === "sale"
+          ? getApplicablePrice(product.unitPrice, product.priceTiers, qty)
+          : product.unitPrice;
+
       append({
         product: product._id,
         productName: product.name,
         sku: product.sku,
         quantity: qty,
-        unitPrice: product.unitPrice,
+        unitPrice: effectiveUnitPrice,
+        baseUnitPrice: product.unitPrice,
+        priceTiers: product.priceTiers,
         stock: product.stock,
       });
 
@@ -890,6 +930,28 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                         <p className="mt-1 font-semibold text-gray-900">
                           {formatCurrency(selectedProductPreview.unitPrice)}
                         </p>
+                        {watchType === "sale" && (
+                          <>
+                            {(() => {
+                              const qty = selectedQuantity || 1;
+                              const tierPrice = getApplicablePrice(
+                                selectedProductPreview.unitPrice,
+                                selectedProductPreview.priceTiers,
+                                qty,
+                              );
+                              return tierPrice < selectedProductPreview.unitPrice ? (
+                                <p className="mt-1 text-xs font-medium text-green-600">
+                                  Escala por cantidad: {formatCurrency(tierPrice)} c/u
+                                </p>
+                              ) : null;
+                            })()}
+                            {!!selectedProductPreview.wholesalePrice && (
+                              <p className="mt-1 text-xs text-gray-500">
+                                Precio mayorista: {formatCurrency(selectedProductPreview.wholesalePrice)}
+                              </p>
+                            )}
+                          </>
+                        )}
                       </div>
                       <div className="rounded-lg bg-white p-3">
                         <p className="text-xs uppercase tracking-wide text-gray-500">Stock</p>
@@ -975,15 +1037,35 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                                     const rawValue = e.target.value;
                                     const availableStock = watchItems[index]?.stock ?? undefined;
 
+                                    // Recalcula el precio efectivo según la
+                                    // nueva cantidad y las escalas guardadas
+                                    // en el ítem (antes el precio quedaba
+                                    // fijo desde que se agregaba el producto
+                                    // y nunca se actualizaba al cambiar la
+                                    // cantidad).
+                                    const applyQuantity = (nextQuantity: number) => {
+                                      field.onChange(nextQuantity);
+                                      if (watchType === "sale") {
+                                        const baseUnitPrice =
+                                          watchItems[index]?.baseUnitPrice ??
+                                          watchItems[index]?.unitPrice;
+                                        const priceTiers = watchItems[index]?.priceTiers;
+                                        setValue(
+                                          `items.${index}.unitPrice`,
+                                          getApplicablePrice(baseUnitPrice, priceTiers, nextQuantity),
+                                        );
+                                      }
+                                    };
+
                                     if (rawValue === "") {
-                                      field.onChange(1);
+                                      applyQuantity(1);
                                       return;
                                     }
 
                                     const nextQuantity = parseInt(rawValue, 10);
 
                                     if (Number.isNaN(nextQuantity) || nextQuantity < 1) {
-                                      field.onChange(1);
+                                      applyQuantity(1);
                                       return;
                                     }
 
@@ -995,22 +1077,31 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                                       toast.error(
                                         `Solo hay ${availableStock} unidades disponibles para ${watchItems[index]?.sku ?? "este producto"}`,
                                       );
-                                      field.onChange(availableStock);
+                                      applyQuantity(availableStock);
                                       return;
                                     }
 
-                                    field.onChange(nextQuantity);
+                                    applyQuantity(nextQuantity);
                                   }}
                                 />
                               )}
                             />
                           </TableCell>
                           <TableCell className="text-right text-sm">
-                            {formatCurrency(field.unitPrice)}
+                            {formatCurrency(watchItems[index]?.unitPrice ?? field.unitPrice)}
+                            {watchType === "sale" &&
+                              watchItems[index]?.baseUnitPrice !== undefined &&
+                              (watchItems[index]?.unitPrice ?? field.unitPrice) <
+                                watchItems[index]!.baseUnitPrice! && (
+                                <p className="text-[10px] font-medium text-green-600">
+                                  Escala aplicada
+                                </p>
+                              )}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             {formatCurrency(
-                              field.unitPrice * (watchItems[index]?.quantity ?? field.quantity),
+                              (watchItems[index]?.unitPrice ?? field.unitPrice) *
+                                (watchItems[index]?.quantity ?? field.quantity),
                             )}
                           </TableCell>
                           <TableCell>
