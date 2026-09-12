@@ -15,6 +15,7 @@ import { Orders } from "./pages/orders/Orders";
 import { ProductDetail } from "./pages/products/ProductDetail";
 import { OrderForm } from "./pages/orders/OrderForm";
 import { Profile } from "./pages/profile/Profile";
+import { Users } from "./pages/users/Users";
 import { Toaster } from "@/components/ui/sonner";
 
 // Protected Route Component
@@ -112,6 +113,14 @@ function App() {
               }
             />
             <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/users"
+              element={
+                <RoleRoute roles={["admin"]}>
+                  <Users />
+                </RoleRoute>
+              }
+            />
           </Route>
 
           {/* Catch all */}

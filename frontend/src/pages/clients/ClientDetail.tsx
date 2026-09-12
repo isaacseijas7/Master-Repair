@@ -236,7 +236,44 @@ export function ClientDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {/* Mobile: card list */}
+              <div className="space-y-3 p-4 md:hidden">
+                {isLoadingOrders ? (
+                  [...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-20 rounded-2xl" />
+                  ))
+                ) : orders.length === 0 ? (
+                  <p className="py-8 text-center text-gray-500">
+                    Este cliente todavía no tiene compras registradas
+                  </p>
+                ) : (
+                  orders.map((order) => (
+                    <article
+                      key={order._id}
+                      className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                      onClick={() => navigate(`/orders/${order._id}`)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <code className="text-sm font-semibold">
+                            {order.orderNumber}
+                          </code>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {formatDate(order.createdAt)}
+                          </p>
+                        </div>
+                        {getStatusBadge(order.status)}
+                      </div>
+                      <p className="mt-3 text-right text-lg font-semibold text-gray-900">
+                        {formatCurrency(order.total)}
+                      </p>
+                    </article>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden overflow-x-auto md:block">
                 <Table>
                   <TableHeader>
                     <TableRow>

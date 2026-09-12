@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate, useMatch } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn, getInitials } from '@/lib/utils';
@@ -11,6 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   LayoutDashboard,
@@ -19,11 +25,15 @@ import {
   Truck,
   Users,
   ShoppingCart,
-  BarChart3, LogOut,
+  BarChart3,
+  LogOut,
   Menu,
   X,
   ChevronDown,
-  Bell
+  Bell,
+  MoreHorizontal,
+  User,
+  UserCog,
 } from 'lucide-react';
 
 const navigation = [
@@ -35,19 +45,52 @@ const navigation = [
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
 ];
 
+// Solo visible para admin: administrar usuarios y roles es la única acción
+// del sistema restringida exclusivamente a ese rol (mismo precedente que
+// /auth/register en el backend), por eso es el único ítem de navegación que
+// necesita ocultarse según el rol en vez de solo ocultar botones dentro de
+// una página ya visible para todos.
+const adminNavigation = { name: 'Usuarios', href: '/users', icon: UserCog };
+
 const mobileNavigation = [
   { name: 'Inicio', href: '/', icon: LayoutDashboard },
   { name: 'Productos', href: '/products', icon: Package },
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
   { name: 'Proveedores', href: '/suppliers', icon: Truck },
-  { name: 'Perfil', href: '/profile', icon: BarChart3 },
+];
+
+const moreNavigation = [
+  { name: 'Categorías', href: '/categories', icon: Tags },
+  { name: 'Clientes', href: '/clients', icon: Users },
+  { name: 'Perfil', href: '/profile', icon: User },
 ];
 
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
+  const visibleNavigation = isAdmin ? [...navigation, adminNavigation] : navigation;
+  const visibleMoreNavigation = isAdmin
+    ? [...moreNavigation, adminNavigation]
+    : moreNavigation;
+
+  // Estas rutas ya muestran su propia barra de acción fija en mobile
+  // (total + enviar, o guardar/eliminar); mantener también la bottom nav
+  // global apilaba dos barras fijas una encima de la otra.
+  // Los 4 useMatch se guardan en variables separadas (no encadenados con
+  // ||) porque || cortocircuita: si uno ya matchea, los siguientes no se
+  // evaluarían, lo que cambia la cantidad de hooks llamados entre renders
+  // y rompe las Rules of Hooks ("Rendered fewer hooks than expected").
+  const matchOrdersNew = useMatch('/orders/new');
+  const matchOrdersEdit = useMatch('/orders/:id/edit');
+  const matchProductsNew = useMatch('/products/new');
+  const matchProductsId = useMatch('/products/:id');
+  const isLongFormRoute = !!(
+    matchOrdersNew || matchOrdersEdit || matchProductsNew || matchProductsId
+  );
 
   const handleLogout = () => {
     logout();
@@ -89,7 +132,7 @@ export function MainLayout() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const isActive = location.pathname === item.href || 
                            location.pathname.startsWith(`${item.href}/`);
             return (
@@ -141,9 +184,9 @@ export function MainLayout() {
             {/* Right side */}
             <div className="flex items-center gap-4">
               {/* Notifications */}
+              {/* TODO: conectar a un sistema de notificaciones real antes de mostrar un indicador */}
               <button className="relative p-2 rounded-lg hover:bg-gray-100">
                 <Bell className="w-5 h-5 text-gray-500" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
               </button>
 
               {/* User menu */}
@@ -185,12 +228,22 @@ export function MainLayout() {
         </header>
 
         {/* Page content */}
-        <main className="p-4 pb-24 sm:p-6 sm:pb-6 lg:p-8">
+        <main
+          className={cn(
+            'p-4 sm:p-6 lg:p-8',
+            isLongFormRoute ? 'pb-4 sm:pb-6' : 'pb-24 sm:pb-6'
+          )}
+        >
           <Outlet />
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden">
+      <nav
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden',
+          isLongFormRoute && 'hidden'
+        )}
+      >
         <div className="grid grid-cols-5 gap-1 px-2 py-2">
           {mobileNavigation.map((item) => {
             const isActive =
@@ -211,8 +264,66 @@ export function MainLayout() {
               </Link>
             );
           })}
+          {(() => {
+            const isMoreActive = visibleMoreNavigation.some(
+              (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+            );
+            return (
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className={cn(
+                  'flex min-h-14 flex-col items-center justify-center rounded-xl px-2 text-[11px] font-medium transition-colors',
+                  isMoreActive ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
+                )}
+              >
+                <MoreHorizontal className="mb-1 h-5 w-5" />
+                <span>Más</span>
+              </button>
+            );
+          })()}
         </div>
       </nav>
+
+      {/* Mobile "more" drawer */}
+      <Drawer open={moreOpen} onOpenChange={setMoreOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Más opciones</DrawerTitle>
+          </DrawerHeader>
+          <nav className="space-y-1 px-4 pb-6">
+            {visibleMoreNavigation.map((item) => {
+              const isActive =
+                location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={() => setMoreOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                    isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+                  )}
+                >
+                  <item.icon className={cn('h-5 w-5', isActive ? 'text-blue-700' : 'text-gray-500')} />
+                  {item.name}
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                handleLogout();
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+            >
+              <LogOut className="h-5 w-5" />
+              Cerrar Sesión
+            </button>
+          </nav>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
