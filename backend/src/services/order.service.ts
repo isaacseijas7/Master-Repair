@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Order, IOrder, MovementType, OrderStatus } from "../models/Order";
 import { Product } from "../models/Product";
 import { clientService } from "./client.service";
@@ -62,6 +63,7 @@ export class OrderService {
       type,
       status,
       supplier,
+      client,
       startDate,
       endDate,
     } = filters;
@@ -78,6 +80,9 @@ export class OrderService {
     if (type) query.type = type;
     if (status) query.status = status;
     if (supplier) query.supplier = supplier;
+    // Antes no existía forma de filtrar el historial de órdenes por cliente,
+    // pese a que Order.client ya estaba indexado justamente para esto.
+    if (client) query.client = client;
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -499,6 +504,36 @@ export class OrderService {
 
   async getPendingCount(): Promise<number> {
     return Order.countDocuments({ status: OrderStatus.PENDING });
+  }
+
+  /**
+   * Resumen de compras de un cliente: cuántas ventas completadas tiene y
+   * cuánto ha gastado en total. Antes no existía ninguna forma de consultar
+   * el historial/valor de compra de un cliente específico.
+   */
+  async getClientStats(
+    clientId: string,
+  ): Promise<{ totalOrders: number; totalSpent: number }> {
+    const result = await Order.aggregate([
+      {
+        $match: {
+          client: new mongoose.Types.ObjectId(clientId),
+          type: MovementType.SALE,
+          status: OrderStatus.COMPLETED,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalSpent: { $sum: "$total" },
+        },
+      },
+    ]);
+
+    return result[0]
+      ? { totalOrders: result[0].totalOrders, totalSpent: result[0].totalSpent }
+      : { totalOrders: 0, totalSpent: 0 };
   }
 }
 

@@ -6,6 +6,8 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Products } from "@/pages/products/Products";
 import { Categories } from "@/pages/categories/Categories";
 import { Suppliers } from "@/pages/suppliers/Suppliers";
+import { Clients } from "@/pages/clients/Clients";
+import { ClientDetail } from "@/pages/clients/ClientDetail";
 import { OrderDetail } from "./pages/orders/OrderDetail";
 import { Orders } from "./pages/orders/Orders";
 import { ProductDetail } from "./pages/products/ProductDetail";
@@ -80,6 +82,8 @@ function App() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/clients/:id" element={<ClientDetail />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/new" element={<OrderForm />} />
             <Route path="/orders/:id" element={<OrderDetail />} />

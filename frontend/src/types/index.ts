@@ -194,6 +194,18 @@ export interface CreateClientInput {
   phone?: string;
 }
 
+export interface UpdateClientInput {
+  name?: string;
+  email?: string;
+  phone?: string;
+  isActive?: boolean;
+}
+
+export interface ClientStats {
+  totalOrders: number;
+  totalSpent: number;
+}
+
 export interface CreateOrderInput {
   type: MovementTypeType;
   paymentType?: PaymentTypeType;
@@ -319,6 +331,7 @@ export interface OrderFilters extends PaginationParams {
   type?: (typeof MovementType)[keyof typeof MovementType];
   status?: (typeof OrderStatus)[keyof typeof OrderStatus];
   supplier?: string;
+  client?: string;
   startDate?: string;
   endDate?: string;
 }

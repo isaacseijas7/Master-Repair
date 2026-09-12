@@ -66,7 +66,13 @@ export class ClientService {
     });
 
     if (duplicatedName) {
-      throw new Error("Ya existe un cliente con ese nombre");
+      // Mensaje más orientador: el nombre es único a nivel de base de datos,
+      // así que dos clientes reales con el mismo nombre completo (ej. dos
+      // personas llamadas "Juan Pérez") necesitan un dato adicional para
+      // poder registrarse por separado.
+      throw new Error(
+        "Ya existe un cliente con ese nombre. Si es una persona distinta, agrega un dato que lo distinga (ej. un apellido materno, apodo o el teléfono) al nombre.",
+      );
     }
 
     if (email) {
@@ -80,6 +86,54 @@ export class ClientService {
     }
 
     const client = new Client({ name, email, phone });
+    await client.save();
+    return client;
+  }
+
+  async updateClient(id: string, data: any): Promise<IClient> {
+    const client = await Client.findById(id);
+    if (!client) throw new Error("Cliente no encontrado");
+
+    if (data.name !== undefined) {
+      const name = normalizeOptionalString(data.name);
+      if (!name) throw new Error("El nombre del cliente es requerido");
+
+      if (name.toLowerCase() !== client.name.toLowerCase()) {
+        const duplicatedName = await Client.findOne({
+          _id: { $ne: id },
+          name: { $regex: new RegExp(`^${this.escapeRegex(name)}$`, "i") },
+        });
+        if (duplicatedName) {
+          throw new Error(
+            "Ya existe un cliente con ese nombre. Si es una persona distinta, agrega un dato que lo distinga (ej. un apellido materno, apodo o el teléfono) al nombre.",
+          );
+        }
+      }
+      client.name = name;
+    }
+
+    if (data.email !== undefined) {
+      const email = normalizeOptionalString(data.email)?.toLowerCase();
+      if (email && email !== client.email) {
+        const duplicatedEmail = await Client.findOne({
+          _id: { $ne: id },
+          email: { $regex: new RegExp(`^${this.escapeRegex(email)}$`, "i") },
+        });
+        if (duplicatedEmail) {
+          throw new Error("Ya existe un cliente con ese email");
+        }
+      }
+      client.email = email;
+    }
+
+    if (data.phone !== undefined) {
+      client.phone = normalizeOptionalString(data.phone);
+    }
+
+    if (data.isActive !== undefined) {
+      client.isActive = data.isActive;
+    }
+
     await client.save();
     return client;
   }

@@ -21,6 +21,7 @@ export const orderService = {
     if (filters.type) params.append("type", filters.type);
     if (filters.status) params.append("status", filters.status);
     if (filters.supplier) params.append("supplier", filters.supplier);
+    if (filters.client) params.append("client", filters.client);
     if (filters.startDate) params.append("startDate", filters.startDate);
     if (filters.endDate) params.append("endDate", filters.endDate);
 

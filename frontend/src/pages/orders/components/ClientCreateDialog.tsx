@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import { clientService } from "@/services/client.service";
 import type { Client } from "@/types";
 
+const phoneRegex = /^[+]?[\d\s().-]{7,20}$/;
+
 const createClientSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio"),
   email: z
@@ -28,7 +30,13 @@ const createClientSchema = z.object({
     .refine((value) => !value || z.email().safeParse(value).success, {
       message: "Email inválido",
     }),
-  phone: z.string().trim().optional(),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || phoneRegex.test(value), {
+      message: "Teléfono inválido",
+    }),
 });
 
 type CreateClientFormData = z.infer<typeof createClientSchema>;
