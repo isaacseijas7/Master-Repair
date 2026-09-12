@@ -18,7 +18,11 @@ export const passwordSchema = z
     newPassword: z
       .string()
       .min(6, "La nueva contraseña debe tener al menos 6 caracteres")
-      .max(100, "La contraseña no puede exceder 100 caracteres"),
+      .max(100, "La contraseña no puede exceder 100 caracteres")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+        "Debe incluir al menos una mayúscula, una minúscula y un número",
+      ),
     confirmPassword: z.string().min(1, "Confirme la nueva contraseña"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

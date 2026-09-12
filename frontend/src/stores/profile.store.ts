@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { profileService, type User } from "@/services/profile.service";
+import { useAuthStore } from "@/stores/auth.store";
 import type {
   ProfileFormData,
   PasswordFormData,
@@ -57,7 +58,11 @@ export const useProfileStore = create<ProfileState>((set) => ({
   changePassword: async (data: PasswordFormData) => {
     set({ isChangingPassword: true, error: null });
     try {
-      await profileService.changePassword(data);
+      const { token } = await profileService.changePassword(data);
+      // El backend invalidó el token anterior al cambiar la contraseña
+      // (tokenVersion); sin actualizar el store, la siguiente petición de
+      // esta misma sesión recibiría 401 y forzaría un logout innecesario.
+      useAuthStore.getState().setToken(token);
       set({ isChangingPassword: false });
       return true;
     } catch (error: any) {

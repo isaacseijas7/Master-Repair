@@ -13,6 +13,7 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
+  tokenVersion: number;
 }
 
 export class AuthService {
@@ -63,11 +64,14 @@ export class AuthService {
     return user;
   }
 
-  private generateToken(user: IUser): string {
+  // Público porque profile.service.ts también lo usa para reemitir un token
+  // vigente cuando cambia la contraseña (ver changePassword en ese archivo).
+  generateToken(user: IUser): string {
     const payload: TokenPayload = {
       userId: user._id.toString(),
       email: user.email,
       role: user.role,
+      tokenVersion: user.tokenVersion,
     };
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
   }
