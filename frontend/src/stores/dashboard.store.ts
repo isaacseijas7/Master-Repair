@@ -1,14 +1,16 @@
 import { create } from 'zustand';
-import type { DashboardMetrics, StockAlert, TopProduct, MonthlyRevenue } from '@/types';
+import type { DashboardMetrics, StockAlert, TopProduct, MonthlyRevenue, InventoryValue } from '@/types';
 import { dashboardService } from '@/services/dashboard.service';
 
 interface DashboardState {
   metrics: DashboardMetrics | null;
+  // Vacíos (no null/undefined) para roles sin permisos financieros, ya que
+  // el backend simplemente no envía estas secciones.
   topProducts: TopProduct[];
   monthlyRevenue: MonthlyRevenue[];
   stockAlerts: StockAlert[];
   recentOrders: any[];
-  inventoryValue: { totalValue: number; totalCost: number } | null;
+  inventoryValue: InventoryValue | null;
   salesByCategory: any[];
   isLoading: boolean;
   error: string | null;
@@ -39,12 +41,14 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       const response = await dashboardService.getDashboardData();
       set({
         metrics: response.metrics,
-        topProducts: response.topProducts,
-        monthlyRevenue: response.monthlyRevenue,
+        // response.topProducts/etc. vienen undefined para roles sin
+        // permisos financieros (Cashier); se normalizan a vacío/null.
+        topProducts: response.topProducts ?? [],
+        monthlyRevenue: response.monthlyRevenue ?? [],
         stockAlerts: response.stockAlerts,
         recentOrders: response.recentOrders,
-        inventoryValue: response.inventoryValue,
-        salesByCategory: response.salesByCategory,
+        inventoryValue: response.inventoryValue ?? null,
+        salesByCategory: response.salesByCategory ?? [],
         isLoading: false,
       });
     } catch (error: any) {

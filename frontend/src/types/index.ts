@@ -263,10 +263,14 @@ export interface DashboardMetrics {
   totalCategories: number;
   totalSuppliers: number;
   totalStock: number;
-  todaySales: number;
-  monthSales: number;
-  monthRevenue: number;
   pendingOrders: number;
+  // Antes se llamaban "todaySales" (un monto en dinero) y "monthSales" (un
+  // conteo de órdenes), pese al mismo patrón de nombre "Sales" para dos
+  // tipos de dato distintos. Además, ahora son opcionales porque el
+  // backend ya no las envía para roles sin permisos financieros (Cashier).
+  todayRevenue?: number;
+  monthOrders?: number;
+  monthRevenue?: number;
 }
 
 export interface TopProduct {
@@ -294,7 +298,6 @@ export interface StockAlert {
 
 export interface InventoryValue {
   totalValue: number;
-  totalCost: number;
 }
 
 export interface SalesByCategory {
@@ -307,12 +310,14 @@ export interface SalesByCategory {
 
 export interface DashboardData {
   metrics: DashboardMetrics;
-  topProducts: TopProduct[];
-  monthlyRevenue: MonthlyRevenue[];
   stockAlerts: StockAlert[];
   recentOrders: Order[];
-  inventoryValue: InventoryValue;
-  salesByCategory: SalesByCategory[];
+  // Ausentes en la respuesta para roles sin permisos financieros (Cashier):
+  // el backend ya no calcula ni envía estas secciones para ellos.
+  topProducts?: TopProduct[];
+  monthlyRevenue?: MonthlyRevenue[];
+  inventoryValue?: InventoryValue;
+  salesByCategory?: SalesByCategory[];
 }
 
 // ==================== FILTER TYPES ====================

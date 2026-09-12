@@ -3,25 +3,37 @@ import { Category } from '../models/Category';
 import { Supplier } from '../models/Supplier';
 import { Order, MovementType, OrderStatus } from '../models/Order';
 
+const PRIVILEGED_ROLES = ["admin", "manager"];
+
 export class DashboardService {
-  async getDashboardData(): Promise<any> {
-    const [
-      metrics,
-      topProducts,
-      monthlyRevenue,
-      stockAlerts,
-      recentOrders,
-      inventoryValue,
-      salesByCategory,
-    ] = await Promise.all([
-      this.getMetrics(),
-      this.getTopProducts(5),
-      this.getMonthlyRevenue(12),
+  /**
+   * Antes el dashboard devolvía ingresos, top productos y ventas por
+   * categoría a cualquier rol autenticado, incluido Cashier, sin ninguna
+   * restricción (hallazgo de la auditoría, Fase 1 y Fase 5). Un Cashier
+   * sigue viendo stock, alertas y órdenes recientes (las necesita para
+   * "gestión de stock" según su alcance documentado), pero ya no ve
+   * ingresos, productos más vendidos ni ventas por categoría.
+   */
+  async getDashboardData(userRole?: string): Promise<any> {
+    const isPrivileged = !!userRole && PRIVILEGED_ROLES.includes(userRole);
+
+    const [metrics, stockAlerts, recentOrders] = await Promise.all([
+      this.getMetrics(userRole),
       this.getStockAlerts(5),
       this.getRecentOrders(5),
-      this.getInventoryValue(),
-      this.getSalesByCategory(),
     ]);
+
+    if (!isPrivileged) {
+      return { metrics, stockAlerts, recentOrders };
+    }
+
+    const [topProducts, monthlyRevenue, inventoryValue, salesByCategory] =
+      await Promise.all([
+        this.getTopProducts(5),
+        this.getMonthlyRevenue(12),
+        this.getInventoryValue(),
+        this.getSalesByCategory(),
+      ]);
 
     return {
       metrics,
@@ -34,7 +46,7 @@ export class DashboardService {
     };
   }
 
-  async getMetrics(): Promise<any> {
+  async getMetrics(userRole?: string): Promise<any> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -76,16 +88,28 @@ export class DashboardService {
     const monthResult = monthSales[0] || { count: 0, total: 0 };
     const totalStock = totalStockResult[0]?.totalStock || 0;
 
-    return {
+    const baseMetrics = {
       totalProducts,
       lowStockProducts,
       totalCategories,
       totalSuppliers,
       totalStock,
-      todaySales: todayResult.total,
-      monthSales: monthResult.count,
-      monthRevenue: monthResult.total,
       pendingOrders,
+    };
+
+    // Antes "todaySales" guardaba un monto en dinero y "monthSales" un
+    // conteo de órdenes, pese al mismo patrón de nombre "Sales" — una
+    // trampa para quien reutilizara el campo sin revisar su tipo real.
+    const isPrivileged = !!userRole && PRIVILEGED_ROLES.includes(userRole);
+    if (!isPrivileged) {
+      return baseMetrics;
+    }
+
+    return {
+      ...baseMetrics,
+      todayRevenue: todayResult.total,
+      monthOrders: monthResult.count,
+      monthRevenue: monthResult.total,
     };
   }
 
@@ -144,7 +168,11 @@ export class DashboardService {
       sku: p.sku,
       currentStock: p.stock,
       minStock: p.minStock,
-      missing: p.minStock - p.stock + 5,
+      // Antes sumaba "+5" sin ninguna explicación ni justificación de
+      // negocio documentada, mostrando al usuario un faltante inflado
+      // (ej. "faltan 7" cuando en realidad faltaban 2). El faltante real es
+      // simplemente la diferencia entre el mínimo y el stock actual.
+      missing: Math.max(0, p.minStock - p.stock),
     }));
   }
 
@@ -157,13 +185,22 @@ export class DashboardService {
       .lean();
   }
 
-  async getInventoryValue(): Promise<{ totalValue: number; totalCost: number }> {
+  /**
+   * Antes también calculaba "totalCost" usando wholesalePrice (un precio de
+   * venta al mayoreo) como si fuera el costo de adquisición del producto.
+   * El sistema no tiene ningún campo real de costo en Producto, así que esa
+   * cifra no representaba una ganancia real; además, el resultado completo
+   * nunca se mostraba en ningún lado (se calculaba en cada carga del
+   * dashboard sin ningún uso). Se deja solo el valor real y verificable:
+   * el valor del inventario a precio de venta.
+   */
+  async getInventoryValue(): Promise<{ totalValue: number }> {
     const result = await Product.aggregate([
       { $match: { isActive: true } },
-      { $group: { _id: null, totalValue: { $sum: { $multiply: ['$unitPrice', '$stock'] } }, totalCost: { $sum: { $multiply: [{ $ifNull: ['$wholesalePrice', '$unitPrice'] }, '$stock'] } } } },
+      { $group: { _id: null, totalValue: { $sum: { $multiply: ['$unitPrice', '$stock'] } } } },
     ]);
 
-    return result[0] || { totalValue: 0, totalCost: 0 };
+    return result[0] ? { totalValue: result[0].totalValue } : { totalValue: 0 };
   }
 
   async getSalesByCategory(): Promise<any[]> {

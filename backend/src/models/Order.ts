@@ -173,6 +173,13 @@ OrderSchema.index({ status: 1 });
 OrderSchema.index({ paymentType: 1 });
 OrderSchema.index({ client: 1 });
 OrderSchema.index({ createdAt: -1 });
+// Respalda las agregaciones del dashboard (ventas de hoy, ingresos
+// mensuales, top productos, ventas por categoría), que siempre filtran por
+// esta combinación exacta de campos. Antes solo existían índices de un solo
+// campo: con una prueba real de 5,000 órdenes, la consulta de "ventas de
+// hoy" examinaba dos tercios de toda la colección para devolver 2
+// resultados. Este índice le permite a MongoDB ir directo al rango.
+OrderSchema.index({ status: 1, type: 1, completedAt: 1 });
 
 // Genera un número de orden legible y con muy baja probabilidad de colisión:
 // prefijo por tipo + timestamp en base36 + sufijo aleatorio de 4 caracteres.
