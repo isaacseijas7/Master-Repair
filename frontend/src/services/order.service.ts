@@ -58,7 +58,10 @@ export const orderService = {
   },
 
   async cancelOrder(id: string): Promise<void> {
-    await apiClient.patch(`/orders/${id}/cancel`);
+    // Antes llamaba a PATCH /orders/:id/cancel, una ruta que nunca existió
+    // en el backend (siempre respondía 404). El backend expone el cambio de
+    // estado a través de /status, el mismo endpoint que usa "Completar".
+    await apiClient.patch(`/orders/${id}/status`, { status: "cancelled" });
   },
 
   async getTodaySales(): Promise<{ count: number; total: number }> {

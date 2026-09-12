@@ -2,7 +2,54 @@ import { Order, IOrder, MovementType, OrderStatus } from "../models/Order";
 import { Product } from "../models/Product";
 import { clientService } from "./client.service";
 
+// Roles que pueden crear o modificar órdenes que no sean de venta
+// (compras, ajustes, devoluciones). Un Cashier solo puede operar ventas,
+// según el alcance de roles documentado en el README del proyecto.
+const PRIVILEGED_ROLES = ["admin", "manager"];
+
 export class OrderService {
+  /**
+   * Valida los ítems de una orden contra el catálogo de productos y calcula
+   * subtotal + líneas procesadas. Se usa tanto en creación como en edición
+   * para que ambas compartan exactamente la misma regla de validación de
+   * stock (antes estaban duplicadas con condiciones ligeramente distintas).
+   */
+  private async validateAndProcessItems(
+    items: any[],
+    effectiveType: string,
+  ): Promise<{ processedItems: any[]; subtotal: number }> {
+    const processedItems = [];
+    let subtotal = 0;
+
+    for (const item of items) {
+      const product = await Product.findById(item.product);
+      if (!product) throw new Error(`Producto no encontrado: ${item.product}`);
+      if (!product.isActive)
+        throw new Error(`El producto ${product.name} no está activo`);
+
+      if (
+        effectiveType === MovementType.SALE &&
+        product.stock < item.quantity
+      ) {
+        throw new Error(`Stock insuficiente para ${product.name}`);
+      }
+
+      const unitPrice = item.unitPrice || product.unitPrice;
+      const totalPrice = unitPrice * item.quantity;
+
+      processedItems.push({
+        product: item.product,
+        quantity: item.quantity,
+        unitPrice,
+        totalPrice,
+      });
+
+      subtotal += totalPrice;
+    }
+
+    return { processedItems, subtotal };
+  }
+
   async getOrders(
     filters: any = {},
   ): Promise<{ data: IOrder[]; pagination: any }> {
@@ -80,7 +127,21 @@ export class OrderService {
     return order;
   }
 
-  async createOrder(orderData: any, userId: string): Promise<IOrder> {
+  async createOrder(
+    orderData: any,
+    userId: string,
+    userRole?: string,
+  ): Promise<IOrder> {
+    if (
+      orderData.type !== MovementType.SALE &&
+      userRole &&
+      !PRIVILEGED_ROLES.includes(userRole)
+    ) {
+      throw new Error(
+        "No tiene permisos para crear órdenes que no sean de venta",
+      );
+    }
+
     if (orderData.type === MovementType.SALE) {
       if (!orderData.client) {
         throw new Error("Selecciona un cliente");
@@ -97,34 +158,10 @@ export class OrderService {
       orderData.customerPhone = undefined;
     }
 
-    const processedItems = [];
-    let subtotal = 0;
-
-    for (const item of orderData.items) {
-      const product = await Product.findById(item.product);
-      if (!product) throw new Error(`Producto no encontrado: ${item.product}`);
-      if (!product.isActive)
-        throw new Error(`El producto ${product.name} no está activo`);
-
-      if (
-        orderData.type === MovementType.SALE &&
-        product.stock < item.quantity
-      ) {
-        throw new Error(`Stock insuficiente para ${product.name}`);
-      }
-
-      const unitPrice = item.unitPrice || product.unitPrice;
-      const totalPrice = unitPrice * item.quantity;
-
-      processedItems.push({
-        product: item.product,
-        quantity: item.quantity,
-        unitPrice,
-        totalPrice,
-      });
-
-      subtotal += totalPrice;
-    }
+    const { processedItems, subtotal } = await this.validateAndProcessItems(
+      orderData.items,
+      orderData.type,
+    );
 
     const tax = orderData.tax || 0;
     const discount = orderData.discount || 0;
@@ -169,42 +206,16 @@ export class OrderService {
     //   throw new Error("No se puede cambiar el tipo de orden");
     // }
 
-    // Procesar items si vienen nuevos
+    // Procesar items si vienen nuevos. Se usa el mismo helper que createOrder
+    // para que la regla de validación de stock sea idéntica en ambos casos
+    // (antes createOrder solo validaba stock si el tipo era "sale", y
+    // updateOrder usaba una condición ligeramente distinta).
     if (orderData.items && orderData.items.length > 0) {
-      const processedItems = [];
-      let subtotal = 0;
-
-      for (const item of orderData.items) {
-        const product = await Product.findById(item.product);
-        if (!product)
-          throw new Error(`Producto no encontrado: ${item.product}`);
-        if (!product.isActive)
-          throw new Error(`El producto ${product.name} no está activo`);
-
-        // Validar stock solo para ventas
-        if (
-          orderData.type === MovementType.SALE ||
-          existingOrder.type === MovementType.SALE
-        ) {
-          if (product.stock < item.quantity) {
-            throw new Error(
-              `Stock insuficiente para ${product.name}. Disponible: ${product.stock}`,
-            );
-          }
-        }
-
-        const unitPrice = item.unitPrice || product.unitPrice;
-        const totalPrice = unitPrice * item.quantity;
-
-        processedItems.push({
-          product: item.product,
-          quantity: item.quantity,
-          unitPrice,
-          totalPrice,
-        });
-
-        subtotal += totalPrice;
-      }
+      const effectiveType = orderData.type ?? existingOrder.type;
+      const { processedItems, subtotal } = await this.validateAndProcessItems(
+        orderData.items,
+        effectiveType,
+      );
 
       existingOrder.items = processedItems;
       existingOrder.subtotal = subtotal;
@@ -252,39 +263,130 @@ export class OrderService {
     return existingOrder.populate(["items.product", "supplier", "client", "createdBy"]);
   }
 
-  async updateOrderStatus(id: string, status: string): Promise<IOrder> {
+  async updateOrderStatus(
+    id: string,
+    status: string,
+    userRole?: string,
+  ): Promise<IOrder> {
     const order = await Order.findById(id);
     if (!order) throw new Error("Orden no encontrada");
 
+    const validStatuses = Object.values(OrderStatus) as string[];
+    if (!validStatuses.includes(status)) {
+      throw new Error("Estado de orden inválido");
+    }
+
+    if (
+      order.type !== MovementType.SALE &&
+      userRole &&
+      !PRIVILEGED_ROLES.includes(userRole)
+    ) {
+      throw new Error(
+        "No tiene permisos para modificar el estado de esta orden",
+      );
+    }
+
     const previousStatus = order.status;
-    order.status = status as (typeof OrderStatus)[keyof typeof OrderStatus];
+
+    if (previousStatus === status) {
+      throw new Error(`La orden ya está en estado "${status}"`);
+    }
+
+    // Una orden cancelada es un estado terminal: no se puede reabrir ni
+    // completar después de cancelada.
+    if (previousStatus === OrderStatus.CANCELLED) {
+      throw new Error("No se puede modificar una orden cancelada");
+    }
+
+    // Solo se puede completar una orden que esté pendiente.
+    if (status === OrderStatus.COMPLETED && previousStatus !== OrderStatus.PENDING) {
+      throw new Error("Solo se puede completar una orden pendiente");
+    }
+
+    // No tiene sentido regresar una orden a "pendiente" una vez que avanzó.
+    if (status === OrderStatus.PENDING) {
+      throw new Error("No se puede volver una orden a estado pendiente");
+    }
 
     if (status === OrderStatus.COMPLETED) {
       order.completedAt = new Date();
-      if (previousStatus === OrderStatus.PENDING) {
-        await this.updateStockForOrder(order);
-      }
+      await this.updateStockForOrder(order);
+    } else if (
+      status === OrderStatus.CANCELLED &&
+      previousStatus === OrderStatus.COMPLETED
+    ) {
+      // La orden ya había afectado el stock al completarse; hay que
+      // revertir ese movimiento antes de marcarla como cancelada.
+      await this.reverseStockForOrder(order);
     }
 
+    order.status = status as (typeof OrderStatus)[keyof typeof OrderStatus];
     await order.save();
     return order.populate(["items.product", "supplier", "client", "createdBy"]);
   }
 
+  /**
+   * Aplica el movimiento de stock de una orden usando operaciones atómicas
+   * de MongoDB ($inc con filtro) en vez de leer el producto, calcular en
+   * memoria y guardar. Con el patrón anterior (findById + save), dos ventas
+   * simultáneas del mismo producto podían leer el mismo stock disponible y
+   * ambas pasar la validación, generando sobreventa. Con $inc + un filtro
+   * "stock >= cantidad", MongoDB serializa la operación a nivel de
+   * documento: si el stock ya no alcanza en el momento exacto de aplicar el
+   * descuento, la operación falla en vez de dejar el stock en negativo.
+   */
   private async updateStockForOrder(order: IOrder): Promise<void> {
     for (const item of order.items) {
-      const product = await Product.findById(item.product);
-      if (product) {
-        if (
-          order.type === MovementType.PURCHASE ||
-          order.type === MovementType.RETURN
-        ) {
-          product.stock += item.quantity;
-        } else if (order.type === MovementType.SALE) {
-          if (product.stock >= item.quantity) {
-            product.stock -= item.quantity;
-          }
+      if (
+        order.type === MovementType.PURCHASE ||
+        order.type === MovementType.RETURN ||
+        order.type === MovementType.ADJUSTMENT
+      ) {
+        // Compra, devolución y ajuste suman stock (un ajuste representa una
+        // corrección positiva, ej. unidades encontradas en un conteo).
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity },
+        });
+      } else if (order.type === MovementType.SALE) {
+        const updated = await Product.findOneAndUpdate(
+          { _id: item.product, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } },
+          { new: true },
+        );
+        if (!updated) {
+          throw new Error(
+            `Stock insuficiente para completar la venta: otro movimiento consumió el stock disponible de uno de los productos`,
+          );
         }
-        await product.save();
+      }
+    }
+  }
+
+  /**
+   * Revierte exactamente el movimiento de stock que hizo updateStockForOrder,
+   * usado cuando una orden completada se cancela después. También atómica,
+   * y usa una pipeline de actualización para nunca dejar el stock negativo.
+   */
+  private async reverseStockForOrder(order: IOrder): Promise<void> {
+    for (const item of order.items) {
+      if (
+        order.type === MovementType.PURCHASE ||
+        order.type === MovementType.RETURN ||
+        order.type === MovementType.ADJUSTMENT
+      ) {
+        await Product.findByIdAndUpdate(item.product, [
+          {
+            $set: {
+              stock: {
+                $max: [0, { $subtract: ["$stock", item.quantity] }],
+              },
+            },
+          },
+        ]);
+      } else if (order.type === MovementType.SALE) {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity },
+        });
       }
     }
   }

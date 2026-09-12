@@ -21,7 +21,6 @@ const ClientSchema = new Schema<IClient>(
       type: String,
       lowercase: true,
       trim: true,
-      sparse: true,
     },
     phone: {
       type: String,

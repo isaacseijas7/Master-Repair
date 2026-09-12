@@ -79,6 +79,7 @@ const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: {
       type: String,
+      unique: true,
     },
     type: {
       type: String,
@@ -173,9 +174,13 @@ OrderSchema.index({ paymentType: 1 });
 OrderSchema.index({ client: 1 });
 OrderSchema.index({ createdAt: -1 });
 
+// Genera un número de orden legible y con muy baja probabilidad de colisión:
+// prefijo por tipo + timestamp en base36 + sufijo aleatorio de 4 caracteres.
+// Además, antes de aceptarlo, verifica contra la colección que no exista ya
+// (con reintentos), porque el campo tiene un índice único que de otra forma
+// rechazaría la orden con un error genérico de base de datos.
 OrderSchema.pre("save", async function (next) {
   if (this.isNew) {
-    const date = new Date();
     const prefix =
       this.type === MovementType.PURCHASE
         ? "OC"
@@ -184,10 +189,30 @@ OrderSchema.pre("save", async function (next) {
           : this.type === MovementType.RETURN
             ? "DE"
             : "AJ";
-    const timestamp = date.getTime().toString(36).toUpperCase();
-    this.orderNumber = `${prefix}-${timestamp}`;
+
+    const OrderModel = this.constructor as mongoose.Model<IOrder>;
+    let orderNumber = "";
+    let isUnique = false;
+    let attempts = 0;
+
+    while (!isUnique && attempts < 5) {
+      const timestamp = Date.now().toString(36).toUpperCase();
+      const randomSuffix = Math.random()
+        .toString(36)
+        .slice(2, 6)
+        .toUpperCase();
+      orderNumber = `${prefix}-${timestamp}-${randomSuffix}`;
+      // eslint-disable-next-line no-await-in-loop
+      const existing = await OrderModel.exists({ orderNumber });
+      isUnique = !existing;
+      attempts++;
+    }
+
+    this.orderNumber = orderNumber;
   }
   next();
 });
 
-export const Order = mongoose.model<IOrder>("Order", OrderSchema);
+export const Order =
+  (mongoose.models.Order as mongoose.Model<IOrder>) ||
+  mongoose.model<IOrder>("Order", OrderSchema);
