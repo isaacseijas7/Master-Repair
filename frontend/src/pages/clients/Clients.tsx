@@ -104,10 +104,9 @@ export function Clients() {
       try {
         await deleteClient(id);
         toast.success("Cliente eliminado");
-      } catch (error: any) {
-        toast.error(
-          error.response?.data?.message || "Error al eliminar el cliente",
-        );
+      } catch {
+        // deleteClient ya deja el mensaje en `error` del store; lo muestra
+        // useStoreErrorToast. Mostrarlo también aquí duplicaría el toast.
       }
     }
   };
@@ -128,10 +127,9 @@ export function Clients() {
       setIsCreateDialogOpen(false);
       form.reset();
       navigate(`/clients/${client._id}`);
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Error al crear el cliente",
-      );
+    } catch {
+      // createClient ya deja el mensaje en `error` del store; lo muestra
+      // useStoreErrorToast. Mostrarlo también aquí duplicaría el toast.
     }
   };
 

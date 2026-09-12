@@ -24,9 +24,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
+          // Antes: "var(--popover)" a secas. En este proyecto las variables
+          // de tema (index.css) son tripletas HSL crudas ("0 0% 100%"), no
+          // colores completos — Tailwind las usa siempre envueltas en
+          // hsl(var(--x)) (ver tailwind.config.js). Sin el wrapper,
+          // "background: var(--normal-bg)" es un valor inválido y el
+          // navegador lo descarta, dejando el toast con fondo transparente:
+          // por eso se veía "detrás" del overlay del modal (en realidad
+          // estaba encima, pero transparente, y se veía el gris a través).
+          "--normal-bg": "hsl(var(--popover))",
+          "--normal-text": "hsl(var(--popover-foreground))",
+          "--normal-border": "hsl(var(--border))",
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }

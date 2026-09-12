@@ -144,12 +144,16 @@ export function Orders() {
     fetchOrders(orderFilters);
   };
 
+  // updateOrderStatus/cancelOrder ya dejan el mensaje real del backend en
+  // `error` del store; lo muestra useStoreErrorToast. Un catch con
+  // toast.error aquí duplicaría el toast (y con un mensaje genérico peor
+  // que el real).
   const handleCompleteOrder = async (id: string) => {
     try {
       await updateOrderStatus(id, OrderStatus.COMPLETED);
       toast.success("Orden completada exitosamente");
-    } catch (error) {
-      toast.error("Error al completar la orden");
+    } catch {
+      // sin-op: ver comentario arriba
     }
   };
 
@@ -158,8 +162,8 @@ export function Orders() {
       try {
         await cancelOrder(id);
         toast.success("Orden cancelada exitosamente");
-      } catch (error) {
-        toast.error("Error al cancelar la orden");
+      } catch {
+        // sin-op: ver comentario arriba
       }
     }
   };
