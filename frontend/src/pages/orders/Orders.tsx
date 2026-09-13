@@ -155,6 +155,12 @@ export function Orders() {
   // toast.error aquí duplicaría el toast (y con un mensaje genérico peor
   // que el real).
   const handleCompleteOrder = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Completar orden",
+      description: "¿Estás seguro de marcar esta orden como completada?",
+      confirmText: "Completar",
+    });
+    if (!confirmed) return;
     try {
       await updateOrderStatus(id, OrderStatus.COMPLETED);
       toast.success("Orden completada exitosamente");
