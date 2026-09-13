@@ -286,6 +286,7 @@ export function OrderDetail() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
+                  data-tour="orders.detail-actions-trigger"
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 sm:hidden"
@@ -352,6 +353,7 @@ export function OrderDetail() {
               {isPending && (
                 <>
                   <Button
+                    data-tour="orders.detail-edit-button"
                     variant="outline"
                     onClick={() => navigate(`/orders/${currentOrder._id}/edit`)}
                     className="h-9"
@@ -372,6 +374,7 @@ export function OrderDetail() {
                   )}
 
                   <Button
+                    data-tour="orders.detail-complete-button"
                     onClick={handleCompleteOrder}
                     className="h-9 bg-green-600 hover:bg-green-700"
                   >
@@ -380,6 +383,7 @@ export function OrderDetail() {
                   </Button>
 
                   <Button
+                    data-tour="orders.detail-cancel-button"
                     variant="destructive"
                     onClick={handleCancelOrder}
                     className="h-9"
@@ -662,6 +666,7 @@ export function OrderDetail() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                data-tour="orders.detail-fab-trigger"
                 size="lg"
                 className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
               >

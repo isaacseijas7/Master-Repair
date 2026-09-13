@@ -47,6 +47,7 @@ export function ProductFilters({
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
+          data-tour="products.search-input"
           placeholder="Buscar por nombre, SKU o descripción..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -60,7 +61,7 @@ export function ProductFilters({
           onCategoryChange(value === "all" ? undefined : value)
         }
       >
-        <SelectTrigger className="w-full sm:w-48">
+        <SelectTrigger data-tour="products.filters-entry" className="w-full sm:w-48">
           <SelectValue placeholder="Todas las categorías" />
         </SelectTrigger>
         <SelectContent>
@@ -100,6 +101,7 @@ export function ProductFilters({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
+              data-tour="products.search-input"
               placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -108,7 +110,12 @@ export function ProductFilters({
           </div>
           <Drawer>
             <DrawerTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Abrir filtros de productos">
+              <Button
+                data-tour="products.filters-entry"
+                variant="outline"
+                size="icon"
+                aria-label="Abrir filtros de productos"
+              >
                 <Filter className="h-4 w-4" />
               </Button>
             </DrawerTrigger>

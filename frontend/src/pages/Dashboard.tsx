@@ -4,9 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatNumber, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { useDashboardStore } from '@/stores/dashboard.store';
+import { dashboardOverviewGuide } from '@/lib/tour/guides/dashboard.guides';
+import { useTourRunner } from '@/lib/tour/useTourRunner';
 import {
   AlertTriangle,
   ArrowRight,
+  CircleHelp,
   Clock,
   DollarSign,
   Package,
@@ -42,6 +45,7 @@ export function Dashboard() {
     isLoading,
     fetchDashboardData
   } = useDashboardStore();
+  const { startTour } = useTourRunner();
 
   useEffect(() => {
     fetchDashboardData();
@@ -59,13 +63,23 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <div data-tour="dashboard.page-title">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <button
+            type="button"
+            onClick={() => startTour(dashboardOverviewGuide)}
+            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            aria-label="Ver recorrido de esta pantalla"
+          >
+            <CircleHelp className="w-4 h-4" />
+          </button>
+        </div>
         <p className="text-gray-500">Resumen general del sistema</p>
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-tour="dashboard.metrics-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Productos"
           value={formatNumber(metrics.totalProducts)}
@@ -127,7 +141,7 @@ export function Dashboard() {
       {hasFinancialAccess && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Revenue Chart */}
-        <Card>
+        <Card data-tour="dashboard.revenue-chart">
           <CardHeader>
             <CardTitle className="text-lg">Ingresos Mensuales</CardTitle>
           </CardHeader>
@@ -229,7 +243,7 @@ export function Dashboard() {
         )}
 
         {/* Stock Alerts */}
-        <Card>
+        <Card data-tour="dashboard.stock-alerts">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -271,7 +285,7 @@ export function Dashboard() {
       </div>
 
       {/* Recent Orders */}
-      <Card>
+      <Card data-tour="dashboard.recent-orders">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Órdenes Recientes</CardTitle>
           <Link to="/orders">

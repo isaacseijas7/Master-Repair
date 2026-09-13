@@ -81,7 +81,12 @@ export function ClientCreateDialog({ onClientCreated }: ClientCreateDialogProps)
       open={open}
       onOpenChange={setOpen}
       trigger={
-        <Button type="button" variant="outline" className="w-full gap-2 md:w-auto">
+        <Button
+          data-tour="orders.form.client-create-button"
+          type="button"
+          variant="outline"
+          className="w-full gap-2 md:w-auto"
+        >
           <Plus className="h-4 w-4" />
           Registrar nuevo cliente
         </Button>

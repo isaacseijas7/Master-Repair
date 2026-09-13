@@ -111,7 +111,12 @@ export function ProductRow({ product, onDelete, canManage }: ProductRowProps) {
         {canManage && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Más opciones">
+              <Button
+                data-tour="products.row-actions-entry"
+                variant="ghost"
+                size="icon"
+                aria-label="Más opciones"
+              >
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>

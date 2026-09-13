@@ -58,6 +58,7 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
+                    data-tour="profile.password.current-input"
                     type={showCurrentPassword ? "text" : "password"}
                     placeholder="••••••••"
                     className="pl-10 pr-10"
@@ -99,6 +100,7 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
                   <div className="relative">
                     <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
+                      data-tour="profile.password.new-input"
                       type={showNewPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
@@ -139,6 +141,7 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
                   <div className="relative">
                     <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
+                      data-tour="profile.password.confirm-input"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
@@ -174,6 +177,7 @@ export function PasswordForm({ onSuccess }: PasswordFormProps) {
 
         <div className="flex justify-end">
           <Button
+            data-tour="profile.password.submit-button"
             type="submit"
             disabled={isChangingPassword}
             variant="destructive"

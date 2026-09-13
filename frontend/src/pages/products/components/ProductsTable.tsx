@@ -115,7 +115,12 @@ export function ProductsTable({
 
                   {canManage && (
                     <div className="mt-4 flex gap-2">
-                      <Button className="flex-1" variant="outline" onClick={() => navigate(`/products/${product._id}`)}>
+                      <Button
+                        data-tour="products.row-actions-entry"
+                        className="flex-1"
+                        variant="outline"
+                        onClick={() => navigate(`/products/${product._id}`)}
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Editar
                       </Button>

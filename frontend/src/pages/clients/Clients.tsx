@@ -31,7 +31,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
-import { Search, Plus, MoreHorizontal, Eye, Trash2, Users, Mail, Phone } from "lucide-react";
+import { CircleHelp, Search, Plus, MoreHorizontal, Eye, Trash2, Users, Mail, Phone } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useForm } from "react-hook-form";
@@ -39,6 +39,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Pagination } from "@/components/Pagination";
 import { toast } from "sonner";
+import { clientsOverviewGuide } from "@/lib/tour/guides/clients.guides";
+import { useTourRunner } from "@/lib/tour/useTourRunner";
 
 // Mismo patrón que valida el backend: antes no había ninguna validación de
 // formato de teléfono, ni aquí ni en el servidor.
@@ -76,6 +78,7 @@ export function Clients() {
   } = useClientStore();
 
   useStoreErrorToast(error, clearError);
+  const { startTour } = useTourRunner();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -129,9 +132,22 @@ export function Clients() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div
+        data-tour="clients.page-title"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+            <button
+              type="button"
+              onClick={() => startTour(clientsOverviewGuide)}
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Ver recorrido de esta pantalla"
+            >
+              <CircleHelp className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-gray-500">
             Gestiona tus clientes y consulta su historial de compras
           </p>
@@ -143,7 +159,7 @@ export function Clients() {
             if (!open) form.reset();
           }}
           trigger={
-            <Button>
+            <Button data-tour="clients.create-button">
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Cliente
             </Button>
@@ -162,7 +178,7 @@ export function Clients() {
                   <FormItem>
                     <FormLabel>Nombre *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nombre completo" {...field} />
+                      <Input data-tour="clients.form.name-input" placeholder="Nombre completo" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,6 +192,7 @@ export function Clients() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
+                        data-tour="clients.form.email-input"
                         type="email"
                         placeholder="cliente@email.com"
                         {...field}
@@ -192,7 +209,7 @@ export function Clients() {
                   <FormItem>
                     <FormLabel>Teléfono</FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" {...field} />
+                      <Input data-tour="clients.form.phone-input" placeholder="(555) 123-4567" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -200,6 +217,7 @@ export function Clients() {
               />
               <div className="flex justify-end gap-2">
                 <Button
+                  data-tour="clients.form.submit-button"
                   type="submit"
                   disabled={form.formState.isSubmitting}
                 >
@@ -223,6 +241,7 @@ export function Clients() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
+              data-tour="clients.search-input"
               placeholder="Buscar por nombre, email o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -288,7 +307,13 @@ export function Clients() {
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Más opciones">
+                          <Button
+                            data-tour="clients.row-actions-entry"
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11"
+                            aria-label="Más opciones"
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -388,7 +413,12 @@ export function Clients() {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="Más opciones">
+                            <Button
+                              data-tour="clients.row-actions-entry"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Más opciones"
+                            >
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

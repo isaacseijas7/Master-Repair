@@ -43,8 +43,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+import { CircleHelp, Loader2 } from "lucide-react";
 import { Pagination } from "@/components/Pagination";
+import { suppliersOverviewGuide } from "@/lib/tour/guides/suppliers.guides";
+import { useTourRunner } from "@/lib/tour/useTourRunner";
 
 const supplierSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -71,6 +73,7 @@ export function Suppliers() {
   } = useSupplierStore();
 
   useStoreErrorToast(error, clearError);
+  const { startTour } = useTourRunner();
 
   const { user } = useAuthStore();
   // El backend ya exige admin/manager para crear, editar y eliminar
@@ -104,9 +107,22 @@ export function Suppliers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div
+        data-tour="suppliers.page-title"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Proveedores</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Proveedores</h1>
+            <button
+              type="button"
+              onClick={() => startTour(suppliersOverviewGuide)}
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Ver recorrido de esta pantalla"
+            >
+              <CircleHelp className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-gray-500">Gestiona tus proveedores</p>
         </div>
         {canManage && (
@@ -114,7 +130,7 @@ export function Suppliers() {
             open={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
             trigger={
-              <Button>
+              <Button data-tour="suppliers.create-button">
                 <Plus className="w-4 h-4 mr-2" />
                 Nuevo Proveedor
               </Button>
@@ -137,6 +153,7 @@ export function Suppliers() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
+              data-tour="suppliers.search-input"
               placeholder="Buscar proveedores..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -192,7 +209,13 @@ export function Suppliers() {
                     {canManage && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Más opciones">
+                          <Button
+                            data-tour="suppliers.row-actions-entry"
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11"
+                            aria-label="Más opciones"
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -290,7 +313,12 @@ export function Suppliers() {
                         {canManage ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" aria-label="Más opciones">
+                              <Button
+                                data-tour="suppliers.row-actions-entry"
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Más opciones"
+                              >
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -389,7 +417,7 @@ function SupplierForm({
               <FormItem>
                 <FormLabel>Nombre *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre del proveedor" {...field} />
+                  <Input data-tour="suppliers.form.name-input" placeholder="Nombre del proveedor" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -402,7 +430,7 @@ function SupplierForm({
               <FormItem>
                 <FormLabel>Persona de Contacto</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre del contacto" {...field} />
+                  <Input data-tour="suppliers.form.contact-input" placeholder="Nombre del contacto" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -418,6 +446,7 @@ function SupplierForm({
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
+                    data-tour="suppliers.form.email-input"
                     type="email"
                     placeholder="proveedor@email.com"
                     {...field}
@@ -434,7 +463,7 @@ function SupplierForm({
               <FormItem>
                 <FormLabel>Teléfono</FormLabel>
                 <FormControl>
-                  <Input placeholder="+1 234 567 890" {...field} />
+                  <Input data-tour="suppliers.form.phone-input" placeholder="+1 234 567 890" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -471,7 +500,12 @@ function SupplierForm({
           )}
         />
         <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-white pt-4">
-          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          <Button
+            data-tour="suppliers.form.submit-button"
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

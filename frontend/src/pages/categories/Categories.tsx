@@ -30,8 +30,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useAuthStore } from "@/stores/auth.store";
 import { useCategoryStore } from "@/stores/category.store";
+import { categoriesOverviewGuide } from "@/lib/tour/guides/categories.guides";
+import { useTourRunner } from "@/lib/tour/useTourRunner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  CircleHelp,
   Edit,
   Loader2,
   MoreHorizontal,
@@ -79,6 +82,7 @@ export function Categories() {
   } = useCategoryStore();
 
   useStoreErrorToast(error, clearError);
+  const { startTour } = useTourRunner();
 
   const { user } = useAuthStore();
   // El backend ya exige admin/manager para crear, editar y eliminar
@@ -112,9 +116,22 @@ export function Categories() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div
+        data-tour="categories.page-title"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Categorías</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Categorías</h1>
+            <button
+              type="button"
+              onClick={() => startTour(categoriesOverviewGuide)}
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Ver recorrido de esta pantalla"
+            >
+              <CircleHelp className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-gray-500">Gestiona las categorías de productos</p>
         </div>
         {canManage && (
@@ -122,7 +139,7 @@ export function Categories() {
             open={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
             trigger={
-              <Button>
+              <Button data-tour="categories.create-button">
                 <Plus className="w-4 h-4 mr-2" />
                 Nueva Categoría
               </Button>
@@ -144,6 +161,7 @@ export function Categories() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
+              data-tour="categories.search-input"
               placeholder="Buscar categorías..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -190,7 +208,13 @@ export function Categories() {
                     {canManage && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Más opciones">
+                          <Button
+                            data-tour="categories.row-actions-entry"
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11"
+                            aria-label="Más opciones"
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -268,7 +292,12 @@ export function Categories() {
                         {canManage ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" aria-label="Más opciones">
+                              <Button
+                                data-tour="categories.row-actions-entry"
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Más opciones"
+                              >
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -366,7 +395,7 @@ function CategoryForm({ initialData, onSubmit }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Nombre *</FormLabel>
               <FormControl>
-                <Input placeholder="Nombre de la categoría" {...field} />
+                <Input data-tour="categories.form.name-input" placeholder="Nombre de la categoría" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -380,6 +409,7 @@ function CategoryForm({ initialData, onSubmit }: CategoryFormProps) {
               <FormLabel>Descripción</FormLabel>
               <FormControl>
                 <Input
+                  data-tour="categories.form.description-input"
                   placeholder="Descripción opcional"
                   {...field}
                   value={field.value ?? ""}
@@ -396,7 +426,7 @@ function CategoryForm({ initialData, onSubmit }: CategoryFormProps) {
             <FormItem>
               <FormLabel>Color *</FormLabel>
               <FormControl>
-                <div className="flex items-center gap-2">
+                <div data-tour="categories.form.color-input" className="flex items-center gap-2">
                   <input
                     type="color"
                     value={field.value}
@@ -415,7 +445,7 @@ function CategoryForm({ initialData, onSubmit }: CategoryFormProps) {
           )}
         />
         <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button data-tour="categories.form.submit-button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -45,6 +45,7 @@ import {
   Banknote,
   Calendar,
   CheckCircle,
+  CircleHelp,
   CreditCard,
   Eye,
   Filter,
@@ -58,6 +59,8 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ordersOverviewGuide } from "@/lib/tour/guides/orders.guides";
+import { useTourRunner } from "@/lib/tour/useTourRunner";
 
 // Tipo para el estado de filtros local
 type FilterState = {
@@ -67,6 +70,7 @@ type FilterState = {
 
 export function Orders() {
   const navigate = useNavigate();
+  const { startTour } = useTourRunner();
   const [limit, setLimit] = useState(10);
   const {
     orders,
@@ -270,6 +274,7 @@ export function Orders() {
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
+          data-tour="orders.search-input"
           placeholder="Buscar por número de orden o cliente..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -277,7 +282,7 @@ export function Orders() {
         />
       </div>
       <Select value={filters.type || "all"} onValueChange={handleTypeChange}>
-        <SelectTrigger className="w-full sm:w-40">
+        <SelectTrigger data-tour="orders.filters-entry" className="w-full sm:w-40">
           <Filter className="w-4 h-4 mr-2" />
           <SelectValue placeholder="Tipo" />
         </SelectTrigger>
@@ -304,14 +309,27 @@ export function Orders() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div
+        data-tour="orders.page-title"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Órdenes</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Órdenes</h1>
+            <button
+              type="button"
+              onClick={() => startTour(ordersOverviewGuide)}
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Ver recorrido de esta pantalla"
+            >
+              <CircleHelp className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-gray-500">
             Gestiona ventas, compras y devoluciones
           </p>
         </div>
-        <Button onClick={() => navigate("/orders/new")}>
+        <Button data-tour="orders.create-button" onClick={() => navigate("/orders/new")}>
           <Plus className="w-4 h-4 mr-2" />
           Nueva Orden
         </Button>
@@ -319,7 +337,10 @@ export function Orders() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+        <Card
+          data-tour="orders.pending-stat"
+          className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100"
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -344,6 +365,7 @@ export function Orders() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
+              data-tour="orders.search-input"
               placeholder="Buscar órdenes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -352,7 +374,12 @@ export function Orders() {
           </div>
           <Drawer>
             <DrawerTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Abrir filtros de órdenes">
+              <Button
+                data-tour="orders.filters-entry"
+                variant="outline"
+                size="icon"
+                aria-label="Abrir filtros de órdenes"
+              >
                 <Filter className="h-4 w-4" />
               </Button>
             </DrawerTrigger>
@@ -429,13 +456,22 @@ export function Orders() {
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button className="flex-1 min-w-32" variant="outline" onClick={() => navigate(`/orders/${order._id}`)}>
+                    <Button
+                      data-tour="orders.row-actions-entry"
+                      className="flex-1 min-w-32"
+                      variant="outline"
+                      onClick={() => navigate(`/orders/${order._id}`)}
+                    >
                       <Eye className="w-4 h-4 mr-2" />
                       Ver detalle
                     </Button>
                     {order.status === OrderStatus.PENDING && (
                       <>
-                        <Button className="flex-1 min-w-32" onClick={() => handleCompleteOrder(order._id)}>
+                        <Button
+                          data-tour="orders.row-complete-button"
+                          className="flex-1 min-w-32"
+                          onClick={() => handleCompleteOrder(order._id)}
+                        >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Completar
                         </Button>
@@ -535,7 +571,12 @@ export function Orders() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="Más opciones">
+                            <Button
+                              data-tour="orders.row-actions-entry"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Más opciones"
+                            >
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

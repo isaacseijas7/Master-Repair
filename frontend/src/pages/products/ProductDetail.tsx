@@ -343,12 +343,13 @@ export function ProductDetail() {
         </div>
         <div className="hidden gap-2 sm:flex">
           {isEditMode && (
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button data-tour="products.form.delete-button" variant="destructive" onClick={handleDelete}>
               <Trash2 className="w-4 h-4 mr-2" />
               Eliminar
             </Button>
           )}
           <Button
+            data-tour="products.form.submit-button"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting || (!isDirty && isEditMode)}
           >
@@ -384,6 +385,7 @@ export function ProductDetail() {
                   <Label htmlFor="name">Nombre del Producto *</Label>
                   <Input
                     id="name"
+                    data-tour="products.form.name-input"
                     {...register("name")}
                     className={errors.name ? "border-red-500" : ""}
                   />
@@ -486,6 +488,7 @@ export function ProductDetail() {
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger
+                          data-tour="products.form.category-select"
                           className={errors.category ? "border-red-500" : ""}
                         >
                           <SelectValue placeholder="Seleccionar categoría" />
@@ -519,6 +522,7 @@ export function ProductDetail() {
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger
+                          data-tour="products.form.supplier-select"
                           className={errors.supplier ? "border-red-500" : ""}
                         >
                           <SelectValue placeholder="Seleccionar proveedor" />
@@ -557,6 +561,7 @@ export function ProductDetail() {
                   <Label htmlFor="unitPrice">Precio Unitario *</Label>
                   <Input
                     id="unitPrice"
+                    data-tour="products.form.unit-price-input"
                     type="number"
                     step="0.01"
                     min={0}
@@ -693,6 +698,7 @@ export function ProductDetail() {
                   <Label htmlFor="stock">Stock Actual *</Label>
                   <Input
                     id="stock"
+                    data-tour="products.form.stock-input"
                     type="number"
                     min={0}
                     {...register("stock", { valueAsNumber: true })}
@@ -800,6 +806,7 @@ export function ProductDetail() {
                   control={control}
                   render={({ field }) => (
                     <Switch
+                      data-tour="products.form.active-switch"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -876,12 +883,13 @@ export function ProductDetail() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 p-4 backdrop-blur sm:hidden">
         <div className="flex gap-2">
           {isEditMode && (
-            <Button variant="destructive" onClick={handleDelete} className="flex-1">
+            <Button data-tour="products.form.delete-button" variant="destructive" onClick={handleDelete} className="flex-1">
               <Trash2 className="w-4 h-4 mr-2" />
               Eliminar
             </Button>
           )}
           <Button
+            data-tour="products.form.submit-button"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting || (!isDirty && isEditMode)}
             className="flex-1"

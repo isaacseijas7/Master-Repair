@@ -91,6 +91,7 @@ export function ClientSelector({
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
+          data-tour="orders.form.client-search-input"
           placeholder="Buscar cliente por nombre, email o teléfono..."
           value={searchTerm}
           onChange={(event) => handleInputChange(event.target.value)}
