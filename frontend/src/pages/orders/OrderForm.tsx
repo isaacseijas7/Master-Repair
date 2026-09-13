@@ -878,7 +878,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
                       data-tour="orders.form.product-search-input"
-                      placeholder="Buscar producto por nombre o SKU..."
+                      placeholder="Buscar producto por nombre, SKU o categoría..."
                       value={searchTerm}
                       onChange={handleSearchChange}
                       className="pl-10 bg-white"
@@ -926,7 +926,7 @@ export function OrderForm({ orderId: propOrderId, onSuccess }: OrderFormProps) {
                           </div>
                         ) : (
                           <div className="px-4 py-3 text-sm text-gray-500">
-                            No hay coincidencias. Prueba con otro nombre o SKU.
+                            No hay coincidencias. Prueba con otro nombre, SKU o categoría.
                           </div>
                         )}
                       </div>
