@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { OrderPrintDialog } from "@/components/orders/OrderPrintDialog";
 import { isClientObject } from "@/helpers/isClientObject";
 import { isProductObject } from "@/helpers/isProductObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
@@ -42,7 +43,7 @@ import {
   MoreVertical, User,
   Building2
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -57,6 +58,7 @@ export function OrderDetail() {
     isLoading,
   } = useOrderStore();
   const confirm = useConfirm();
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -292,7 +294,7 @@ export function OrderDetail() {
               variant="ghost"
               size="icon"
               className="h-9 w-9 sm:hidden"
-              onClick={() => window.print()}
+              onClick={() => setPrintDialogOpen(true)}
             >
               <Printer className="w-4 h-4" />
             </Button>
@@ -309,7 +311,7 @@ export function OrderDetail() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => window.print()}>
+                <DropdownMenuItem onClick={() => setPrintDialogOpen(true)}>
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
                 </DropdownMenuItem>
@@ -357,7 +359,7 @@ export function OrderDetail() {
             <div className="hidden sm:flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => window.print()}
+                onClick={() => setPrintDialogOpen(true)}
                 className="h-9"
               >
                 <Printer className="w-4 h-4 mr-2" />
@@ -722,6 +724,12 @@ export function OrderDetail() {
           </DropdownMenu>
         </div>
       )}
+
+      <OrderPrintDialog
+        order={currentOrder}
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+      />
     </div>
   );
 }
