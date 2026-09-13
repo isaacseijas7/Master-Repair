@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table";
 import { isClientObject } from "@/helpers/isClientObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -114,6 +115,7 @@ export function Orders() {
     status: undefined,
   });
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const confirm = useConfirm();
 
   useEffect(() => {
     const orderFilters: OrderFilters = {
@@ -162,13 +164,19 @@ export function Orders() {
   };
 
   const handleCancelOrder = async (id: string) => {
-    if (confirm("¿Estás seguro de cancelar esta orden?")) {
-      try {
-        await cancelOrder(id);
-        toast.success("Orden cancelada exitosamente");
-      } catch {
-        // sin-op: ver comentario arriba
-      }
+    const confirmed = await confirm({
+      title: "Cancelar orden",
+      description: "¿Estás seguro de cancelar esta orden? Esta acción no se puede deshacer.",
+      confirmText: "Cancelar orden",
+      cancelText: "Volver",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    try {
+      await cancelOrder(id);
+      toast.success("Orden cancelada exitosamente");
+    } catch {
+      // sin-op: ver comentario arriba
     }
   };
 

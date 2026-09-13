@@ -21,6 +21,7 @@ import { isClientObject } from "@/helpers/isClientObject";
 import { isProductObject } from "@/helpers/isProductObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
 import { isUserObject } from "@/helpers/isUserObject";
+import { useConfirm } from "@/hooks/useConfirm";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useOrderStore } from "@/stores/order.store";
 import { MovementType, OrderStatus } from "@/types";
@@ -55,6 +56,7 @@ export function OrderDetail() {
     cancelOrder,
     isLoading,
   } = useOrderStore();
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (id) {
@@ -75,14 +77,20 @@ export function OrderDetail() {
 
   const handleCancelOrder = async () => {
     if (!id) return;
-    if (confirm("¿Estás seguro de cancelar esta orden?")) {
-      try {
-        await cancelOrder(id);
-        toast.success("Orden cancelada exitosamente");
-        fetchOrderById(id);
-      } catch (error) {
-        toast.error("Error al cancelar la orden");
-      }
+    const confirmed = await confirm({
+      title: "Cancelar orden",
+      description: "¿Estás seguro de cancelar esta orden? Esta acción no se puede deshacer.",
+      confirmText: "Cancelar orden",
+      cancelText: "Volver",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    try {
+      await cancelOrder(id);
+      toast.success("Orden cancelada exitosamente");
+      fetchOrderById(id);
+    } catch (error) {
+      toast.error("Error al cancelar la orden");
     }
   };
 

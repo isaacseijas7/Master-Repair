@@ -29,6 +29,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useAuthStore } from "@/stores/auth.store";
@@ -85,6 +86,7 @@ export function Suppliers() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchSuppliers({ search: debouncedSearch });
@@ -100,9 +102,14 @@ export function Suppliers() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar este proveedor?")) {
-      await deleteSupplier(id);
-    }
+    const confirmed = await confirm({
+      title: "Eliminar proveedor",
+      description: "¿Estás seguro de eliminar este proveedor? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    await deleteSupplier(id);
   };
 
   return (

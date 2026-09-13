@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate, useMatch } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
+import { useConfirm } from '@/hooks/useConfirm';
 import { cn, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,6 +75,7 @@ export function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const confirm = useConfirm();
   const isAdmin = user?.role === 'admin';
   const visibleNavigation = isAdmin ? [...navigation, adminNavigation] : navigation;
   const visibleMoreNavigation = isAdmin
@@ -95,7 +97,13 @@ export function MainLayout() {
     matchOrdersNew || matchOrdersEdit || matchProductsNew || matchProductsId
   );
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const confirmed = await confirm({
+      title: 'Cerrar sesión',
+      description: '¿Estás seguro de que deseas cerrar sesión?',
+      confirmText: 'Cerrar sesión',
+    });
+    if (!confirmed) return;
     logout();
     navigate('/login');
   };
