@@ -14,16 +14,19 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Lock, Loader2 } from "lucide-react";
+import { CircleHelp, User, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { User as UserType } from "@/services/profile.service";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
+import { profileEditInfoGuide } from "@/lib/tour/guides/profile.guides";
+import { useTourRunner } from "@/lib/tour/useTourRunner";
 
 export function Profile() {
   const { user, isLoading, error, fetchProfile, clearError } =
     useProfileStore();
   const { user: authUser, updateUser } = useAuthStore();
+  const { startTour } = useTourRunner();
 
   useEffect(() => {
     fetchProfile();
@@ -83,8 +86,18 @@ export function Profile() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
+      <div data-tour="profile.page-title" className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
+          <button
+            type="button"
+            onClick={() => startTour(profileEditInfoGuide)}
+            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            aria-label="Ver recorrido de esta pantalla"
+          >
+            <CircleHelp className="w-4 h-4" />
+          </button>
+        </div>
         <p className="text-muted-foreground">
           Gestiona tu información personal y seguridad de la cuenta
         </p>
@@ -142,11 +155,11 @@ export function Profile() {
         {/* Tabs para editar perfil y contraseña */}
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-            <TabsTrigger value="general" className="gap-2">
+            <TabsTrigger data-tour="profile.tab-general" value="general" className="gap-2">
               <User className="h-4 w-4" />
               Información General
             </TabsTrigger>
-            <TabsTrigger value="security" className="gap-2">
+            <TabsTrigger data-tour="profile.tab-security" value="security" className="gap-2">
               <Lock className="h-4 w-4" />
               Seguridad
             </TabsTrigger>

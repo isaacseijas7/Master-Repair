@@ -336,6 +336,7 @@ export function ClientDetail() {
               <CardTitle className="text-base">Información</CardTitle>
               {!isEditing && (
                 <Button
+                  data-tour="clients.detail-edit-button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditing(true)}
@@ -358,7 +359,7 @@ export function ClientDetail() {
                         <FormItem>
                           <FormLabel>Nombre *</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input data-tour="clients.detail.name-input" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -371,7 +372,7 @@ export function ClientDetail() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" {...field} />
+                            <Input data-tour="clients.detail.email-input" type="email" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -384,7 +385,7 @@ export function ClientDetail() {
                         <FormItem>
                           <FormLabel>Teléfono</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input data-tour="clients.detail.phone-input" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -405,7 +406,11 @@ export function ClientDetail() {
                       >
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={form.formState.isSubmitting}>
+                      <Button
+                        data-tour="clients.detail.submit-button"
+                        type="submit"
+                        disabled={form.formState.isSubmitting}
+                      >
                         {form.formState.isSubmitting ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         ) : (

@@ -67,6 +67,7 @@ export function ProfileForm({ onSuccess }: ProfileFormProps) {
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
+                      data-tour="profile.form.first-name-input"
                       placeholder="Tu nombre"
                       className="pl-10"
                       {...field}
@@ -107,7 +108,7 @@ export function ProfileForm({ onSuccess }: ProfileFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="tu@email.com" {...field} />
+                <Input data-tour="profile.form.email-input" type="email" placeholder="tu@email.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -116,6 +117,7 @@ export function ProfileForm({ onSuccess }: ProfileFormProps) {
 
         <div className="flex justify-end">
           <Button
+            data-tour="profile.form.submit-button"
             type="submit"
             disabled={isUpdating || !form.formState.isDirty}
             className="gap-2"

@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  CircleHelp,
   Edit,
   Loader2,
   MoreHorizontal,
@@ -60,6 +61,8 @@ import {
   Trash2,
   UserCog,
 } from "lucide-react";
+import { usersOverviewGuide } from "@/lib/tour/guides/users.guides";
+import { useTourRunner } from "@/lib/tour/useTourRunner";
 
 const ROLE_LABELS: Record<string, string> = {
   [UserRole.ADMIN]: "Administrador",
@@ -94,6 +97,7 @@ export function Users() {
   } = useUserStore();
 
   useStoreErrorToast(error, clearError);
+  const { startTour } = useTourRunner();
 
   const { user: currentUser } = useAuthStore();
 
@@ -137,9 +141,22 @@ export function Users() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div
+        data-tour="users.page-title"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Usuarios</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Usuarios</h1>
+            <button
+              type="button"
+              onClick={() => startTour(usersOverviewGuide)}
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Ver recorrido de esta pantalla"
+            >
+              <CircleHelp className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-gray-500">
             Administra las cuentas y los roles del sistema
           </p>
@@ -148,7 +165,7 @@ export function Users() {
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           trigger={
-            <Button>
+            <Button data-tour="users.create-button">
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Usuario
             </Button>
@@ -171,6 +188,7 @@ export function Users() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
+                data-tour="users.search-input"
                 placeholder="Buscar por nombre o email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -183,7 +201,7 @@ export function Users() {
                 setRoleFilter(value === "all" ? undefined : value)
               }
             >
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger data-tour="users.filters-entry" className="w-full sm:w-48">
                 <SelectValue placeholder="Todos los roles" />
               </SelectTrigger>
               <SelectContent>
@@ -255,7 +273,13 @@ export function Users() {
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Más opciones">
+                          <Button
+                            data-tour="users.row-actions-entry"
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11"
+                            aria-label="Más opciones"
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -356,7 +380,12 @@ export function Users() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="Más opciones">
+                            <Button
+                              data-tour="users.row-actions-entry"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Más opciones"
+                            >
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -467,7 +496,7 @@ function UserForm({ initialData, isSelf, onSubmit }: UserFormProps) {
               <FormItem>
                 <FormLabel>Nombre *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre" {...field} />
+                  <Input data-tour="users.form.first-name-input" placeholder="Nombre" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -495,7 +524,7 @@ function UserForm({ initialData, isSelf, onSubmit }: UserFormProps) {
             <FormItem>
               <FormLabel>Email *</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="usuario@masterrepair.com" {...field} />
+                <Input data-tour="users.form.email-input" type="email" placeholder="usuario@masterrepair.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -510,7 +539,7 @@ function UserForm({ initialData, isSelf, onSubmit }: UserFormProps) {
               <FormItem>
                 <FormLabel>Contraseña *</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
+                  <Input data-tour="users.form.password-input" type="password" placeholder="••••••••" {...field} />
                 </FormControl>
                 <p className="text-xs text-gray-500">
                   Mínimo 6 caracteres, con mayúscula, minúscula y número.
@@ -533,7 +562,7 @@ function UserForm({ initialData, isSelf, onSubmit }: UserFormProps) {
                 disabled={isSelf}
               >
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger data-tour="users.form.role-select" className="w-full">
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
                 </FormControl>
@@ -566,6 +595,7 @@ function UserForm({ initialData, isSelf, onSubmit }: UserFormProps) {
               </div>
               <FormControl>
                 <Switch
+                  data-tour="users.form.active-switch"
                   checked={field.value}
                   onCheckedChange={field.onChange}
                   disabled={isSelf}
@@ -581,7 +611,7 @@ function UserForm({ initialData, isSelf, onSubmit }: UserFormProps) {
         )}
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button data-tour="users.form.submit-button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
