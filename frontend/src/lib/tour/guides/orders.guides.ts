@@ -120,11 +120,17 @@ export const ordersEditGuide: TourDef = {
       title: "Editar orden",
       description:
         "Desde el detalle de una orden pendiente, usa este botón para modificarla.",
+      // El destino (la página de detalle de ESA orden) depende de cuál
+      // orden abra el usuario; no hay una ruta fija a la que navegar.
+      newSegment: true,
     },
     {
       target: "orders.form.items-table",
       title: "Ajusta los productos",
       description: "Puedes cambiar cantidades, quitar o agregar productos.",
+      // Aparece recién cuando el usuario hace clic en el botón "Editar" real
+      // (no en "Siguiente"), lo que navega a /orders/:id/edit.
+      newSegment: true,
     },
     {
       target: "orders.form.submit-button",
@@ -150,6 +156,9 @@ export const ordersStatusChangeGuide: TourDef = {
       title: "Completar orden",
       description:
         "Usa este botón para marcar la orden como completada una vez finalizada.",
+      // El destino (la página de detalle de ESA orden) depende de cuál
+      // orden abra el usuario; no hay una ruta fija a la que navegar.
+      newSegment: true,
     },
   ],
 };
@@ -169,6 +178,9 @@ export const ordersCancelGuide: TourDef = {
       target: ["orders.detail-cancel-button", "orders.detail-fab-trigger"],
       title: "Cancelar orden",
       description: "Usa este botón para cancelar la orden. Se te pedirá confirmación.",
+      // El destino (la página de detalle de ESA orden) depende de cuál
+      // orden abra el usuario; no hay una ruta fija a la que navegar.
+      newSegment: true,
     },
   ],
 };

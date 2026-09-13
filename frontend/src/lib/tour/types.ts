@@ -8,6 +8,14 @@ export interface TourStepDef {
   description: string;
   /** Ruta a la que navegar antes de este paso, si es distinta a la del paso anterior. */
   route?: string;
+  /**
+   * Fuerza el inicio de un nuevo tramo aunque no se indique `route` (para
+   * pasos cuyo destino depende de que el usuario navegue manualmente, como
+   * abrir una orden concreta con :id dinámico). Sin esto, el motor asumiría
+   * que el paso ya está en la página actual y no esperaría a que su
+   * elemento aparezca.
+   */
+  newSegment?: boolean;
   side?: "top" | "right" | "bottom" | "left";
 }
 
