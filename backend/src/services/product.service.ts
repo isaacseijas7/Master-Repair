@@ -1,7 +1,29 @@
 import { generateSKU, Product } from "../models/Product";
+import { Category } from "../models/Category";
 import { LeanProduct, ProductDocument } from "../types/product.types";
 
 export class ProductService {
+  private async buildSearchOr(search: string): Promise<any[]> {
+    const regex = { $regex: search, $options: "i" };
+    const or: any[] = [
+      { name: regex },
+      { sku: regex },
+      { description: regex },
+      { brand: regex },
+    ];
+
+    const matchingCategories = await Category.find(
+      { $or: [{ name: regex }, { description: regex }] },
+      "_id",
+    ).lean();
+
+    if (matchingCategories.length > 0) {
+      or.push({ category: { $in: matchingCategories.map((c) => c._id) } });
+    }
+
+    return or;
+  }
+
   async getProducts(
     filters: any = {},
   ): Promise<{ data: ProductDocument[]; pagination: any }> {
@@ -23,12 +45,7 @@ export class ProductService {
     const query: any = {};
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { sku: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { brand: { $regex: search, $options: "i" } },
-      ];
+      query.$or = await this.buildSearchOr(search);
     }
 
     if (category) query.category = category;
@@ -170,12 +187,7 @@ export class ProductService {
     const query: any = {};
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { sku: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { brand: { $regex: search, $options: "i" } },
-      ];
+      query.$or = await this.buildSearchOr(search);
     }
 
     if (category) query.category = category;
