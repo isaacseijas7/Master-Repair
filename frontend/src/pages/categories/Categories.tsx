@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useAuthStore } from "@/stores/auth.store";
@@ -94,6 +95,7 @@ export function Categories() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchCategories({ search: debouncedSearch });
@@ -109,9 +111,14 @@ export function Categories() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta categoría?")) {
-      await deleteCategory(id);
-    }
+    const confirmed = await confirm({
+      title: "Eliminar categoría",
+      description: "¿Estás seguro de eliminar esta categoría? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    await deleteCategory(id);
   };
 
   return (

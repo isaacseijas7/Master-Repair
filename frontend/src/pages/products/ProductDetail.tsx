@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useConfirm } from "@/hooks/useConfirm";
 
 // ==========================================
 // 1. SCHEMA DE VALIDACIÓN CON ZOD
@@ -153,6 +154,7 @@ export function ProductDetail() {
 
   const { activeCategories, fetchActiveCategories } = useCategoryStore();
   const { activeSuppliers, fetchActiveSuppliers } = useSupplierStore();
+  const confirm = useConfirm();
 
   // ==========================================
   // 5. CONFIGURACIÓN DE REACT-HOOK-FORM
@@ -277,18 +279,20 @@ export function ProductDetail() {
   const handleDelete = async () => {
     if (!id) return;
 
-    if (
-      confirm(
-        "¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.",
-      )
-    ) {
-      try {
-        await deleteProduct(id);
-        toast.success("Producto eliminado");
-        navigate("/products");
-      } catch (error) {
-        toast.error("Error al eliminar el producto");
-      }
+    const confirmed = await confirm({
+      title: "Eliminar producto",
+      description: "¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteProduct(id);
+      toast.success("Producto eliminado");
+      navigate("/products");
+    } catch (error) {
+      toast.error("Error al eliminar el producto");
     }
   };
 

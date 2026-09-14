@@ -17,10 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { OrderPrintDialog } from "@/components/orders/OrderPrintDialog";
 import { isClientObject } from "@/helpers/isClientObject";
 import { isProductObject } from "@/helpers/isProductObject";
 import { isSupplierObject } from "@/helpers/isSupplierObject";
 import { isUserObject } from "@/helpers/isUserObject";
+import { useConfirm } from "@/hooks/useConfirm";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useOrderStore } from "@/stores/order.store";
 import { MovementType, OrderStatus } from "@/types";
@@ -41,7 +43,7 @@ import {
   MoreVertical, User,
   Building2
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -55,6 +57,8 @@ export function OrderDetail() {
     cancelOrder,
     isLoading,
   } = useOrderStore();
+  const confirm = useConfirm();
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -64,6 +68,12 @@ export function OrderDetail() {
 
   const handleCompleteOrder = async () => {
     if (!id) return;
+    const confirmed = await confirm({
+      title: "Completar orden",
+      description: "¿Estás seguro de marcar esta orden como completada?",
+      confirmText: "Completar",
+    });
+    if (!confirmed) return;
     try {
       await updateOrderStatus(id, OrderStatus.COMPLETED);
       toast.success("Orden completada exitosamente");
@@ -75,14 +85,20 @@ export function OrderDetail() {
 
   const handleCancelOrder = async () => {
     if (!id) return;
-    if (confirm("¿Estás seguro de cancelar esta orden?")) {
-      try {
-        await cancelOrder(id);
-        toast.success("Orden cancelada exitosamente");
-        fetchOrderById(id);
-      } catch (error) {
-        toast.error("Error al cancelar la orden");
-      }
+    const confirmed = await confirm({
+      title: "Cancelar orden",
+      description: "¿Estás seguro de cancelar esta orden? Esta acción no se puede deshacer.",
+      confirmText: "Cancelar orden",
+      cancelText: "Volver",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    try {
+      await cancelOrder(id);
+      toast.success("Orden cancelada exitosamente");
+      fetchOrderById(id);
+    } catch (error) {
+      toast.error("Error al cancelar la orden");
     }
   };
 
@@ -278,7 +294,7 @@ export function OrderDetail() {
               variant="ghost"
               size="icon"
               className="h-9 w-9 sm:hidden"
-              onClick={() => window.print()}
+              onClick={() => setPrintDialogOpen(true)}
             >
               <Printer className="w-4 h-4" />
             </Button>
@@ -295,7 +311,7 @@ export function OrderDetail() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => window.print()}>
+                <DropdownMenuItem onClick={() => setPrintDialogOpen(true)}>
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
                 </DropdownMenuItem>
@@ -343,7 +359,7 @@ export function OrderDetail() {
             <div className="hidden sm:flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => window.print()}
+                onClick={() => setPrintDialogOpen(true)}
                 className="h-9"
               >
                 <Printer className="w-4 h-4 mr-2" />
@@ -708,6 +724,12 @@ export function OrderDetail() {
           </DropdownMenu>
         </div>
       )}
+
+      <OrderPrintDialog
+        order={currentOrder}
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+      />
     </div>
   );
 }

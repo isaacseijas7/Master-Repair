@@ -17,6 +17,7 @@ import { OrderForm } from "./pages/orders/OrderForm";
 import { Profile } from "./pages/profile/Profile";
 import { Users } from "./pages/users/Users";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -128,6 +129,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster />
+      <ConfirmDialog />
     </ErrorBoundary>
   );
 }

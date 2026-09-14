@@ -1,3 +1,4 @@
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useAuthStore } from "@/stores/auth.store";
@@ -23,6 +24,8 @@ export function Products() {
   } = useProductStore();
 
   useStoreErrorToast(error, clearError);
+
+  const confirm = useConfirm();
 
   const { user } = useAuthStore();
   // El backend ya exige admin/manager para crear, editar, eliminar y
@@ -59,9 +62,14 @@ export function Products() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar este producto?")) {
-      await deleteProduct(id);
-    }
+    const confirmed = await confirm({
+      title: "Eliminar producto",
+      description: "¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    await deleteProduct(id);
   };
 
   const handleCategoryChange = (categoryId: string | undefined) => {

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { CircleHelp, Search, Plus, MoreHorizontal, Eye, Trash2, Users, Mail, Phone } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { useForm } from "react-hook-form";
@@ -83,6 +84,7 @@ export function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchClients({ search: debouncedSearch });
@@ -97,14 +99,19 @@ export function Clients() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar este cliente?")) {
-      try {
-        await deleteClient(id);
-        toast.success("Cliente eliminado");
-      } catch {
-        // deleteClient ya deja el mensaje en `error` del store; lo muestra
-        // useStoreErrorToast. Mostrarlo también aquí duplicaría el toast.
-      }
+    const confirmed = await confirm({
+      title: "Eliminar cliente",
+      description: "¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    try {
+      await deleteClient(id);
+      toast.success("Cliente eliminado");
+    } catch {
+      // deleteClient ya deja el mensaje en `error` del store; lo muestra
+      // useStoreErrorToast. Mostrarlo también aquí duplicaría el toast.
     }
   };
 

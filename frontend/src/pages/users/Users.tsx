@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useUserStore } from "@/stores/user.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { UserRole, type User } from "@/types";
@@ -109,6 +110,7 @@ export function Users() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchUsers({
@@ -128,14 +130,19 @@ export function Users() {
 
   const handleDelete = async (targetUser: User) => {
     if (targetUser._id === currentUser?._id) return;
-    if (confirm(`¿Estás seguro de eliminar al usuario "${targetUser.firstName} ${targetUser.lastName}"?`)) {
-      try {
-        await deleteUser(targetUser._id);
-        toast.success("Usuario eliminado");
-      } catch {
-        // deleteUser ya deja el mensaje en `error` del store; lo muestra
-        // useStoreErrorToast. Mostrarlo también aquí duplicaría el toast.
-      }
+    const confirmed = await confirm({
+      title: "Eliminar usuario",
+      description: `¿Estás seguro de eliminar al usuario "${targetUser.firstName} ${targetUser.lastName}"? Esta acción no se puede deshacer.`,
+      confirmText: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    try {
+      await deleteUser(targetUser._id);
+      toast.success("Usuario eliminado");
+    } catch {
+      // deleteUser ya deja el mensaje en `error` del store; lo muestra
+      // useStoreErrorToast. Mostrarlo también aquí duplicaría el toast.
     }
   };
 
