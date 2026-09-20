@@ -1,6 +1,13 @@
 import apiClient from './api.service';
 import { downloadExcel } from './download';
-import type { Phone, CreatePhoneInput, PhoneFilters, PaginatedResponse, ApiResponse } from '@/types';
+import type {
+  Phone,
+  CreatePhoneInput,
+  PhoneFilters,
+  PhoneExportColumn,
+  PaginatedResponse,
+  ApiResponse,
+} from '@/types';
 
 export const phoneService = {
   async getPhones(params: PhoneFilters = {}): Promise<PaginatedResponse<Phone>> {
@@ -28,12 +35,11 @@ export const phoneService = {
     await apiClient.delete(`/phones/${id}`);
   },
 
-  // Sin brandIds (o vacío) exporta el catálogo de todas las marcas.
-  async exportToExcel(brandIds: string[] = []): Promise<void> {
-    await downloadExcel(
-      '/phones/export',
-      'telefonos',
-      brandIds.length > 0 ? { brandIds: brandIds.join(',') } : undefined,
-    );
+  // Sin brandIds (o vacío) exporta el catálogo de todas las marcas. `columns`
+  // son las columnas de precio a incluir (el modelo siempre va).
+  async exportToExcel(brandIds: string[], columns: PhoneExportColumn[]): Promise<void> {
+    const params: Record<string, string> = { columns: columns.join(',') };
+    if (brandIds.length > 0) params.brandIds = brandIds.join(',');
+    await downloadExcel('/phones/export', 'telefonos', params);
   },
 };

@@ -4,7 +4,13 @@ export interface IPhone extends Document {
   brandId: Types.ObjectId;
   // No puede llamarse `model`: es una clave reservada de Mongoose Document.
   phoneModel: string;
+  // Precio de venta al por mayor (USD). Se llama `salePrice` por historia: es
+  // el campo original del catálogo.
   salePrice: number;
+  // Precio de venta unitario (USD). Opcional: los registros anteriores no lo tienen.
+  unitSalePrice?: number | null;
+  // Precio de compra al proveedor (USD). Opcional. Dato interno: solo lo ven admin/manager.
+  purchasePrice?: number | null;
   createdAt: Date;
   updatedAt: Date;
   __v?: any;
@@ -23,11 +29,19 @@ const PhoneSchema = new Schema<IPhone>(
       required: [true, 'El modelo es requerido'],
       trim: true,
     },
-    // Precio de venta en dólares estadounidenses (USD).
+    // Precio de venta al por mayor en dólares estadounidenses (USD).
     salePrice: {
       type: Number,
-      required: [true, 'El precio de venta es requerido'],
-      min: [0, 'El precio de venta no puede ser negativo'],
+      required: [true, 'El precio de venta al por mayor es requerido'],
+      min: [0, 'El precio no puede ser negativo'],
+    },
+    unitSalePrice: {
+      type: Number,
+      min: [0, 'El precio no puede ser negativo'],
+    },
+    purchasePrice: {
+      type: Number,
+      min: [0, 'El precio no puede ser negativo'],
     },
   },
   {

@@ -2,13 +2,34 @@ import { Types } from 'mongoose';
 import { Brand } from '../models/Brand';
 import { Phone } from '../models/Phone';
 import { LeanPhone, PhoneDocument } from '../types/phone.types';
-import { buildCatalogWorkbookBuffer, CatalogBrandGroup } from '../utils/catalogExcel';
+import { buildCatalogWorkbookBuffer, CatalogBrandGroup, CatalogPriceColumn } from '../utils/catalogExcel';
 import { buildPagination, escapeRegex, parsePagination } from '../utils/query';
 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 } as const;
 
+export type PhonePriceInput = {
+  salePrice?: number;
+  unitSalePrice?: number | null;
+  purchasePrice?: number | null;
+};
+
+// Columnas de precio que se pueden incluir en el Excel del catálogo, en el
+// orden en que se escriben.
+export const PHONE_EXPORT_COLUMNS: Array<CatalogPriceColumn & { key: keyof PhonePriceInput }> = [
+  { key: 'purchasePrice', header: 'PRECIO COMPRA\n(USD)' },
+  { key: 'unitSalePrice', header: 'PRECIO UNITARIO\n(USD)' },
+  { key: 'salePrice', header: 'PRECIO MAYOR\n(USD)' },
+];
+export const DEFAULT_PHONE_EXPORT_COLUMNS = ['salePrice', 'unitSalePrice'];
+
+// El precio de compra es un dato interno: solo lo ven admin y manager.
+const COST_FIELD = '-purchasePrice';
+
 export class PhoneService {
-  async getPhones(filters: any = {}): Promise<{ data: LeanPhone[]; pagination: any }> {
+  async getPhones(
+    filters: any = {},
+    canViewCost = false,
+  ): Promise<{ data: LeanPhone[]; pagination: any }> {
     const { search, brandId } = filters;
     const { page, limit, skip } = parsePagination(filters.page, filters.limit);
 
@@ -25,6 +46,7 @@ export class PhoneService {
 
     const [phones, total] = await Promise.all([
       Phone.find(query)
+        .select(canViewCost ? '' : COST_FIELD)
         .populate('brandId', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -39,13 +61,17 @@ export class PhoneService {
     };
   }
 
-  async getPhoneById(id: string): Promise<PhoneDocument> {
-    const phone = await Phone.findById(id).populate('brandId', 'name');
+  async getPhoneById(id: string, canViewCost = false): Promise<PhoneDocument> {
+    const phone = await Phone.findById(id)
+      .select(canViewCost ? '' : COST_FIELD)
+      .populate('brandId', 'name');
     if (!phone) throw new Error('Teléfono no encontrado');
     return phone as unknown as PhoneDocument;
   }
 
-  async createPhone(data: { brandId: string; phoneModel: string; salePrice: number }): Promise<PhoneDocument> {
+  async createPhone(
+    data: { brandId: string; phoneModel: string; salePrice: number } & PhonePriceInput,
+  ): Promise<PhoneDocument> {
     await this.assertBrandExists(data.brandId);
     await this.assertModelAvailable(data.brandId, data.phoneModel);
 
@@ -57,7 +83,7 @@ export class PhoneService {
 
   async updatePhone(
     id: string,
-    data: { brandId?: string; phoneModel?: string; salePrice?: number },
+    data: { brandId?: string; phoneModel?: string } & PhonePriceInput,
   ): Promise<PhoneDocument> {
     const phone = await Phone.findById(id);
     if (!phone) throw new Error('Teléfono no encontrado');
@@ -80,8 +106,15 @@ export class PhoneService {
   }
 
   // Catálogo en formato "lista de precios": teléfonos agrupados por marca.
-  // Sin `brandIds` (o vacío) exporta todas las marcas.
-  async exportPhones(brandIds: string[] = []): Promise<Buffer> {
+  // Sin `brandIds` (o vacío) exporta todas las marcas. `columns` son las claves
+  // de precio a incluir (además del modelo, que siempre va).
+  async exportPhones(
+    brandIds: string[] = [],
+    columns: string[] = DEFAULT_PHONE_EXPORT_COLUMNS,
+  ): Promise<Buffer> {
+    const priceColumns = PHONE_EXPORT_COLUMNS.filter((c) => columns.includes(c.key));
+    if (priceColumns.length === 0) throw new Error('Selecciona al menos una columna de precio');
+
     const query = brandIds.length > 0 ? { brandId: { $in: brandIds } } : {};
     const phones = await Phone.find(query).populate('brandId', 'name').lean();
 
@@ -89,14 +122,17 @@ export class PhoneService {
     for (const phone of phones as any[]) {
       const brand: string = phone.brandId?.name ?? 'Sin marca';
       if (!byBrand.has(brand)) byBrand.set(brand, { brand, phones: [] });
-      byBrand.get(brand)!.phones.push({ model: phone.phoneModel, price: phone.salePrice });
+      byBrand.get(brand)!.phones.push({
+        model: phone.phoneModel,
+        values: Object.fromEntries(priceColumns.map((c) => [c.key, phone[c.key] ?? null])),
+      });
     }
 
     const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
     const groups = [...byBrand.values()].sort((a, b) => collator.compare(a.brand, b.brand));
     groups.forEach((group) => group.phones.sort((a, b) => collator.compare(a.model, b.model)));
 
-    return buildCatalogWorkbookBuffer(groups);
+    return buildCatalogWorkbookBuffer(groups, priceColumns);
   }
 
   private async assertBrandExists(brandId: string): Promise<void> {

@@ -15,6 +15,14 @@ import { phoneService } from "@/services/phone.service";
 import { useBrandStore } from "@/stores/brand.store";
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import type { PhoneExportColumn } from "@/types";
+
+// El modelo siempre va en el archivo; estas son las columnas opcionales.
+const PRICE_COLUMNS: Array<{ id: PhoneExportColumn; label: string }> = [
+  { id: "purchasePrice", label: "Precio de compra al proveedor" },
+  { id: "unitSalePrice", label: "Precio de venta unitario" },
+  { id: "salePrice", label: "Precio de venta al por mayor" },
+];
 
 interface ExportPhonesDialogProps {
   // Marca filtrada en el listado; si existe, llega preseleccionada.
@@ -26,6 +34,10 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
   const { allBrands, fetchAllBrands } = useBrandStore();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [columns, setColumns] = useState<PhoneExportColumn[]>([
+    "salePrice",
+    "unitSalePrice",
+  ]);
   const [isExporting, setIsExporting] = useState(false);
 
   const exportableBrands = allBrands.filter((b) => (b.phoneCount ?? 0) > 0);
@@ -53,6 +65,11 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
+  const toggleColumn = (id: PhoneExportColumn) =>
+    setColumns((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+
   const toggleAll = () =>
     setSelected(allSelected ? [] : exportableBrands.map((b) => b._id));
 
@@ -60,7 +77,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
     setIsExporting(true);
     try {
       // Todas las marcas seleccionadas equivale a no filtrar.
-      await phoneService.exportToExcel(allSelected ? [] : selected);
+      await phoneService.exportToExcel(allSelected ? [] : selected, columns);
       toast.success(`Excel generado con ${selectedPhones} teléfonos`);
       setOpen(false);
     } catch (error) {
@@ -86,7 +103,8 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
             Exportar catálogo a Excel
           </DialogTitle>
           <DialogDescription>
-            Selecciona las marcas que quieres incluir en el archivo.
+            Selecciona las marcas y las columnas que quieres incluir en el
+            archivo.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,6 +114,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
           </p>
         ) : (
           <div className="space-y-3 py-2">
+            <p className="text-sm font-medium text-gray-700">Marcas</p>
             <div className="flex items-center gap-2 border-b pb-3">
               <Checkbox
                 id="export-all-brands"
@@ -109,7 +128,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
                 Todas las marcas
               </Label>
             </div>
-            <div className="max-h-64 space-y-3 overflow-y-auto">
+            <div className="max-h-48 space-y-3 overflow-y-auto">
               {exportableBrands.map((brand) => (
                 <div key={brand._id} className="flex items-center gap-2">
                   <Checkbox
@@ -135,6 +154,39 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
                 Selecciona al menos una marca para continuar
               </p>
             )}
+
+            <div className="space-y-3 border-t pt-4">
+              <p className="text-sm font-medium text-gray-700">Columnas</p>
+              <div className="flex items-center gap-2">
+                <Checkbox id="export-col-model" checked disabled />
+                <Label
+                  htmlFor="export-col-model"
+                  className="font-normal text-gray-500"
+                >
+                  Modelo (siempre incluido)
+                </Label>
+              </div>
+              {PRICE_COLUMNS.map((column) => (
+                <div key={column.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`export-col-${column.id}`}
+                    checked={columns.includes(column.id)}
+                    onCheckedChange={() => toggleColumn(column.id)}
+                  />
+                  <Label
+                    htmlFor={`export-col-${column.id}`}
+                    className="cursor-pointer font-normal"
+                  >
+                    {column.label}
+                  </Label>
+                </div>
+              ))}
+              {columns.length === 0 && (
+                <p className="text-center text-sm text-red-500">
+                  Selecciona al menos una columna de precio
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -148,7 +200,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
           </Button>
           <Button
             onClick={handleExport}
-            disabled={isExporting || selected.length === 0}
+            disabled={isExporting || selected.length === 0 || columns.length === 0}
             className="gap-2 bg-green-600 hover:bg-green-700"
           >
             {isExporting ? (

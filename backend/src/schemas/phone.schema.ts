@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+// USD, mayor a 0 y con máximo 2 decimales.
+const usdPrice = (label: string) =>
+  z
+    .number({ invalid_type_error: `${label} debe ser un número` })
+    .positive(`${label} debe ser mayor a 0`)
+    .max(1_000_000, `${label} es demasiado alto`)
+    .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, {
+      message: `${label} admite máximo 2 decimales`,
+    });
+
 export const createPhoneSchema = z.object({
   brandId: z
     .string({ required_error: "La marca es requerida" })
@@ -9,14 +19,10 @@ export const createPhoneSchema = z.object({
     .trim()
     .min(1, "El modelo es requerido")
     .max(150, "Máximo 150 caracteres"),
-  // USD con máximo 2 decimales.
-  salePrice: z
-    .number({ invalid_type_error: "El precio de venta debe ser un número" })
-    .positive("El precio de venta debe ser mayor a 0")
-    .max(1_000_000, "El precio de venta es demasiado alto")
-    .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, {
-      message: "El precio admite máximo 2 decimales",
-    }),
+  salePrice: usdPrice("El precio de venta al por mayor"),
+  // Opcionales; `null` los deja vacíos (permite borrar un valor al editar).
+  unitSalePrice: usdPrice("El precio de venta unitario").nullable().optional(),
+  purchasePrice: usdPrice("El precio de compra").nullable().optional(),
 });
 
 export const updatePhoneSchema = createPhoneSchema.partial();
