@@ -4,6 +4,8 @@ import { seedCategories } from "./category.seeder";
 import { seedSuppliers } from "./supplier.seeder";
 import { seedProducts } from "./product.seeder";
 import { seedOrders } from "./order.seeder";
+import { seedBrands } from "./brand.seeder";
+import { seedPhones } from "./phone.seeder";
 
 const runSeeders = async (): Promise<void> => {
   try {
@@ -17,6 +19,12 @@ const runSeeders = async (): Promise<void> => {
     console.log("\n--- CATEGORÍAS ---");
     const categoryIds = await seedCategories();
 
+    console.log("\n--- MARCAS ---");
+    const brandIds = await seedBrands();
+
+    console.log("\n--- TELÉFONOS ---");
+    await seedPhones(brandIds);
+
     // console.log("\n--- PROVEEDORES ---");
     // const supplierIds = await seedSuppliers();
 
@@ -29,6 +37,8 @@ const runSeeders = async (): Promise<void> => {
     console.log("\n✨ Seeding completado exitosamente");
     console.log("\n📊 Resumen de datos creados:");
     console.log("• 4 usuarios (admin, manager, 2 cashiers)");
+    console.log("• 5 marcas de teléfonos (Samsung, Xiaomi, Redmi, Spark, iPhone)");
+    console.log("• 21 teléfonos de prueba distribuidos entre esas marcas");
     // console.log("• 10 categorías de productos");
     // console.log("• 8 proveedores");
     // console.log("• 50+ productos con stock realista");

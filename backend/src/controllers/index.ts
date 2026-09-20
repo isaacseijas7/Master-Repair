@@ -9,3 +9,5 @@ export {
   DashboardController,
 } from "./dashboard.controller";
 export { profileController, ProfileController } from "./profile.controller";
+export { brandController, BrandController } from "./brand.controller";
+export { phoneController, PhoneController } from "./phone.controller";

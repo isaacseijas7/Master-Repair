@@ -32,6 +32,9 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronRight,
+  Smartphone,
+  BadgeCheck,
   Bell,
   CircleHelp,
   MoreHorizontal,
@@ -47,6 +50,19 @@ const navigation = [
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
 ];
+
+// Menú principal "Catálogo de Teléfonos" con sus submenús.
+const phoneCatalogNavigation = {
+  name: 'Catálogo de Teléfonos',
+  icon: Smartphone,
+  children: [
+    { name: 'Marcas', href: '/brands', icon: BadgeCheck },
+    { name: 'Teléfonos', href: '/phones', icon: Smartphone },
+  ],
+};
+
+const isPathActive = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
 
 // Solo visible para admin: administrar usuarios y roles es la única acción
 // del sistema restringida exclusivamente a ese rol (mismo precedente que
@@ -77,7 +93,18 @@ export function MainLayout() {
   const { user, logout } = useAuthStore();
   const confirm = useConfirm();
   const isAdmin = user?.role === 'admin';
-  const visibleNavigation = isAdmin ? [...navigation, adminNavigation] : navigation;
+  const isCatalogActive = phoneCatalogNavigation.children.some((child) =>
+    isPathActive(location.pathname, child.href)
+  );
+  const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
+  const [wasCatalogActive, setWasCatalogActive] = useState(isCatalogActive);
+  // Al entrar a un submenú del catálogo (ej. desde un enlace directo) el
+  // grupo debe quedar desplegado; se ajusta durante el render en vez de en
+  // un efecto para no provocar un render extra.
+  if (isCatalogActive !== wasCatalogActive) {
+    setWasCatalogActive(isCatalogActive);
+    if (isCatalogActive) setCatalogOpen(true);
+  }
   const visibleMoreNavigation = isAdmin
     ? [...moreNavigation, adminNavigation]
     : moreNavigation;
@@ -143,7 +170,7 @@ export function MainLayout() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1">
-          {visibleNavigation.map((item) => {
+          {navigation.map((item) => {
             const isActive = location.pathname === item.href || 
                            location.pathname.startsWith(`${item.href}/`);
             return (
@@ -163,6 +190,73 @@ export function MainLayout() {
               </Link>
             );
           })}
+
+          {/* Catálogo de Teléfonos */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setCatalogOpen((open) => !open)}
+              aria-expanded={catalogOpen}
+              className={cn(
+                'flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
+                isCatalogActive
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              )}
+            >
+              <phoneCatalogNavigation.icon
+                className={cn('w-5 h-5', isCatalogActive ? 'text-blue-700' : 'text-gray-500')}
+              />
+              <span className="flex-1 text-left">{phoneCatalogNavigation.name}</span>
+              <ChevronRight
+                className={cn('w-4 h-4 transition-transform', catalogOpen && 'rotate-90')}
+              />
+            </button>
+            {catalogOpen && (
+              <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-3">
+                {phoneCatalogNavigation.children.map((child) => {
+                  const isActive = isPathActive(location.pathname, child.href);
+                  return (
+                    <Link
+                      key={child.name}
+                      to={child.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      )}
+                    >
+                      <child.icon className={cn('w-4 h-4', isActive ? 'text-blue-700' : 'text-gray-500')} />
+                      {child.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {isAdmin && (
+            <Link
+              to={adminNavigation.href}
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
+                isPathActive(location.pathname, adminNavigation.href)
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              )}
+            >
+              <adminNavigation.icon
+                className={cn(
+                  'w-5 h-5',
+                  isPathActive(location.pathname, adminNavigation.href) ? 'text-blue-700' : 'text-gray-500'
+                )}
+              />
+              {adminNavigation.name}
+            </Link>
+          )}
         </nav>
 
         {/* Bottom section */}
@@ -285,9 +379,9 @@ export function MainLayout() {
             );
           })}
           {(() => {
-            const isMoreActive = visibleMoreNavigation.some(
-              (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
-            );
+            const isMoreActive =
+              isCatalogActive ||
+              visibleMoreNavigation.some((item) => isPathActive(location.pathname, item.href));
             return (
               <button
                 type="button"
@@ -327,6 +421,26 @@ export function MainLayout() {
                 >
                   <item.icon className={cn('h-5 w-5', isActive ? 'text-blue-700' : 'text-gray-500')} />
                   {item.name}
+                </Link>
+              );
+            })}
+            <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              {phoneCatalogNavigation.name}
+            </p>
+            {phoneCatalogNavigation.children.map((child) => {
+              const isActive = isPathActive(location.pathname, child.href);
+              return (
+                <Link
+                  key={child.name}
+                  to={child.href}
+                  onClick={() => setMoreOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                    isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+                  )}
+                >
+                  <child.icon className={cn('h-5 w-5', isActive ? 'text-blue-700' : 'text-gray-500')} />
+                  {child.name}
                 </Link>
               );
             })}
