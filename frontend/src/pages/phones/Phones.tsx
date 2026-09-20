@@ -197,7 +197,7 @@ export function Phones() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Teléfonos</h1>
           <p className="text-gray-500">
-            Gestiona el catálogo de teléfonos y sus precios de venta
+            Gestiona el catálogo de pantallas y sus precios
           </p>
         </div>
         {canManage && (
@@ -474,7 +474,7 @@ function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
               </Select>
               {brands.length === 0 && (
                 <p className="text-xs text-gray-500">
-                  Aún no hay marcas. Créalas primero en Catálogo de Teléfonos →
+                  Aún no hay marcas. Créalas primero en Catálogo de Pantallas →
                   Marcas.
                 </p>
               )}
