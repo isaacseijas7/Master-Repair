@@ -15,36 +15,27 @@ const FONT_NAME = "Aptos Narrow";
 const USD_FORMAT = '"$"#,##0.00';
 const THIN = { style: "thin" as const, color: { argb: "FF000000" } };
 
-const MODEL_WIDTH = 29.57;
+const MODEL_WIDTH = 32;
 const PRICE_WIDTH = 18;
-const GAP_WIDTH = 3.14;
-const BLOCKS_PER_BAND = 2;
 
 const baseFont = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
 
 // Genera la "Lista de precios" del catálogo: banner con el logo, título y las
-// marcas agrupadas de a dos por franja. Cada bloque tiene la columna Modelo y
-// una columna por cada precio seleccionado (en USD):
+// marcas agrupadas, una debajo de la otra. Cada bloque de marca tiene la
+// columna Modelo y una columna por cada precio seleccionado (en USD):
 //
-//   [Modelo][Precio…] [separador] [Modelo][Precio…]
+//   [Modelo][Precio…]
 export async function buildCatalogWorkbookBuffer(
   groups: CatalogBrandGroup[],
   priceColumns: CatalogPriceColumn[],
 ): Promise<Buffer> {
-  const blockWidth = 1 + priceColumns.length;
-  const blockWidths = [MODEL_WIDTH, ...priceColumns.map(() => PRICE_WIDTH)];
-  const columnWidths = [...blockWidths, GAP_WIDTH, ...blockWidths];
+  const columnWidths = [MODEL_WIDTH, ...priceColumns.map(() => PRICE_WIDTH)];
   const totalColumns = columnWidths.length;
-  // Columna (base 1) donde empieza cada bloque de la franja.
-  const blockStartCols = Array.from(
-    { length: BLOCKS_PER_BAND },
-    (_, i) => 1 + i * (blockWidth + 1),
-  );
 
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet("Catálogo", {
     pageSetup: {
-      orientation: totalColumns > 5 ? "landscape" : "portrait",
+      orientation: "portrait",
       fitToPage: true,
       fitToWidth: 1,
       fitToHeight: 0,
@@ -67,69 +58,54 @@ export async function buildCatalogWorkbookBuffer(
   ws.getRow(3).height = 30;
   ws.getRow(4).height = 12;
 
-  // --- Bloques de marcas, de a dos por franja ---
+  // --- Un bloque por marca, uno debajo del otro ---
   let row = 5;
-  for (let i = 0; i < groups.length; i += BLOCKS_PER_BAND) {
-    const band = groups.slice(i, i + BLOCKS_PER_BAND);
-
+  for (const group of groups) {
     // Encabezado con el nombre de la marca (celdas combinadas).
     ws.getRow(row).height = 17.25;
-    band.forEach((group, blockIdx) => {
-      const c = blockStartCols[blockIdx];
-      ws.mergeCells(row, c, row, c + blockWidth - 1);
-      const cell = ws.getCell(row, c);
-      cell.value = group.brand.toUpperCase();
-      cell.font = baseFont;
-      cell.alignment = { horizontal: "center", vertical: "bottom" };
-      for (let k = 0; k < blockWidth; k++) {
-        ws.getCell(row, c + k).border = { bottom: THIN };
-      }
-    });
+    ws.mergeCells(row, 1, row, totalColumns);
+    const brandCell = ws.getCell(row, 1);
+    brandCell.value = group.brand.toUpperCase();
+    brandCell.font = baseFont;
+    brandCell.alignment = { horizontal: "center", vertical: "bottom" };
+    for (let col = 1; col <= totalColumns; col++) {
+      ws.getCell(row, col).border = { bottom: THIN };
+    }
 
     // Encabezados de columnas.
     const headerRow = row + 1;
     ws.getRow(headerRow).height = 30;
-    band.forEach((_, blockIdx) => {
-      const c = blockStartCols[blockIdx];
-      const headers = ["MODELO", ...priceColumns.map((p) => p.header)];
-      headers.forEach((text, k) => {
-        const cell = ws.getCell(headerRow, c + k);
-        cell.value = text;
-        cell.font = baseFont;
-        cell.alignment = { vertical: "bottom", wrapText: true };
-        cell.border = { top: THIN, bottom: THIN };
-      });
+    ["MODELO", ...priceColumns.map((p) => p.header)].forEach((text, k) => {
+      const cell = ws.getCell(headerRow, 1 + k);
+      cell.value = text;
+      cell.font = baseFont;
+      cell.alignment = { vertical: "bottom", wrapText: true };
+      cell.border = { top: THIN, bottom: THIN };
     });
 
     // Filas de datos.
-    const rowCount = Math.max(...band.map((g) => g.phones.length));
-    for (let n = 0; n < rowCount; n++) {
+    group.phones.forEach((phone, n) => {
       const dataRow = headerRow + 1 + n;
-      band.forEach((group, blockIdx) => {
-        const phone = group.phones[n];
-        if (!phone) return;
-        const c = blockStartCols[blockIdx];
 
-        const modelCell = ws.getCell(dataRow, c);
-        modelCell.value = phone.model;
-        modelCell.font = baseFont;
-        modelCell.alignment = { vertical: "bottom" };
-        modelCell.border = { bottom: THIN };
+      const modelCell = ws.getCell(dataRow, 1);
+      modelCell.value = phone.model;
+      modelCell.font = baseFont;
+      modelCell.alignment = { vertical: "bottom" };
+      modelCell.border = { bottom: THIN };
 
-        priceColumns.forEach((column, k) => {
-          const cell = ws.getCell(dataRow, c + 1 + k);
-          const value = phone.values[column.key];
-          if (typeof value === "number") cell.value = value;
-          cell.numFmt = USD_FORMAT;
-          cell.font = baseFont;
-          cell.alignment = { vertical: "bottom" };
-          cell.border = { bottom: THIN };
-        });
+      priceColumns.forEach((column, k) => {
+        const cell = ws.getCell(dataRow, 2 + k);
+        const value = phone.values[column.key];
+        if (typeof value === "number") cell.value = value;
+        cell.numFmt = USD_FORMAT;
+        cell.font = baseFont;
+        cell.alignment = { vertical: "bottom" };
+        cell.border = { bottom: THIN };
       });
-    }
+    });
 
-    // Fila en blanco entre franjas.
-    row = headerRow + rowCount + 2;
+    // Fila en blanco entre marcas.
+    row = headerRow + group.phones.length + 2;
   }
 
   return applyBannerSize(Buffer.from(await workbook.xlsx.writeBuffer()), banner);
