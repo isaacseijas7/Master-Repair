@@ -42,6 +42,11 @@ export const seedPhones = async (
   await Phone.deleteMany({});
   console.log("🗑️  Colección de teléfonos limpiada");
 
+  // Mongoose crea índices pero nunca elimina los obsoletos: si la colección
+  // conserva un índice de una versión anterior del esquema, los inserts
+  // fallan con E11000. syncIndexes deja solo los índices del esquema actual.
+  await Phone.syncIndexes();
+
   const phonesData = Object.entries(phonesByBrand).flatMap(([brandName, phones]) => {
     const brandId = brandIds[brandName];
     if (!brandId) {
