@@ -138,7 +138,7 @@ export function Brands() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Marcas</h1>
           <p className="text-gray-500">
-            Gestiona las marcas del catálogo de teléfonos
+            Gestiona las marcas del catálogo de pantallas
           </p>
         </div>
         {canManage && (

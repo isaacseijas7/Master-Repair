@@ -51,9 +51,9 @@ const navigation = [
   { name: 'Órdenes', href: '/orders', icon: ShoppingCart },
 ];
 
-// Menú principal "Catálogo de Teléfonos" con sus submenús.
+// Menú principal "Catálogo de Pantallas" con sus submenús.
 const phoneCatalogNavigation = {
-  name: 'Catálogo de Teléfonos',
+  name: 'Catálogo de Pantallas',
   icon: Smartphone,
   children: [
     { name: 'Marcas', href: '/brands', icon: BadgeCheck },
@@ -188,7 +188,7 @@ export function MainLayout() {
             );
           })}
 
-          {/* Catálogo de Teléfonos */}
+          {/* Catálogo de Pantallas */}
           <div>
             <button
               type="button"
