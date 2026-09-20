@@ -1,6 +1,7 @@
 import { generateSKU, Product } from "../models/Product";
 import { Category } from "../models/Category";
 import { LeanProduct, ProductDocument } from "../types/product.types";
+import { addBanner, applyBannerSize, BANNER_ROWS } from "../utils/excelBanner";
 
 export class ProductService {
   private async buildSearchOr(search: string): Promise<any[]> {
@@ -242,16 +243,35 @@ export class ProductService {
     const selectedColumns =
       columns.length > 0 ? columns : Object.keys(columnDefinitions);
 
-    // Configurar columnas en el worksheet
-    worksheet.columns = selectedColumns.map((col) => columnDefinitions[col]);
+    // Configurar columnas (solo key y ancho: el encabezado se escribe abajo,
+    // después del banner)
+    worksheet.columns = selectedColumns.map((col) => ({
+      key: columnDefinitions[col].key,
+      width: columnDefinitions[col].width,
+    }));
 
-    // Estilo para header
-    worksheet.getRow(1).font = { bold: true, size: 12 };
-    worksheet.getRow(1).fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFE0E0E0" },
-    };
+    // Banner con el logo en las filas 1-2, una fila de separación y luego el
+    // encabezado de la tabla.
+    const banner = addBanner(
+      workbook,
+      worksheet,
+      selectedColumns.map((col) => columnDefinitions[col].width),
+      "left",
+    );
+    const headerRowNumber = BANNER_ROWS + 2;
+    worksheet.getRow(BANNER_ROWS + 1).height = 12;
+
+    const headerRow = worksheet.getRow(headerRowNumber);
+    selectedColumns.forEach((col, index) => {
+      const cell = headerRow.getCell(index + 1);
+      cell.value = columnDefinitions[col].header;
+      cell.font = { bold: true, size: 12 };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
+      };
+    });
 
     // Agregar datos
     products.forEach((product: any) => {
@@ -300,18 +320,15 @@ export class ProductService {
       }
     });
 
-    // Auto-filtros
+    // Auto-filtros sobre el encabezado de la tabla. No se congela el
+    // encabezado: quedaría fijo junto con el banner y ocuparía media pantalla.
     worksheet.autoFilter = {
-      from: { row: 1, column: 1 },
-      to: { row: 1, column: selectedColumns.length },
+      from: { row: headerRowNumber, column: 1 },
+      to: { row: headerRowNumber, column: selectedColumns.length },
     };
 
-    // Congelar primera fila
-    worksheet.views = [{ state: "frozen", ySplit: 1 }];
-
     // Generar buffer
-    const buffer = await workbook.xlsx.writeBuffer();
-    return buffer;
+    return applyBannerSize(Buffer.from(await workbook.xlsx.writeBuffer()), banner);
   }
 }
 
