@@ -5,9 +5,9 @@ import path from "path";
 // Funciona igual desde src/ (tsx) y desde dist/ (node): ambos quedan a dos
 // niveles de backend/assets.
 const BANNER_PATH = path.resolve(__dirname, "../../assets/catalog/banner.jpg");
-// Logo recortado a 1080x600 px (franja central de la imagen original).
-const BANNER_SOURCE_PX = { width: 1080, height: 600 };
-const MAX_BANNER_HEIGHT_PX = 260;
+// Banner "Mecánico" de 1160x376 px.
+const BANNER_SOURCE_PX = { width: 1160, height: 376 };
+const MAX_BANNER_WIDTH_PX = 1000;
 const EMU_PER_PX = 9525;
 
 // El banner ocupa siempre las filas 1 y 2 de la hoja.
@@ -38,7 +38,7 @@ function pxToAnchor(px: number, row: number, columnWidths: number[]): ExcelJS.An
   } as unknown as ExcelJS.Anchor;
 }
 
-// Inserta el logo en las filas 1-2, centrado sobre la tabla o alineado a la
+// Inserta el banner en las filas 1-2, centrado sobre la tabla o alineado a la
 // izquierda (útil en tablas anchas, donde un banner centrado quedaría fuera
 // de la primera pantalla). Si la tabla es más angosta que el banner, este se
 // reduce para no salirse de las columnas.
@@ -49,10 +49,7 @@ export function addBanner(
   align: "center" | "left" = "center",
 ): BannerPlacement {
   const tableWidthPx = columnWidths.reduce((sum, w) => sum + colWidthPx(w), 0);
-  const maxWidthPx = Math.round(
-    (MAX_BANNER_HEIGHT_PX * BANNER_SOURCE_PX.width) / BANNER_SOURCE_PX.height,
-  );
-  const widthPx = Math.min(maxWidthPx, tableWidthPx);
+  const widthPx = Math.min(MAX_BANNER_WIDTH_PX, tableWidthPx);
   const heightPx = Math.round((widthPx * BANNER_SOURCE_PX.height) / BANNER_SOURCE_PX.width);
   const leftPx =
     align === "left" ? 0 : Math.max(0, Math.round((tableWidthPx - widthPx) / 2));

@@ -53,12 +53,27 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Control } from "react-hook-form";
 import { z } from "zod";
 
-// El precio se captura como texto en el input numérico y se convierte a
+// Los precios se capturan como texto en el input numérico y se convierten a
 // número al enviar; así el formulario conserva exactamente lo que escribe
 // el usuario (ej. "10.50").
+const isValidPrice = (v: string) =>
+  Number.isFinite(Number(v)) && Number(v) > 0 && /^\d+(\.\d{1,2})?$/.test(v);
+
+const requiredPrice = z
+  .string()
+  .min(1, "El precio es requerido")
+  .refine((v) => Number(v) > 0, { message: "El precio debe ser mayor a 0" })
+  .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), { message: "Máximo 2 decimales" });
+
+const optionalPrice = z
+  .string()
+  .refine((v) => v === "" || isValidPrice(v), {
+    message: "Debe ser mayor a 0, con máximo 2 decimales",
+  });
+
 const phoneSchema = z.object({
   brandId: z.string().min(1, "Selecciona una marca"),
   phoneModel: z
@@ -66,18 +81,18 @@ const phoneSchema = z.object({
     .trim()
     .min(1, "El modelo es requerido")
     .max(150, "Máximo 150 caracteres"),
-  salePrice: z
-    .string()
-    .min(1, "El precio es requerido")
-    .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, {
-      message: "El precio debe ser mayor a 0",
-    })
-    .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), {
-      message: "Máximo 2 decimales",
-    }),
+  purchasePrice: optionalPrice,
+  unitSalePrice: optionalPrice,
+  salePrice: requiredPrice,
 });
 
 type PhoneFormData = z.infer<typeof phoneSchema>;
+
+const priceToString = (value?: number | null) =>
+  typeof value === "number" ? String(value) : "";
+
+const formatPrice = (value?: number | null) =>
+  typeof value === "number" ? formatCurrency(value) : "-";
 
 const getBrandName = (brand: Phone["brandId"]) =>
   typeof brand === "string" ? "-" : brand?.name ?? "-";
@@ -136,11 +151,17 @@ export function Phones() {
     }
   };
 
+  // Los precios opcionales en blanco se envían como null (vacían el valor).
   const toInput = (data: PhoneFormData) => ({
     brandId: data.brandId,
     phoneModel: data.phoneModel,
     salePrice: Number(data.salePrice),
+    unitSalePrice: data.unitSalePrice ? Number(data.unitSalePrice) : null,
+    purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null,
   });
+
+  // Marca, modelo, mayor, unitario, [compra] y acciones.
+  const columnCount = canManage ? 6 : 5;
 
   const rowActions = (phone: Phone, className?: string) => (
     <DropdownMenu>
@@ -264,9 +285,22 @@ export function Phones() {
                       <h3 className="truncate text-base font-semibold text-gray-900">
                         {phone.phoneModel}
                       </h3>
-                      <p className="mt-1 text-sm font-medium text-gray-700">
-                        {formatCurrency(phone.salePrice)}
-                      </p>
+                      <dl className="mt-2 space-y-0.5 text-sm text-gray-700">
+                        {canManage && (
+                          <div className="flex gap-2">
+                            <dt className="text-gray-500">Compra:</dt>
+                            <dd className="font-medium">{formatPrice(phone.purchasePrice)}</dd>
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <dt className="text-gray-500">Unitario:</dt>
+                          <dd className="font-medium">{formatPrice(phone.unitSalePrice)}</dd>
+                        </div>
+                        <div className="flex gap-2">
+                          <dt className="text-gray-500">Mayor:</dt>
+                          <dd className="font-medium">{formatPrice(phone.salePrice)}</dd>
+                        </div>
+                      </dl>
                     </div>
                     {canManage && rowActions(phone, "h-11 w-11")}
                   </div>
@@ -282,7 +316,11 @@ export function Phones() {
                 <TableRow>
                   <TableHead>Marca</TableHead>
                   <TableHead>Modelo</TableHead>
-                  <TableHead className="text-right">Precio de venta (USD)</TableHead>
+                  {canManage && (
+                    <TableHead className="text-right">Precio de compra (USD)</TableHead>
+                  )}
+                  <TableHead className="text-right">Precio unitario (USD)</TableHead>
+                  <TableHead className="text-right">Precio al por mayor (USD)</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -290,14 +328,14 @@ export function Phones() {
                 {isLoading ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={4}>
+                      <TableCell colSpan={columnCount}>
                         <Skeleton className="h-12" />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : phones.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
+                    <TableCell colSpan={columnCount} className="text-center py-8">
                       <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                       <p className="text-gray-500">No se encontraron teléfonos</p>
                     </TableCell>
@@ -309,8 +347,16 @@ export function Phones() {
                       <TableCell className="font-medium">
                         {phone.phoneModel}
                       </TableCell>
+                      {canManage && (
+                        <TableCell className="text-right tabular-nums">
+                          {formatPrice(phone.purchasePrice)}
+                        </TableCell>
+                      )}
                       <TableCell className="text-right tabular-nums">
-                        {formatCurrency(phone.salePrice)}
+                        {formatPrice(phone.unitSalePrice)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatPrice(phone.salePrice)}
                       </TableCell>
                       <TableCell>{canManage ? rowActions(phone) : null}</TableCell>
                     </TableRow>
@@ -354,6 +400,8 @@ export function Phones() {
               brandId: getBrandId(editingPhone.brandId),
               phoneModel: editingPhone.phoneModel,
               salePrice: String(editingPhone.salePrice),
+              unitSalePrice: priceToString(editingPhone.unitSalePrice),
+              purchasePrice: priceToString(editingPhone.purchasePrice),
             }}
             onSubmit={async (data) => {
               await updatePhone(editingPhone._id, toInput(data));
@@ -381,6 +429,8 @@ function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
       brandId: initialData?.brandId ?? "",
       phoneModel: initialData?.phoneModel ?? "",
       salePrice: initialData?.salePrice ?? "",
+      unitSalePrice: initialData?.unitSalePrice ?? "",
+      purchasePrice: initialData?.purchasePrice ?? "",
     },
   });
 
@@ -445,34 +495,20 @@ function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
             </FormItem>
           )}
         />
-        <FormField
+        <PriceField
+          control={form.control}
+          name="purchasePrice"
+          label="Precio de compra al proveedor (USD)"
+        />
+        <PriceField
+          control={form.control}
+          name="unitSalePrice"
+          label="Precio de venta unitario (USD)"
+        />
+        <PriceField
           control={form.control}
           name="salePrice"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Precio de venta (USD) *</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    min="0.01"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="pl-7 pr-14"
-                    {...field}
-                  />
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500">
-                    USD
-                  </span>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Precio de venta al por mayor (USD) *"
         />
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isSubmitting}>
@@ -488,5 +524,45 @@ function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
         </div>
       </form>
     </Form>
+  );
+}
+
+interface PriceFieldProps {
+  control: Control<PhoneFormData>;
+  name: "salePrice" | "unitSalePrice" | "purchasePrice";
+  label: string;
+}
+
+function PriceField({ control, name, label }: PriceFieldProps) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                $
+              </span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                className="pl-7 pr-14"
+                {...field}
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500">
+                USD
+              </span>
+            </div>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }

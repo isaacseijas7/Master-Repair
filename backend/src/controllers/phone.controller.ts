@@ -1,6 +1,14 @@
 import { FastifyRequest, FastifyReply, RouteGenericInterface } from "fastify";
-import { phoneService } from "../services/phone.service";
+import {
+  phoneService,
+  PHONE_EXPORT_COLUMNS,
+  DEFAULT_PHONE_EXPORT_COLUMNS,
+} from "../services/phone.service";
 import { createPhoneSchema, updatePhoneSchema } from "../schemas/phone.schema";
+
+// El precio de compra es un dato interno: solo admin y manager lo ven.
+const canViewCost = (request: FastifyRequest) =>
+  request.user?.role === "admin" || request.user?.role === "manager";
 
 interface GetPhonesRoute extends RouteGenericInterface {
   Querystring: Record<string, any>;
@@ -8,7 +16,7 @@ interface GetPhonesRoute extends RouteGenericInterface {
 
 interface ExportPhonesRoute extends RouteGenericInterface {
   // IDs de marca separados por coma; vacío = todas las marcas.
-  Querystring: { brandIds?: string };
+  Querystring: { brandIds?: string; columns?: string };
 }
 
 interface PhoneByIdRoute extends RouteGenericInterface {
@@ -30,7 +38,10 @@ export class PhoneController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const result = await phoneService.getPhones(request.query);
+      const result = await phoneService.getPhones(
+        request.query,
+        canViewCost(request),
+      );
       reply.send({
         success: true,
         message: "Teléfonos obtenidos exitosamente",
@@ -46,7 +57,10 @@ export class PhoneController {
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const phone = await phoneService.getPhoneById(request.params.id);
+      const phone = await phoneService.getPhoneById(
+        request.params.id,
+        canViewCost(request),
+      );
       reply.send({
         success: true,
         message: "Teléfono obtenido exitosamente",
@@ -140,7 +154,19 @@ export class PhoneController {
         return;
       }
 
-      const buffer = await phoneService.exportPhones(brandIds);
+      const columns = request.query.columns
+        ? request.query.columns.split(",").map((c) => c.trim()).filter(Boolean)
+        : DEFAULT_PHONE_EXPORT_COLUMNS;
+      const validKeys = PHONE_EXPORT_COLUMNS.map((c) => c.key as string);
+      if (
+        columns.length === 0 ||
+        columns.some((c) => !validKeys.includes(c))
+      ) {
+        reply.status(400).send({ success: false, message: "Columnas inválidas" });
+        return;
+      }
+
+      const buffer = await phoneService.exportPhones(brandIds, columns);
 
       const timestamp = new Date().toISOString().split("T")[0];
       reply.header(

@@ -91,8 +91,11 @@ export interface Phone {
   _id: string;
   brandId: Brand | string;
   phoneModel: string;
-  // Precio de venta en USD
+  // Precios en USD. `salePrice` es el precio de venta al por mayor.
   salePrice: number;
+  unitSalePrice?: number | null;
+  // Solo lo devuelve el backend a admin/manager
+  purchasePrice?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,7 +104,12 @@ export interface CreatePhoneInput {
   brandId: string;
   phoneModel: string;
   salePrice: number;
+  // null borra el valor al editar
+  unitSalePrice?: number | null;
+  purchasePrice?: number | null;
 }
+
+export type PhoneExportColumn = 'salePrice' | 'unitSalePrice' | 'purchasePrice';
 
 export interface PhoneFilters extends PaginationParams {
   brandId?: string;

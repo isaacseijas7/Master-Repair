@@ -1,29 +1,50 @@
 import ExcelJS from "exceljs";
 import { addBanner, applyBannerSize } from "./excelBanner";
 
+export interface CatalogPriceColumn {
+  key: string;
+  header: string;
+}
+
 export interface CatalogBrandGroup {
   brand: string;
-  phones: Array<{ model: string; price: number }>;
+  phones: Array<{ model: string; values: Record<string, number | null | undefined> }>;
 }
 
 const FONT_NAME = "Aptos Narrow";
 const USD_FORMAT = '"$"#,##0.00';
 const THIN = { style: "thin" as const, color: { argb: "FF000000" } };
 
-// Columnas: [A modelo][B precio][C separador][D modelo][E precio], igual que
-// el formato de lista de precios del cliente.
-const COLUMN_WIDTHS = [29.57, 14.29, 3.14, 32.29, 13.71];
-const BLOCK_START_COLS = [1, 4];
+const MODEL_WIDTH = 29.57;
+const PRICE_WIDTH = 18;
+const GAP_WIDTH = 3.14;
+const BLOCKS_PER_BAND = 2;
 
-// Genera la "Lista de precios" del catálogo: banner con el logo, título y
-// las marcas agrupadas de a dos por fila (Modelo / Precio en USD).
+const baseFont = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
+
+// Genera la "Lista de precios" del catálogo: banner con el logo, título y las
+// marcas agrupadas de a dos por franja. Cada bloque tiene la columna Modelo y
+// una columna por cada precio seleccionado (en USD):
+//
+//   [Modelo][Precio…] [separador] [Modelo][Precio…]
 export async function buildCatalogWorkbookBuffer(
   groups: CatalogBrandGroup[],
+  priceColumns: CatalogPriceColumn[],
 ): Promise<Buffer> {
+  const blockWidth = 1 + priceColumns.length;
+  const blockWidths = [MODEL_WIDTH, ...priceColumns.map(() => PRICE_WIDTH)];
+  const columnWidths = [...blockWidths, GAP_WIDTH, ...blockWidths];
+  const totalColumns = columnWidths.length;
+  // Columna (base 1) donde empieza cada bloque de la franja.
+  const blockStartCols = Array.from(
+    { length: BLOCKS_PER_BAND },
+    (_, i) => 1 + i * (blockWidth + 1),
+  );
+
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet("Catálogo", {
     pageSetup: {
-      orientation: "portrait",
+      orientation: totalColumns > 5 ? "landscape" : "portrait",
       fitToPage: true,
       fitToWidth: 1,
       fitToHeight: 0,
@@ -31,15 +52,15 @@ export async function buildCatalogWorkbookBuffer(
     },
   });
 
-  ws.columns = COLUMN_WIDTHS.map((width) => ({ width }));
+  ws.columns = columnWidths.map((width) => ({ width }));
   ws.properties.defaultRowHeight = 15;
 
   // --- Banner (filas 1-2) ---
-  const banner = addBanner(workbook, ws, COLUMN_WIDTHS);
+  const banner = addBanner(workbook, ws, columnWidths);
 
   // --- Título (fila 3) ---
-  ws.mergeCells("A3:E3");
-  const title = ws.getCell("A3");
+  ws.mergeCells(3, 1, 3, totalColumns);
+  const title = ws.getCell(3, 1);
   title.value = "LISTA DE PRECIOS";
   title.font = { name: FONT_NAME, size: 28, bold: true, color: { argb: "FF000000" } };
   title.alignment = { horizontal: "center", vertical: "middle" };
@@ -48,34 +69,34 @@ export async function buildCatalogWorkbookBuffer(
 
   // --- Bloques de marcas, de a dos por franja ---
   let row = 5;
-  for (let i = 0; i < groups.length; i += 2) {
-    const band = groups.slice(i, i + 2);
+  for (let i = 0; i < groups.length; i += BLOCKS_PER_BAND) {
+    const band = groups.slice(i, i + BLOCKS_PER_BAND);
 
     // Encabezado con el nombre de la marca (celdas combinadas).
     ws.getRow(row).height = 17.25;
     band.forEach((group, blockIdx) => {
-      const c = BLOCK_START_COLS[blockIdx];
-      ws.mergeCells(row, c, row, c + 1);
+      const c = blockStartCols[blockIdx];
+      ws.mergeCells(row, c, row, c + blockWidth - 1);
       const cell = ws.getCell(row, c);
       cell.value = group.brand.toUpperCase();
-      cell.font = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
+      cell.font = baseFont;
       cell.alignment = { horizontal: "center", vertical: "bottom" };
-      cell.border = { bottom: THIN };
-      ws.getCell(row, c + 1).border = { bottom: THIN };
+      for (let k = 0; k < blockWidth; k++) {
+        ws.getCell(row, c + k).border = { bottom: THIN };
+      }
     });
 
     // Encabezados de columnas.
     const headerRow = row + 1;
+    ws.getRow(headerRow).height = 30;
     band.forEach((_, blockIdx) => {
-      const c = BLOCK_START_COLS[blockIdx];
-      [
-        [c, "MODELO"],
-        [c + 1, "PRECIO (USD)"],
-      ].forEach(([col, text]) => {
-        const cell = ws.getCell(headerRow, col as number);
-        cell.value = text as string;
-        cell.font = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
-        cell.alignment = { vertical: "bottom" };
+      const c = blockStartCols[blockIdx];
+      const headers = ["MODELO", ...priceColumns.map((p) => p.header)];
+      headers.forEach((text, k) => {
+        const cell = ws.getCell(headerRow, c + k);
+        cell.value = text;
+        cell.font = baseFont;
+        cell.alignment = { vertical: "bottom", wrapText: true };
         cell.border = { top: THIN, bottom: THIN };
       });
     });
@@ -87,20 +108,23 @@ export async function buildCatalogWorkbookBuffer(
       band.forEach((group, blockIdx) => {
         const phone = group.phones[n];
         if (!phone) return;
-        const c = BLOCK_START_COLS[blockIdx];
+        const c = blockStartCols[blockIdx];
 
         const modelCell = ws.getCell(dataRow, c);
         modelCell.value = phone.model;
-        modelCell.font = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
+        modelCell.font = baseFont;
         modelCell.alignment = { vertical: "bottom" };
         modelCell.border = { bottom: THIN };
 
-        const priceCell = ws.getCell(dataRow, c + 1);
-        priceCell.value = phone.price;
-        priceCell.numFmt = USD_FORMAT;
-        priceCell.font = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
-        priceCell.alignment = { vertical: "bottom" };
-        priceCell.border = { bottom: THIN };
+        priceColumns.forEach((column, k) => {
+          const cell = ws.getCell(dataRow, c + 1 + k);
+          const value = phone.values[column.key];
+          if (typeof value === "number") cell.value = value;
+          cell.numFmt = USD_FORMAT;
+          cell.font = baseFont;
+          cell.alignment = { vertical: "bottom" };
+          cell.border = { bottom: THIN };
+        });
       });
     }
 

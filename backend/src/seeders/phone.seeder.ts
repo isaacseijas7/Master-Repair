@@ -1,7 +1,7 @@
 import { Phone } from "../models/Phone";
 import mongoose from "mongoose";
 
-// Precios de venta en USD (datos de prueba).
+// `salePrice` es el precio de venta al por mayor, en USD (datos de prueba).
 const phonesByBrand: Record<string, Array<{ phoneModel: string; salePrice: number }>> = {
   Samsung: [
     { phoneModel: "Galaxy S24", salePrice: 799.99 },
@@ -52,7 +52,14 @@ export const seedPhones = async (
     if (!brandId) {
       throw new Error(`Marca "${brandName}" no encontrada; ejecuta antes el seeder de marcas`);
     }
-    return phones.map((phone) => ({ brandId, ...phone }));
+    return phones.map((phone) => ({
+      brandId,
+      ...phone,
+      // Datos de prueba derivados del precio al por mayor (`salePrice`):
+      // compra al proveedor ≈ 10% menos, venta unitaria ≈ 12% más.
+      purchasePrice: Math.round(phone.salePrice * 0.9 * 100) / 100,
+      unitSalePrice: Math.round(phone.salePrice * 1.12 * 100) / 100,
+    }));
   });
 
   const phones = await Phone.insertMany(phonesData);
