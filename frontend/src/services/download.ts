@@ -9,8 +9,10 @@ const XLSX_MIME =
 export async function downloadExcel(
   path: string,
   filenamePrefix: string,
+  params?: Record<string, string>,
 ): Promise<void> {
   const response = await apiClient.get(path, {
+    params,
     responseType: "blob",
     headers: { Accept: XLSX_MIME },
   });

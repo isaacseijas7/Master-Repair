@@ -6,6 +6,11 @@ interface GetPhonesRoute extends RouteGenericInterface {
   Querystring: Record<string, any>;
 }
 
+interface ExportPhonesRoute extends RouteGenericInterface {
+  // IDs de marca separados por coma; vacío = todas las marcas.
+  Querystring: { brandIds?: string };
+}
+
 interface PhoneByIdRoute extends RouteGenericInterface {
   Params: { id: string };
 }
@@ -121,11 +126,21 @@ export class PhoneController {
   }
 
   async exportPhones(
-    request: FastifyRequest,
+    request: FastifyRequest<ExportPhonesRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const buffer = await phoneService.exportPhones();
+      const brandIds = (request.query.brandIds ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      if (brandIds.some((id) => !/^[0-9a-fA-F]{24}$/.test(id))) {
+        reply.status(400).send({ success: false, message: "Marca inválida" });
+        return;
+      }
+
+      const buffer = await phoneService.exportPhones(brandIds);
 
       const timestamp = new Date().toISOString().split("T")[0];
       reply.header(

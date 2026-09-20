@@ -1,7 +1,7 @@
 import { Brand } from '../models/Brand';
 import { Phone } from '../models/Phone';
 import { LeanBrand, BrandDocument } from '../types/brand.types';
-import { buildWorkbookBuffer, DATE_FORMAT } from '../utils/excel';
+import { buildWorkbookBuffer } from '../utils/excel';
 import { buildPagination, escapeRegex, parsePagination } from '../utils/query';
 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 } as const;
@@ -26,9 +26,20 @@ export class BrandService {
   }
 
   // Listado completo sin paginar, para alimentar selectores.
-  async getAllBrands(): Promise<LeanBrand[]> {
-    const brands = await Brand.find().sort({ name: 1 }).lean();
-    return brands as LeanBrand[];
+  // Incluye la cantidad de teléfonos de cada marca (p. ej. para el diálogo
+  // de exportación del catálogo).
+  async getAllBrands(): Promise<Array<LeanBrand & { phoneCount: number }>> {
+    const [brands, counts] = await Promise.all([
+      Brand.find().sort({ name: 1 }).lean(),
+      Phone.aggregate<{ _id: unknown; count: number }>([
+        { $group: { _id: '$brandId', count: { $sum: 1 } } },
+      ]),
+    ]);
+    const countByBrand = new Map(counts.map((c) => [String(c._id), c.count]));
+    return (brands as LeanBrand[]).map((brand) => ({
+      ...brand,
+      phoneCount: countByBrand.get(String(brand._id)) ?? 0,
+    }));
   }
 
   async getBrandById(id: string): Promise<BrandDocument> {
@@ -75,14 +86,10 @@ export class BrandService {
       [
         { header: 'ID', key: 'id', width: 28 },
         { header: 'Marca', key: 'name', width: 30 },
-        { header: 'Fecha de creación', key: 'createdAt', width: 20, numFmt: DATE_FORMAT },
-        { header: 'Última actualización', key: 'updatedAt', width: 20, numFmt: DATE_FORMAT },
       ],
       brands.map((brand) => ({
         id: brand._id.toString(),
         name: brand.name,
-        createdAt: brand.createdAt,
-        updatedAt: brand.updatedAt,
       })),
     );
   }

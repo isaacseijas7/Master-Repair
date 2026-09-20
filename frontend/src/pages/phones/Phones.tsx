@@ -1,5 +1,5 @@
 import { Pagination } from "@/components/Pagination";
-import { ExportExcelButton } from "@/components/export/ExportExcelButton";
+import { ExportPhonesDialog } from "@/components/export/ExportPhonesDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
@@ -38,7 +38,6 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { formatCurrency } from "@/lib/utils";
-import { phoneService } from "@/services/phone.service";
 import { useAuthStore } from "@/stores/auth.store";
 import { useBrandStore } from "@/stores/brand.store";
 import { usePhoneStore } from "@/stores/phone.store";
@@ -182,11 +181,7 @@ export function Phones() {
         </div>
         {canManage && (
           <div className="flex flex-wrap items-center gap-3">
-            <ExportExcelButton
-              onExport={phoneService.exportToExcel}
-              disabled={pagination.total === 0 && !searchTerm && !brandFilter}
-              successMessage="Excel del catálogo generado"
-            />
+            <ExportPhonesDialog currentBrandId={brandFilter} />
             <ResponsiveDialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}

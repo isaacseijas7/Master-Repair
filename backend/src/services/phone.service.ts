@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { Brand } from '../models/Brand';
 import { Phone } from '../models/Phone';
 import { LeanPhone, PhoneDocument } from '../types/phone.types';
-import { buildWorkbookBuffer, DATE_FORMAT, USD_FORMAT } from '../utils/excel';
+import { buildCatalogWorkbookBuffer, CatalogBrandGroup } from '../utils/catalogExcel';
 import { buildPagination, escapeRegex, parsePagination } from '../utils/query';
 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 } as const;
@@ -79,34 +79,24 @@ export class PhoneService {
     if (!phone) throw new Error('Teléfono no encontrado');
   }
 
-  async exportPhones(): Promise<Buffer> {
-    const phones = await Phone.find().populate('brandId', 'name').lean();
+  // Catálogo en formato "lista de precios": teléfonos agrupados por marca.
+  // Sin `brandIds` (o vacío) exporta todas las marcas.
+  async exportPhones(brandIds: string[] = []): Promise<Buffer> {
+    const query = brandIds.length > 0 ? { brandId: { $in: brandIds } } : {};
+    const phones = await Phone.find(query).populate('brandId', 'name').lean();
 
-    const rows = phones
-      .map((phone: any) => ({
-        brand: phone.brandId?.name ?? '-',
-        phoneModel: phone.phoneModel,
-        salePrice: phone.salePrice,
-        createdAt: phone.createdAt,
-        updatedAt: phone.updatedAt,
-      }))
-      .sort(
-        (a, b) =>
-          a.brand.localeCompare(b.brand, 'es', { sensitivity: 'base' }) ||
-          a.phoneModel.localeCompare(b.phoneModel, 'es', { sensitivity: 'base' }),
-      );
+    const byBrand = new Map<string, CatalogBrandGroup>();
+    for (const phone of phones as any[]) {
+      const brand: string = phone.brandId?.name ?? 'Sin marca';
+      if (!byBrand.has(brand)) byBrand.set(brand, { brand, phones: [] });
+      byBrand.get(brand)!.phones.push({ model: phone.phoneModel, price: phone.salePrice });
+    }
 
-    return buildWorkbookBuffer(
-      'Teléfonos',
-      [
-        { header: 'Marca', key: 'brand', width: 25 },
-        { header: 'Modelo', key: 'phoneModel', width: 35 },
-        { header: 'Precio de venta (USD)', key: 'salePrice', width: 22, numFmt: USD_FORMAT },
-        { header: 'Fecha de creación', key: 'createdAt', width: 20, numFmt: DATE_FORMAT },
-        { header: 'Última actualización', key: 'updatedAt', width: 20, numFmt: DATE_FORMAT },
-      ],
-      rows,
-    );
+    const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+    const groups = [...byBrand.values()].sort((a, b) => collator.compare(a.brand, b.brand));
+    groups.forEach((group) => group.phones.sort((a, b) => collator.compare(a.model, b.model)));
+
+    return buildCatalogWorkbookBuffer(groups);
   }
 
   private async assertBrandExists(brandId: string): Promise<void> {

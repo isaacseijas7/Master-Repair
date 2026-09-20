@@ -76,6 +76,8 @@ export interface CreateCategoryInput {
 export interface Brand {
   _id: string;
   name: string;
+  // Solo lo devuelve GET /brands/all
+  phoneCount?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -7,9 +7,6 @@ export interface SheetColumn {
   numFmt?: string;
 }
 
-export const USD_FORMAT = '"$"#,##0.00';
-export const DATE_FORMAT = "dd/mm/yyyy hh:mm";
-
 // Genera un .xlsx de una sola hoja con encabezado resaltado, primera fila
 // congelada y autofiltro.
 export async function buildWorkbookBuffer(

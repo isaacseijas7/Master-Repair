@@ -28,7 +28,12 @@ export const phoneService = {
     await apiClient.delete(`/phones/${id}`);
   },
 
-  async exportToExcel(): Promise<void> {
-    await downloadExcel('/phones/export', 'telefonos');
+  // Sin brandIds (o vacío) exporta el catálogo de todas las marcas.
+  async exportToExcel(brandIds: string[] = []): Promise<void> {
+    await downloadExcel(
+      '/phones/export',
+      'telefonos',
+      brandIds.length > 0 ? { brandIds: brandIds.join(',') } : undefined,
+    );
   },
 };
