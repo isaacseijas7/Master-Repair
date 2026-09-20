@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/drawer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { HelpCenterSheet } from '@/components/help/HelpCenterSheet';
+import logo from '@/assets/logo.png';
 import {
   LayoutDashboard,
   Package,
@@ -27,7 +28,6 @@ import {
   Truck,
   Users,
   ShoppingCart,
-  BarChart3,
   LogOut,
   Menu,
   X,
@@ -153,12 +153,9 @@ export function MainLayout() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Máster Repair</span>
+        <div className="flex items-center justify-between h-24 px-6 border-b border-gray-200">
+          <Link to="/" aria-label="Máster Repair - Inicio">
+            <img src={logo} alt="Máster Repair C.A" className="h-20 w-auto" />
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
