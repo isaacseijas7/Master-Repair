@@ -21,7 +21,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BarChart3, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -69,12 +70,11 @@ export function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-              <BarChart3 className="w-8 h-8 text-white" />
-            </div>
+            <img src={logo} alt="" className="h-32 w-auto" />
           </div>
           <div className="text-center">
-            <CardTitle className="text-2xl font-bold">Máster Repair</CardTitle>
+            {/* El nombre del sistema está en el logo; se conserva como título accesible. */}
+            <CardTitle className="sr-only">Máster Repair</CardTitle>
             <CardDescription>
               Sistema de Gestión de Inventario
             </CardDescription>

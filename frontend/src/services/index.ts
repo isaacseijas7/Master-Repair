@@ -6,3 +6,5 @@ export { clientService } from './client.service';
 export { supplierService } from './supplier.service';
 export { orderService } from './order.service';
 export { dashboardService } from './dashboard.service';
+export { brandService } from './brand.service';
+export { phoneService } from './phone.service';

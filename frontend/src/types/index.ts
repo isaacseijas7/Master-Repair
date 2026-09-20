@@ -72,6 +72,41 @@ export interface CreateCategoryInput {
   isActive?: boolean;
 }
 
+// ==================== BRAND TYPES ====================
+export interface Brand {
+  _id: string;
+  name: string;
+  // Solo lo devuelve GET /brands/all
+  phoneCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBrandInput {
+  name: string;
+}
+
+// ==================== PHONE TYPES ====================
+export interface Phone {
+  _id: string;
+  brandId: Brand | string;
+  phoneModel: string;
+  // Precio de venta en USD
+  salePrice: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePhoneInput {
+  brandId: string;
+  phoneModel: string;
+  salePrice: number;
+}
+
+export interface PhoneFilters extends PaginationParams {
+  brandId?: string;
+}
+
 // ==================== SUPPLIER TYPES ====================
 export interface Supplier {
   _id: string;

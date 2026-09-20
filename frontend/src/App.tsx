@@ -7,6 +7,8 @@ import { Login } from "@/pages/Login";
 import { Dashboard } from "@/pages/Dashboard";
 import { Products } from "@/pages/products/Products";
 import { Categories } from "@/pages/categories/Categories";
+import { Brands } from "@/pages/brands/Brands";
+import { Phones } from "@/pages/phones/Phones";
 import { Suppliers } from "@/pages/suppliers/Suppliers";
 import { Clients } from "@/pages/clients/Clients";
 import { ClientDetail } from "@/pages/clients/ClientDetail";
@@ -99,6 +101,8 @@ function App() {
               }
             />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/brands" element={<Brands />} />
+            <Route path="/phones" element={<Phones />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/:id" element={<ClientDetail />} />
