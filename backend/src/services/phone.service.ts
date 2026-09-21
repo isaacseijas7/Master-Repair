@@ -65,7 +65,7 @@ export class PhoneService {
     const phone = await Phone.findById(id)
       .select(canViewCost ? '' : COST_FIELD)
       .populate('brandId', 'name');
-    if (!phone) throw new Error('Teléfono no encontrado');
+    if (!phone) throw new Error('Pantalla no encontrado');
     return phone as unknown as PhoneDocument;
   }
 
@@ -86,7 +86,7 @@ export class PhoneService {
     data: { brandId?: string; phoneModel?: string } & PhonePriceInput,
   ): Promise<PhoneDocument> {
     const phone = await Phone.findById(id);
-    if (!phone) throw new Error('Teléfono no encontrado');
+    if (!phone) throw new Error('Pantalla no encontrado');
 
     if (data.brandId) await this.assertBrandExists(data.brandId);
 
@@ -102,7 +102,7 @@ export class PhoneService {
 
   async deletePhone(id: string): Promise<void> {
     const phone = await Phone.findByIdAndDelete(id);
-    if (!phone) throw new Error('Teléfono no encontrado');
+    if (!phone) throw new Error('Pantalla no encontrado');
   }
 
   // Catálogo en formato "lista de precios": pantallas agrupados por marca.

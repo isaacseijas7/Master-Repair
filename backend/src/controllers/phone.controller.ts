@@ -63,7 +63,7 @@ export class PhoneController {
       );
       reply.send({
         success: true,
-        message: "Teléfono obtenido exitosamente",
+        message: "Pantalla obtenido exitosamente",
         data: { phone },
       });
     } catch (error: any) {
@@ -80,7 +80,7 @@ export class PhoneController {
       const phone = await phoneService.createPhone(validatedData);
       reply.status(201).send({
         success: true,
-        message: "Teléfono creado exitosamente",
+        message: "Pantalla creado exitosamente",
         data: { phone },
       });
     } catch (error: any) {
@@ -108,7 +108,7 @@ export class PhoneController {
       );
       reply.send({
         success: true,
-        message: "Teléfono actualizado exitosamente",
+        message: "Pantalla actualizado exitosamente",
         data: { phone },
       });
     } catch (error: any) {
@@ -132,7 +132,7 @@ export class PhoneController {
       await phoneService.deletePhone(request.params.id);
       reply.send({
         success: true,
-        message: "Teléfono eliminado exitosamente",
+        message: "Pantalla eliminado exitosamente",
       });
     } catch (error: any) {
       reply.status(400).send({ success: false, message: error.message });

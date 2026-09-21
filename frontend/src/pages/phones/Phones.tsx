@@ -209,10 +209,10 @@ export function Phones() {
               trigger={
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Teléfono
+                  Nuevo Pantalla
                 </Button>
               }
-              title="Crear Nuevo Teléfono"
+              title="Crear Nuevo Pantalla"
             >
               <PhoneForm
                 brands={allBrands}
@@ -391,7 +391,7 @@ export function Phones() {
       <ResponsiveDialog
         open={!!editingPhone}
         onOpenChange={() => setEditingPhone(null)}
-        title="Editar Teléfono"
+        title="Editar Pantalla"
       >
         {editingPhone && (
           <PhoneForm
