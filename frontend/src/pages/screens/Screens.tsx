@@ -64,30 +64,33 @@ import { z } from "zod";
 const isValidPrice = (v: string) =>
   Number.isFinite(Number(v)) && Number(v) > 0 && /^\d+(\.\d{1,2})?$/.test(v);
 
-const requiredPrice = z
-  .string()
-  .min(1, "El precio es requerido")
-  .refine((v) => Number(v) > 0, { message: "El precio debe ser mayor a 0" })
-  .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), { message: "Máximo 2 decimales" });
-
 const optionalPrice = z
   .string()
   .refine((v) => v === "" || isValidPrice(v), {
     message: "Debe ser mayor a 0, con máximo 2 decimales",
   });
 
-const screenSchema = z.object({
-  brandId: z.string().min(1, "Selecciona una marca"),
-  screenModel: z
-    .string()
-    .trim()
-    .min(1, "El modelo es requerido")
-    .max(150, "Máximo 150 caracteres"),
-  purchasePrice: optionalPrice,
-  unitSalePrice: optionalPrice,
-  salePrice: requiredPrice,
-  isMechanic: z.boolean(),
-});
+const screenSchema = z
+  .object({
+    brandId: z.string().min(1, "Selecciona una marca"),
+    screenModel: z
+      .string()
+      .trim()
+      .min(1, "El modelo es requerido")
+      .max(150, "Máximo 150 caracteres"),
+    purchasePrice: optionalPrice,
+    unitSalePrice: optionalPrice,
+    salePrice: optionalPrice,
+    isMechanic: z.boolean(),
+  })
+  // Al menos uno de los dos precios de venta es obligatorio.
+  .superRefine((data, ctx) => {
+    if (data.unitSalePrice === "" && data.salePrice === "") {
+      const message = "Ingresa al menos el precio unitario o el precio al por mayor";
+      ctx.addIssue({ code: "custom", path: ["unitSalePrice"], message });
+      ctx.addIssue({ code: "custom", path: ["salePrice"], message });
+    }
+  });
 
 type ScreenFormData = z.infer<typeof screenSchema>;
 
@@ -158,7 +161,7 @@ export function Screens() {
   const toInput = (data: ScreenFormData) => ({
     brandId: data.brandId,
     screenModel: data.screenModel,
-    salePrice: Number(data.salePrice),
+    salePrice: data.salePrice ? Number(data.salePrice) : null,
     unitSalePrice: data.unitSalePrice ? Number(data.unitSalePrice) : null,
     purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null,
     isMechanic: data.isMechanic,
@@ -412,7 +415,7 @@ export function Screens() {
             initialData={{
               brandId: getBrandId(editingScreen.brandId),
               screenModel: editingScreen.screenModel,
-              salePrice: String(editingScreen.salePrice),
+              salePrice: priceToString(editingScreen.salePrice),
               unitSalePrice: priceToString(editingScreen.unitSalePrice),
               purchasePrice: priceToString(editingScreen.purchasePrice),
               isMechanic: editingScreen.isMechanic ?? false,
@@ -523,8 +526,11 @@ function ScreenForm({ brands, initialData, onSubmit }: ScreenFormProps) {
         <PriceField
           control={form.control}
           name="salePrice"
-          label="Precio de venta al por mayor (USD) *"
+          label="Precio de venta al por mayor (USD)"
         />
+        <p className="-mt-2 text-xs text-gray-500">
+          Ingresa al menos uno: el precio unitario o el precio al por mayor.
+        </p>
         <FormField
           control={form.control}
           name="isMechanic"

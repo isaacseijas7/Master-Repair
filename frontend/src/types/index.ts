@@ -92,7 +92,7 @@ export interface Screen {
   brandId: Brand | string;
   screenModel: string;
   // Precios en USD. `salePrice` es el precio de venta al por mayor.
-  salePrice: number;
+  salePrice?: number | null;
   unitSalePrice?: number | null;
   // Solo lo devuelve el backend a admin/manager
   purchasePrice?: number | null;
@@ -105,7 +105,8 @@ export interface Screen {
 export interface CreateScreenInput {
   brandId: string;
   screenModel: string;
-  salePrice: number;
+  // Al menos uno de salePrice y unitSalePrice es obligatorio.
+  salePrice?: number | null;
   // null borra el valor al editar
   unitSalePrice?: number | null;
   purchasePrice?: number | null;

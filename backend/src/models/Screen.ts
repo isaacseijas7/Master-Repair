@@ -5,8 +5,9 @@ export interface IScreen extends Document {
   // No puede llamarse `model`: es una clave reservada de Mongoose Document.
   screenModel: string;
   // Precio de venta al por mayor (USD). Se llama `salePrice` por historia: es
-  // el campo original del catálogo.
-  salePrice: number;
+  // el campo original del catálogo. Debe existir al menos uno de `salePrice` y
+  // `unitSalePrice` (lo valida el servicio).
+  salePrice?: number | null;
   // Precio de venta unitario (USD). Opcional: los registros anteriores no lo tienen.
   unitSalePrice?: number | null;
   // Precio de compra al proveedor (USD). Opcional. Dato interno: solo lo ven admin/manager.
@@ -36,7 +37,6 @@ const ScreenSchema = new Schema<IScreen>(
     // Precio de venta al por mayor en dólares estadounidenses (USD).
     salePrice: {
       type: Number,
-      required: [true, 'El precio de venta al por mayor es requerido'],
       min: [0, 'El precio no puede ser negativo'],
     },
     unitSalePrice: {

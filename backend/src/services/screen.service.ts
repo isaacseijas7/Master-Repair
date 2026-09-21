@@ -2,13 +2,14 @@ import { Types } from 'mongoose';
 import { Brand } from '../models/Brand';
 import { Screen } from '../models/Screen';
 import { LeanScreen, ScreenDocument } from '../types/screen.types';
+import { hasSalePrice, SALE_PRICE_REQUIRED_MESSAGE } from '../schemas/screen.schema';
 import { buildCatalogWorkbookBuffer, CatalogBrandGroup, CatalogPriceColumn } from '../utils/catalogExcel';
 import { buildPagination, escapeRegex, parsePagination } from '../utils/query';
 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 } as const;
 
 export type ScreenPriceInput = {
-  salePrice?: number;
+  salePrice?: number | null;
   unitSalePrice?: number | null;
   purchasePrice?: number | null;
   isMechanic?: boolean;
@@ -75,12 +76,13 @@ export class ScreenService {
   }
 
   async createScreen(
-    data: { brandId: string; screenModel: string; salePrice: number } & ScreenPriceInput,
+    data: { brandId: string; screenModel: string } & ScreenPriceInput,
   ): Promise<ScreenDocument> {
     await this.assertBrandExists(data.brandId);
     await this.assertModelAvailable(data.brandId, data.screenModel);
 
     const screen = new Screen(data);
+    this.assertHasSalePrice(screen);
     await screen.save();
     await screen.populate('brandId', 'name');
     return screen as unknown as ScreenDocument;
@@ -100,6 +102,7 @@ export class ScreenService {
     if (data.brandId || data.screenModel) await this.assertModelAvailable(brandId, screenModel, id);
 
     Object.assign(screen, data);
+    this.assertHasSalePrice(screen);
     await screen.save();
     await screen.populate('brandId', 'name');
     return screen as unknown as ScreenDocument;
@@ -144,6 +147,11 @@ export class ScreenService {
     groups.forEach((group) => group.screens.sort((a, b) => collator.compare(a.model, b.model)));
 
     return buildCatalogWorkbookBuffer(groups, priceColumns);
+  }
+
+  // Debe haber al menos un precio de venta: unitario o al por mayor.
+  private assertHasSalePrice(screen: { salePrice?: number | null; unitSalePrice?: number | null }): void {
+    if (!hasSalePrice(screen)) throw new Error(SALE_PRICE_REQUIRED_MESSAGE);
   }
 
   private async assertBrandExists(brandId: string): Promise<void> {
