@@ -26,7 +26,7 @@ export class BrandService {
   }
 
   // Listado completo sin paginar, para alimentar selectores.
-  // Incluye la cantidad de teléfonos de cada marca (p. ej. para el diálogo
+  // Incluye la cantidad de pantallas de cada marca (p. ej. para el diálogo
   // de exportación del catálogo).
   async getAllBrands(): Promise<Array<LeanBrand & { phoneCount: number }>> {
     const [brands, counts] = await Promise.all([
@@ -72,7 +72,7 @@ export class BrandService {
 
     const phoneCount = await Phone.countDocuments({ brandId: id });
     if (phoneCount > 0) {
-      throw new Error(`No se puede eliminar la marca porque tiene ${phoneCount} teléfonos asociados`);
+      throw new Error(`No se puede eliminar la marca porque tiene ${phoneCount} pantallas asociados`);
     }
 
     await Brand.findByIdAndDelete(id);

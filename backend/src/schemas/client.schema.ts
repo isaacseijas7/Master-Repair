@@ -3,7 +3,7 @@ import { z } from "zod";
 // Antes Cliente no tenía ningún schema de validación formal: el controlador
 // pasaba request.body directo al servicio. Esto agrega validación de
 // formato (antes solo existía para el email, de forma manual) y cierra el
-// hallazgo de la auditoría sobre falta de validación de teléfono.
+// hallazgo de la auditoría sobre falta de validación de pantalla.
 const phoneRegex = /^[+]?[\d\s().-]{7,20}$/;
 
 export const createClientSchema = z.object({

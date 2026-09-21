@@ -137,9 +137,9 @@ export function Phones() {
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
-      title: "Eliminar teléfono",
+      title: "Eliminar pantalla",
       description:
-        "¿Estás seguro de eliminar este teléfono? Esta acción no se puede deshacer.",
+        "¿Estás seguro de eliminar este pantalla? Esta acción no se puede deshacer.",
       confirmText: "Eliminar",
       variant: "destructive",
     });
@@ -195,7 +195,7 @@ export function Phones() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Teléfonos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Pantallas</h1>
           <p className="text-gray-500">
             Gestiona el catálogo de pantallas y sus precios
           </p>
@@ -209,10 +209,10 @@ export function Phones() {
               trigger={
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Teléfono
+                  Nuevo Pantalla
                 </Button>
               }
-              title="Crear Nuevo Teléfono"
+              title="Crear Nuevo Pantalla"
             >
               <PhoneForm
                 brands={allBrands}
@@ -269,7 +269,7 @@ export function Phones() {
             ) : phones.length === 0 ? (
               <div className="py-8 text-center">
                 <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No se encontraron teléfonos</p>
+                <p className="text-gray-500">No se encontraron pantallas</p>
               </div>
             ) : (
               phones.map((phone) => (
@@ -337,7 +337,7 @@ export function Phones() {
                   <TableRow>
                     <TableCell colSpan={columnCount} className="text-center py-8">
                       <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">No se encontraron teléfonos</p>
+                      <p className="text-gray-500">No se encontraron pantallas</p>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -391,7 +391,7 @@ export function Phones() {
       <ResponsiveDialog
         open={!!editingPhone}
         onOpenChange={() => setEditingPhone(null)}
-        title="Editar Teléfono"
+        title="Editar Pantalla"
       >
         {editingPhone && (
           <PhoneForm

@@ -65,7 +65,7 @@ export class PhoneService {
     const phone = await Phone.findById(id)
       .select(canViewCost ? '' : COST_FIELD)
       .populate('brandId', 'name');
-    if (!phone) throw new Error('Teléfono no encontrado');
+    if (!phone) throw new Error('Pantalla no encontrado');
     return phone as unknown as PhoneDocument;
   }
 
@@ -86,7 +86,7 @@ export class PhoneService {
     data: { brandId?: string; phoneModel?: string } & PhonePriceInput,
   ): Promise<PhoneDocument> {
     const phone = await Phone.findById(id);
-    if (!phone) throw new Error('Teléfono no encontrado');
+    if (!phone) throw new Error('Pantalla no encontrado');
 
     if (data.brandId) await this.assertBrandExists(data.brandId);
 
@@ -102,10 +102,10 @@ export class PhoneService {
 
   async deletePhone(id: string): Promise<void> {
     const phone = await Phone.findByIdAndDelete(id);
-    if (!phone) throw new Error('Teléfono no encontrado');
+    if (!phone) throw new Error('Pantalla no encontrado');
   }
 
-  // Catálogo en formato "lista de precios": teléfonos agrupados por marca.
+  // Catálogo en formato "lista de precios": pantallas agrupados por marca.
   // Sin `brandIds` (o vacío) exporta todas las marcas. `columns` son las claves
   // de precio a incluir (además del modelo, que siempre va).
   async exportPhones(
@@ -144,7 +144,7 @@ export class PhoneService {
     const query: any = { brandId, phoneModel: phoneModel.trim() };
     if (excludeId) query._id = { $ne: excludeId };
     const existing = await Phone.findOne(query).collation(CASE_INSENSITIVE).lean();
-    if (existing) throw new Error('Ya existe un teléfono con ese modelo en la marca seleccionada');
+    if (existing) throw new Error('Ya existe un pantalla con ese modelo en la marca seleccionada');
   }
 }
 

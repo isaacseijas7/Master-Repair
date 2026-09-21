@@ -5,11 +5,11 @@ import mongoose from "mongoose";
 export const seedBrands = async (): Promise<
   Record<string, mongoose.Types.ObjectId>
 > => {
-  // Los teléfonos referencian a las marcas: se limpian primero para no
+  // Los pantallas referencian a las marcas: se limpian primero para no
   // dejar registros huérfanos.
   await Phone.deleteMany({});
   await Brand.deleteMany({});
-  console.log("🗑️  Colecciones de marcas y teléfonos limpiadas");
+  console.log("🗑️  Colecciones de marcas y pantallas limpiadas");
 
   const brandsData = [
     { name: "Samsung" },
