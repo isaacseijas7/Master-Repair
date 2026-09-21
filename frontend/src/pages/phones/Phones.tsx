@@ -209,10 +209,10 @@ export function Phones() {
               trigger={
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Pantalla
+                  Nueva Pantalla
                 </Button>
               }
-              title="Crear Nuevo Pantalla"
+              title="Crear Nueva Pantalla"
             >
               <PhoneForm
                 brands={allBrands}
