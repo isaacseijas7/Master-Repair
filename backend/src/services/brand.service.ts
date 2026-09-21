@@ -1,5 +1,5 @@
 import { Brand } from '../models/Brand';
-import { Phone } from '../models/Phone';
+import { Screen } from '../models/Screen';
 import { LeanBrand, BrandDocument } from '../types/brand.types';
 import { buildWorkbookBuffer } from '../utils/excel';
 import { buildPagination, escapeRegex, parsePagination } from '../utils/query';
@@ -28,17 +28,17 @@ export class BrandService {
   // Listado completo sin paginar, para alimentar selectores.
   // Incluye la cantidad de pantallas de cada marca (p. ej. para el diálogo
   // de exportación del catálogo).
-  async getAllBrands(): Promise<Array<LeanBrand & { phoneCount: number }>> {
+  async getAllBrands(): Promise<Array<LeanBrand & { screenCount: number }>> {
     const [brands, counts] = await Promise.all([
       Brand.find().sort({ name: 1 }).lean(),
-      Phone.aggregate<{ _id: unknown; count: number }>([
+      Screen.aggregate<{ _id: unknown; count: number }>([
         { $group: { _id: '$brandId', count: { $sum: 1 } } },
       ]),
     ]);
     const countByBrand = new Map(counts.map((c) => [String(c._id), c.count]));
     return (brands as LeanBrand[]).map((brand) => ({
       ...brand,
-      phoneCount: countByBrand.get(String(brand._id)) ?? 0,
+      screenCount: countByBrand.get(String(brand._id)) ?? 0,
     }));
   }
 
@@ -70,9 +70,9 @@ export class BrandService {
     const brand = await Brand.findById(id);
     if (!brand) throw new Error('Marca no encontrada');
 
-    const phoneCount = await Phone.countDocuments({ brandId: id });
-    if (phoneCount > 0) {
-      throw new Error(`No se puede eliminar la marca porque tiene ${phoneCount} pantallas asociados`);
+    const screenCount = await Screen.countDocuments({ brandId: id });
+    if (screenCount > 0) {
+      throw new Error(`No se puede eliminar la marca porque tiene ${screenCount} pantallas asociadas`);
     }
 
     await Brand.findByIdAndDelete(id);

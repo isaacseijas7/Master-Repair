@@ -1,5 +1,5 @@
 import { Pagination } from "@/components/Pagination";
-import { ExportPhonesDialog } from "@/components/export/ExportPhonesDialog";
+import { ExportScreensDialog } from "@/components/export/ExportScreensDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
@@ -40,8 +40,8 @@ import { useStoreErrorToast } from "@/hooks/useStoreErrorToast";
 import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { useBrandStore } from "@/stores/brand.store";
-import { usePhoneStore } from "@/stores/phone.store";
-import type { Brand, Phone } from "@/types";
+import { useScreenStore } from "@/stores/screen.store";
+import type { Brand, Screen } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Edit,
@@ -74,9 +74,9 @@ const optionalPrice = z
     message: "Debe ser mayor a 0, con máximo 2 decimales",
   });
 
-const phoneSchema = z.object({
+const screenSchema = z.object({
   brandId: z.string().min(1, "Selecciona una marca"),
-  phoneModel: z
+  screenModel: z
     .string()
     .trim()
     .min(1, "El modelo es requerido")
@@ -86,7 +86,7 @@ const phoneSchema = z.object({
   salePrice: requiredPrice,
 });
 
-type PhoneFormData = z.infer<typeof phoneSchema>;
+type ScreenFormData = z.infer<typeof screenSchema>;
 
 const priceToString = (value?: number | null) =>
   typeof value === "number" ? String(value) : "";
@@ -94,24 +94,24 @@ const priceToString = (value?: number | null) =>
 const formatPrice = (value?: number | null) =>
   typeof value === "number" ? formatCurrency(value) : "-";
 
-const getBrandName = (brand: Phone["brandId"]) =>
+const getBrandName = (brand: Screen["brandId"]) =>
   typeof brand === "string" ? "-" : brand?.name ?? "-";
 
-const getBrandId = (brand: Phone["brandId"]) =>
+const getBrandId = (brand: Screen["brandId"]) =>
   typeof brand === "string" ? brand : brand?._id ?? "";
 
-export function Phones() {
+export function Screens() {
   const {
-    phones,
+    screens,
     pagination,
     isLoading,
     error,
-    fetchPhones,
-    createPhone,
-    updatePhone,
-    deletePhone,
+    fetchScreens,
+    createScreen,
+    updateScreen,
+    deleteScreen,
     clearError,
-  } = usePhoneStore();
+  } = useScreenStore();
   const { allBrands, fetchAllBrands } = useBrandStore();
 
   useStoreErrorToast(error, clearError);
@@ -123,7 +123,7 @@ export function Phones() {
   const [searchTerm, setSearchTerm] = useState("");
   const [brandFilter, setBrandFilter] = useState<string | undefined>();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingPhone, setEditingPhone] = useState<Phone | null>(null);
+  const [editingScreen, setEditingScreen] = useState<Screen | null>(null);
   const debouncedSearch = useDebounce(searchTerm, 500);
   const confirm = useConfirm();
 
@@ -132,29 +132,29 @@ export function Phones() {
   }, [fetchAllBrands]);
 
   useEffect(() => {
-    fetchPhones({ search: debouncedSearch, brandId: brandFilter });
-  }, [debouncedSearch, brandFilter, fetchPhones]);
+    fetchScreens({ search: debouncedSearch, brandId: brandFilter });
+  }, [debouncedSearch, brandFilter, fetchScreens]);
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
       title: "Eliminar pantalla",
       description:
-        "¿Estás seguro de eliminar este pantalla? Esta acción no se puede deshacer.",
+        "¿Estás seguro de eliminar esta pantalla? Esta acción no se puede deshacer.",
       confirmText: "Eliminar",
       variant: "destructive",
     });
     if (!confirmed) return;
     try {
-      await deletePhone(id);
+      await deleteScreen(id);
     } catch {
       // El store ya publicó el error para el toast.
     }
   };
 
   // Los precios opcionales en blanco se envían como null (vacían el valor).
-  const toInput = (data: PhoneFormData) => ({
+  const toInput = (data: ScreenFormData) => ({
     brandId: data.brandId,
-    phoneModel: data.phoneModel,
+    screenModel: data.screenModel,
     salePrice: Number(data.salePrice),
     unitSalePrice: data.unitSalePrice ? Number(data.unitSalePrice) : null,
     purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null,
@@ -163,7 +163,7 @@ export function Phones() {
   // Marca, modelo, mayor, unitario, [compra] y acciones.
   const columnCount = canManage ? 6 : 5;
 
-  const rowActions = (phone: Phone, className?: string) => (
+  const rowActions = (screen: Screen, className?: string) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
@@ -176,12 +176,12 @@ export function Phones() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setEditingPhone(phone)}>
+        <DropdownMenuItem onClick={() => setEditingScreen(screen)}>
           <Edit className="w-4 h-4 mr-2" />
           Editar
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => handleDelete(phone._id)}
+          onClick={() => handleDelete(screen._id)}
           className="text-red-600"
         >
           <Trash2 className="w-4 h-4 mr-2" />
@@ -202,22 +202,22 @@ export function Phones() {
         </div>
         {canManage && (
           <div className="flex flex-wrap items-center gap-3">
-            <ExportPhonesDialog currentBrandId={brandFilter} />
+            <ExportScreensDialog currentBrandId={brandFilter} />
             <ResponsiveDialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
               trigger={
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Pantalla
+                  Nueva Pantalla
                 </Button>
               }
-              title="Crear Nuevo Pantalla"
+              title="Crear Nueva Pantalla"
             >
-              <PhoneForm
+              <ScreenForm
                 brands={allBrands}
                 onSubmit={async (data) => {
-                  await createPhone(toInput(data));
+                  await createScreen(toInput(data));
                   setIsCreateDialogOpen(false);
                 }}
               />
@@ -266,43 +266,43 @@ export function Phones() {
               Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-20 rounded-2xl" />
               ))
-            ) : phones.length === 0 ? (
+            ) : screens.length === 0 ? (
               <div className="py-8 text-center">
                 <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">No se encontraron pantallas</p>
               </div>
             ) : (
-              phones.map((phone) => (
+              screens.map((screen) => (
                 <article
-                  key={phone._id}
+                  key={screen._id}
                   className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-medium uppercase text-gray-500">
-                        {getBrandName(phone.brandId)}
+                        {getBrandName(screen.brandId)}
                       </p>
                       <h3 className="truncate text-base font-semibold text-gray-900">
-                        {phone.phoneModel}
+                        {screen.screenModel}
                       </h3>
                       <dl className="mt-2 space-y-0.5 text-sm text-gray-700">
                         {canManage && (
                           <div className="flex gap-2">
                             <dt className="text-gray-500">Compra:</dt>
-                            <dd className="font-medium">{formatPrice(phone.purchasePrice)}</dd>
+                            <dd className="font-medium">{formatPrice(screen.purchasePrice)}</dd>
                           </div>
                         )}
                         <div className="flex gap-2">
                           <dt className="text-gray-500">Unitario:</dt>
-                          <dd className="font-medium">{formatPrice(phone.unitSalePrice)}</dd>
+                          <dd className="font-medium">{formatPrice(screen.unitSalePrice)}</dd>
                         </div>
                         <div className="flex gap-2">
                           <dt className="text-gray-500">Mayor:</dt>
-                          <dd className="font-medium">{formatPrice(phone.salePrice)}</dd>
+                          <dd className="font-medium">{formatPrice(screen.salePrice)}</dd>
                         </div>
                       </dl>
                     </div>
-                    {canManage && rowActions(phone, "h-11 w-11")}
+                    {canManage && rowActions(screen, "h-11 w-11")}
                   </div>
                 </article>
               ))
@@ -333,7 +333,7 @@ export function Phones() {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : phones.length === 0 ? (
+                ) : screens.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={columnCount} className="text-center py-8">
                       <Smartphone className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -341,24 +341,24 @@ export function Phones() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  phones.map((phone) => (
-                    <TableRow key={phone._id}>
-                      <TableCell>{getBrandName(phone.brandId)}</TableCell>
+                  screens.map((screen) => (
+                    <TableRow key={screen._id}>
+                      <TableCell>{getBrandName(screen.brandId)}</TableCell>
                       <TableCell className="font-medium">
-                        {phone.phoneModel}
+                        {screen.screenModel}
                       </TableCell>
                       {canManage && (
                         <TableCell className="text-right tabular-nums">
-                          {formatPrice(phone.purchasePrice)}
+                          {formatPrice(screen.purchasePrice)}
                         </TableCell>
                       )}
                       <TableCell className="text-right tabular-nums">
-                        {formatPrice(phone.unitSalePrice)}
+                        {formatPrice(screen.unitSalePrice)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatPrice(phone.salePrice)}
+                        {formatPrice(screen.salePrice)}
                       </TableCell>
-                      <TableCell>{canManage ? rowActions(phone) : null}</TableCell>
+                      <TableCell>{canManage ? rowActions(screen) : null}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -369,7 +369,7 @@ export function Phones() {
           <Pagination
             pagination={pagination}
             onPageChange={(page) =>
-              fetchPhones({
+              fetchScreens({
                 page,
                 limit: pagination.limit,
                 search: debouncedSearch,
@@ -377,7 +377,7 @@ export function Phones() {
               })
             }
             onLimitChange={(limit) =>
-              fetchPhones({
+              fetchScreens({
                 limit,
                 page: 1,
                 search: debouncedSearch,
@@ -389,23 +389,23 @@ export function Phones() {
       </Card>
 
       <ResponsiveDialog
-        open={!!editingPhone}
-        onOpenChange={() => setEditingPhone(null)}
+        open={!!editingScreen}
+        onOpenChange={() => setEditingScreen(null)}
         title="Editar Pantalla"
       >
-        {editingPhone && (
-          <PhoneForm
+        {editingScreen && (
+          <ScreenForm
             brands={allBrands}
             initialData={{
-              brandId: getBrandId(editingPhone.brandId),
-              phoneModel: editingPhone.phoneModel,
-              salePrice: String(editingPhone.salePrice),
-              unitSalePrice: priceToString(editingPhone.unitSalePrice),
-              purchasePrice: priceToString(editingPhone.purchasePrice),
+              brandId: getBrandId(editingScreen.brandId),
+              screenModel: editingScreen.screenModel,
+              salePrice: String(editingScreen.salePrice),
+              unitSalePrice: priceToString(editingScreen.unitSalePrice),
+              purchasePrice: priceToString(editingScreen.purchasePrice),
             }}
             onSubmit={async (data) => {
-              await updatePhone(editingPhone._id, toInput(data));
-              setEditingPhone(null);
+              await updateScreen(editingScreen._id, toInput(data));
+              setEditingScreen(null);
             }}
           />
         )}
@@ -414,27 +414,27 @@ export function Phones() {
   );
 }
 
-interface PhoneFormProps {
+interface ScreenFormProps {
   brands: Brand[];
-  initialData?: Partial<PhoneFormData>;
-  onSubmit: (data: PhoneFormData) => Promise<void>;
+  initialData?: Partial<ScreenFormData>;
+  onSubmit: (data: ScreenFormData) => Promise<void>;
 }
 
-function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
+function ScreenForm({ brands, initialData, onSubmit }: ScreenFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<PhoneFormData>({
-    resolver: zodResolver(phoneSchema),
+  const form = useForm<ScreenFormData>({
+    resolver: zodResolver(screenSchema),
     defaultValues: {
       brandId: initialData?.brandId ?? "",
-      phoneModel: initialData?.phoneModel ?? "",
+      screenModel: initialData?.screenModel ?? "",
       salePrice: initialData?.salePrice ?? "",
       unitSalePrice: initialData?.unitSalePrice ?? "",
       purchasePrice: initialData?.purchasePrice ?? "",
     },
   });
 
-  const handleSubmit = async (data: PhoneFormData) => {
+  const handleSubmit = async (data: ScreenFormData) => {
     setIsSubmitting(true);
     try {
       await onSubmit(data);
@@ -484,7 +484,7 @@ function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
         />
         <FormField
           control={form.control}
-          name="phoneModel"
+          name="screenModel"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Modelo *</FormLabel>
@@ -528,7 +528,7 @@ function PhoneForm({ brands, initialData, onSubmit }: PhoneFormProps) {
 }
 
 interface PriceFieldProps {
-  control: Control<PhoneFormData>;
+  control: Control<ScreenFormData>;
   name: "salePrice" | "unitSalePrice" | "purchasePrice";
   label: string;
 }

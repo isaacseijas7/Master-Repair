@@ -9,7 +9,7 @@ import { dashboardRoutes } from "./dashboard.routes";
 import { profileRoutes } from "./profile.routes";
 import { userRoutes } from "./user.routes";
 import { brandRoutes } from "./brand.routes";
-import { phoneRoutes } from "./phone.routes";
+import { screenRoutes } from "./screen.routes";
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get("/health", async () => {
@@ -33,5 +33,5 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   await fastify.register(dashboardRoutes, { prefix: `${apiPrefix}/dashboard` });
   await fastify.register(userRoutes, { prefix: `${apiPrefix}/users` });
   await fastify.register(brandRoutes, { prefix: `${apiPrefix}/brands` });
-  await fastify.register(phoneRoutes, { prefix: `${apiPrefix}/phones` });
+  await fastify.register(screenRoutes, { prefix: `${apiPrefix}/screens` });
 }

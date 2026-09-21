@@ -77,7 +77,7 @@ export interface Brand {
   _id: string;
   name: string;
   // Solo lo devuelve GET /brands/all
-  phoneCount?: number;
+  screenCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -86,11 +86,11 @@ export interface CreateBrandInput {
   name: string;
 }
 
-// ==================== PHONE TYPES ====================
-export interface Phone {
+// ==================== SCREEN TYPES ====================
+export interface Screen {
   _id: string;
   brandId: Brand | string;
-  phoneModel: string;
+  screenModel: string;
   // Precios en USD. `salePrice` es el precio de venta al por mayor.
   salePrice: number;
   unitSalePrice?: number | null;
@@ -100,18 +100,18 @@ export interface Phone {
   updatedAt: string;
 }
 
-export interface CreatePhoneInput {
+export interface CreateScreenInput {
   brandId: string;
-  phoneModel: string;
+  screenModel: string;
   salePrice: number;
   // null borra el valor al editar
   unitSalePrice?: number | null;
   purchasePrice?: number | null;
 }
 
-export type PhoneExportColumn = 'salePrice' | 'unitSalePrice' | 'purchasePrice';
+export type ScreenExportColumn = 'salePrice' | 'unitSalePrice' | 'purchasePrice';
 
-export interface PhoneFilters extends PaginationParams {
+export interface ScreenFilters extends PaginationParams {
   brandId?: string;
 }
 

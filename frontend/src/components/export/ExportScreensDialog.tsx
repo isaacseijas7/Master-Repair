@@ -11,41 +11,41 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { phoneService } from "@/services/phone.service";
+import { screenService } from "@/services/screen.service";
 import { useBrandStore } from "@/stores/brand.store";
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { PhoneExportColumn } from "@/types";
+import type { ScreenExportColumn } from "@/types";
 
 // El modelo siempre va en el archivo; estas son las columnas opcionales.
-const PRICE_COLUMNS: Array<{ id: PhoneExportColumn; label: string }> = [
+const PRICE_COLUMNS: Array<{ id: ScreenExportColumn; label: string }> = [
   { id: "purchasePrice", label: "Precio de compra al proveedor" },
   { id: "unitSalePrice", label: "Precio de venta unitario" },
   { id: "salePrice", label: "Precio de venta al por mayor" },
 ];
 
-interface ExportPhonesDialogProps {
+interface ExportScreensDialogProps {
   // Marca filtrada en el listado; si existe, llega preseleccionada.
   currentBrandId?: string;
 }
 
 // Solo las marcas con pantallas aportan filas al archivo.
-export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) {
+export function ExportScreensDialog({ currentBrandId }: ExportScreensDialogProps) {
   const { allBrands, fetchAllBrands } = useBrandStore();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const [columns, setColumns] = useState<PhoneExportColumn[]>([
+  const [columns, setColumns] = useState<ScreenExportColumn[]>([
     "salePrice",
     "unitSalePrice",
   ]);
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportableBrands = allBrands.filter((b) => (b.phoneCount ?? 0) > 0);
+  const exportableBrands = allBrands.filter((b) => (b.screenCount ?? 0) > 0);
   const allSelected =
     exportableBrands.length > 0 && selected.length === exportableBrands.length;
-  const selectedPhones = exportableBrands
+  const selectedScreens = exportableBrands
     .filter((b) => selected.includes(b._id))
-    .reduce((sum, b) => sum + (b.phoneCount ?? 0), 0);
+    .reduce((sum, b) => sum + (b.screenCount ?? 0), 0);
 
   const handleOpenChange = async (next: boolean) => {
     setOpen(next);
@@ -53,10 +53,10 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
     // Refresca los conteos por si se agregaron o eliminaron pantallas.
     await fetchAllBrands();
     const brands = useBrandStore.getState().allBrands;
-    const withPhones = brands.filter((b) => (b.phoneCount ?? 0) > 0);
-    const preselected = withPhones.find((b) => b._id === currentBrandId);
+    const withScreens = brands.filter((b) => (b.screenCount ?? 0) > 0);
+    const preselected = withScreens.find((b) => b._id === currentBrandId);
     setSelected(
-      preselected ? [preselected._id] : withPhones.map((b) => b._id),
+      preselected ? [preselected._id] : withScreens.map((b) => b._id),
     );
   };
 
@@ -65,7 +65,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
-  const toggleColumn = (id: PhoneExportColumn) =>
+  const toggleColumn = (id: ScreenExportColumn) =>
     setColumns((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
@@ -77,8 +77,8 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
     setIsExporting(true);
     try {
       // Todas las marcas seleccionadas equivale a no filtrar.
-      await phoneService.exportToExcel(allSelected ? [] : selected, columns);
-      toast.success(`Excel generado con ${selectedPhones} pantallas`);
+      await screenService.exportToExcel(allSelected ? [] : selected, columns);
+      toast.success(`Excel generado con ${selectedScreens} pantallas`);
       setOpen(false);
     } catch (error) {
       toast.error("Error al generar el archivo Excel");
@@ -110,7 +110,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
 
         {exportableBrands.length === 0 ? (
           <p className="py-6 text-center text-sm text-gray-500">
-            No hay pantallas registrados para exportar.
+            No hay pantallas registradas para exportar.
           </p>
         ) : (
           <div className="space-y-3 py-2">
@@ -143,8 +143,8 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
                     {brand.name}
                   </Label>
                   <span className="text-xs text-gray-500">
-                    {brand.phoneCount}{" "}
-                    {brand.phoneCount === 1 ? "pantalla" : "pantallas"}
+                    {brand.screenCount}{" "}
+                    {brand.screenCount === 1 ? "pantalla" : "pantallas"}
                   </span>
                 </div>
               ))}

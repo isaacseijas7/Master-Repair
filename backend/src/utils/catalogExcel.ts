@@ -8,7 +8,7 @@ export interface CatalogPriceColumn {
 
 export interface CatalogBrandGroup {
   brand: string;
-  phones: Array<{ model: string; values: Record<string, number | null | undefined> }>;
+  screens: Array<{ model: string; values: Record<string, number | null | undefined> }>;
 }
 
 const FONT_NAME = "Aptos Narrow";
@@ -84,18 +84,18 @@ export async function buildCatalogWorkbookBuffer(
     });
 
     // Filas de datos.
-    group.phones.forEach((phone, n) => {
+    group.screens.forEach((screen, n) => {
       const dataRow = headerRow + 1 + n;
 
       const modelCell = ws.getCell(dataRow, 1);
-      modelCell.value = phone.model;
+      modelCell.value = screen.model;
       modelCell.font = baseFont;
       modelCell.alignment = { vertical: "bottom" };
       modelCell.border = { bottom: THIN };
 
       priceColumns.forEach((column, k) => {
         const cell = ws.getCell(dataRow, 2 + k);
-        const value = phone.values[column.key];
+        const value = screen.values[column.key];
         if (typeof value === "number") cell.value = value;
         cell.numFmt = USD_FORMAT;
         cell.font = baseFont;
@@ -105,7 +105,7 @@ export async function buildCatalogWorkbookBuffer(
     });
 
     // Fila en blanco entre marcas.
-    row = headerRow + group.phones.length + 2;
+    row = headerRow + group.screens.length + 2;
   }
 
   return applyBannerSize(Buffer.from(await workbook.xlsx.writeBuffer()), banner);
