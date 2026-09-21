@@ -11,11 +11,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { screenService } from "@/services/screen.service";
 import { useBrandStore } from "@/stores/brand.store";
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { ScreenExportColumn } from "@/types";
+import type { ScreenExportColumn, ScreenExportSource } from "@/types";
 
 // El modelo siempre va en el archivo; estas son las columnas opcionales.
 const PRICE_COLUMNS: Array<{ id: ScreenExportColumn; label: string }> = [
@@ -23,6 +24,25 @@ const PRICE_COLUMNS: Array<{ id: ScreenExportColumn; label: string }> = [
   { id: "unitSalePrice", label: "Precio de venta unitario" },
   { id: "salePrice", label: "Precio de venta al por mayor" },
 ];
+
+const SOURCE_OPTIONS: Array<{ id: ScreenExportSource; label: string }> = [
+  { id: "all", label: "Todas las pantallas" },
+  { id: "mechanic", label: "Solo pantallas de mecánico" },
+  { id: "regular", label: "Solo pantallas que no son de mecánico" },
+];
+
+// Si el backend rechaza la exportación, el cuerpo del error llega como Blob.
+async function getExportErrorMessage(error: unknown): Promise<string> {
+  const data = (error as { response?: { data?: unknown } })?.response?.data;
+  if (data instanceof Blob) {
+    try {
+      return JSON.parse(await data.text()).message ?? "";
+    } catch {
+      return "";
+    }
+  }
+  return (data as { message?: string } | undefined)?.message ?? "";
+}
 
 interface ExportScreensDialogProps {
   // Marca filtrada en el listado; si existe, llega preseleccionada.
@@ -38,6 +58,7 @@ export function ExportScreensDialog({ currentBrandId }: ExportScreensDialogProps
     "salePrice",
     "unitSalePrice",
   ]);
+  const [source, setSource] = useState<ScreenExportSource>("all");
   const [isExporting, setIsExporting] = useState(false);
 
   const exportableBrands = allBrands.filter((b) => (b.screenCount ?? 0) > 0);
@@ -77,11 +98,24 @@ export function ExportScreensDialog({ currentBrandId }: ExportScreensDialogProps
     setIsExporting(true);
     try {
       // Todas las marcas seleccionadas equivale a no filtrar.
-      await screenService.exportToExcel(allSelected ? [] : selected, columns);
-      toast.success(`Excel generado con ${selectedScreens} pantallas`);
+      await screenService.exportToExcel(
+        allSelected ? [] : selected,
+        columns,
+        source,
+      );
+      // Los conteos por marca incluyen todas las pantallas, así que solo son
+      // exactos cuando no se filtra por mecánico.
+      toast.success(
+        source === "all"
+          ? `Excel generado con ${selectedScreens} pantallas`
+          : "Excel generado correctamente",
+      );
       setOpen(false);
     } catch (error) {
-      toast.error("Error al generar el archivo Excel");
+      toast.error(
+        (await getExportErrorMessage(error)) ||
+          "Error al generar el archivo Excel",
+      );
       console.error(error);
     } finally {
       setIsExporting(false);
@@ -154,6 +188,31 @@ export function ExportScreensDialog({ currentBrandId }: ExportScreensDialogProps
                 Selecciona al menos una marca para continuar
               </p>
             )}
+
+            <div className="space-y-3 border-t pt-4">
+              <p className="text-sm font-medium text-gray-700">
+                Tipo de pantallas
+              </p>
+              <RadioGroup
+                value={source}
+                onValueChange={(value) => setSource(value as ScreenExportSource)}
+              >
+                {SOURCE_OPTIONS.map((option) => (
+                  <div key={option.id} className="flex items-center gap-2">
+                    <RadioGroupItem
+                      value={option.id}
+                      id={`export-source-${option.id}`}
+                    />
+                    <Label
+                      htmlFor={`export-source-${option.id}`}
+                      className="cursor-pointer font-normal"
+                    >
+                      {option.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
 
             <div className="space-y-3 border-t pt-4">
               <p className="text-sm font-medium text-gray-700">Columnas</p>

@@ -17,6 +17,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -62,29 +64,33 @@ import { z } from "zod";
 const isValidPrice = (v: string) =>
   Number.isFinite(Number(v)) && Number(v) > 0 && /^\d+(\.\d{1,2})?$/.test(v);
 
-const requiredPrice = z
-  .string()
-  .min(1, "El precio es requerido")
-  .refine((v) => Number(v) > 0, { message: "El precio debe ser mayor a 0" })
-  .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), { message: "Máximo 2 decimales" });
-
 const optionalPrice = z
   .string()
   .refine((v) => v === "" || isValidPrice(v), {
     message: "Debe ser mayor a 0, con máximo 2 decimales",
   });
 
-const screenSchema = z.object({
-  brandId: z.string().min(1, "Selecciona una marca"),
-  screenModel: z
-    .string()
-    .trim()
-    .min(1, "El modelo es requerido")
-    .max(150, "Máximo 150 caracteres"),
-  purchasePrice: optionalPrice,
-  unitSalePrice: optionalPrice,
-  salePrice: requiredPrice,
-});
+const screenSchema = z
+  .object({
+    brandId: z.string().min(1, "Selecciona una marca"),
+    screenModel: z
+      .string()
+      .trim()
+      .min(1, "El modelo es requerido")
+      .max(150, "Máximo 150 caracteres"),
+    purchasePrice: optionalPrice,
+    unitSalePrice: optionalPrice,
+    salePrice: optionalPrice,
+    isMechanic: z.boolean(),
+  })
+  // Al menos uno de los dos precios de venta es obligatorio.
+  .superRefine((data, ctx) => {
+    if (data.unitSalePrice === "" && data.salePrice === "") {
+      const message = "Ingresa al menos el precio unitario o el precio al por mayor";
+      ctx.addIssue({ code: "custom", path: ["unitSalePrice"], message });
+      ctx.addIssue({ code: "custom", path: ["salePrice"], message });
+    }
+  });
 
 type ScreenFormData = z.infer<typeof screenSchema>;
 
@@ -155,13 +161,14 @@ export function Screens() {
   const toInput = (data: ScreenFormData) => ({
     brandId: data.brandId,
     screenModel: data.screenModel,
-    salePrice: Number(data.salePrice),
+    salePrice: data.salePrice ? Number(data.salePrice) : null,
     unitSalePrice: data.unitSalePrice ? Number(data.unitSalePrice) : null,
     purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null,
+    isMechanic: data.isMechanic,
   });
 
-  // Marca, modelo, mayor, unitario, [compra] y acciones.
-  const columnCount = canManage ? 6 : 5;
+  // Marca, modelo, tipo, mayor, unitario, [compra] y acciones.
+  const columnCount = canManage ? 7 : 6;
 
   const rowActions = (screen: Screen, className?: string) => (
     <DropdownMenu>
@@ -285,6 +292,7 @@ export function Screens() {
                       <h3 className="truncate text-base font-semibold text-gray-900">
                         {screen.screenModel}
                       </h3>
+                      {screen.isMechanic && <MechanicBadge className="mt-1" />}
                       <dl className="mt-2 space-y-0.5 text-sm text-gray-700">
                         {canManage && (
                           <div className="flex gap-2">
@@ -316,6 +324,7 @@ export function Screens() {
                 <TableRow>
                   <TableHead>Marca</TableHead>
                   <TableHead>Modelo</TableHead>
+                  <TableHead>Tipo</TableHead>
                   {canManage && (
                     <TableHead className="text-right">Precio de compra (USD)</TableHead>
                   )}
@@ -346,6 +355,13 @@ export function Screens() {
                       <TableCell>{getBrandName(screen.brandId)}</TableCell>
                       <TableCell className="font-medium">
                         {screen.screenModel}
+                      </TableCell>
+                      <TableCell>
+                        {screen.isMechanic ? (
+                          <MechanicBadge />
+                        ) : (
+                          <span className="text-gray-500">Regular</span>
+                        )}
                       </TableCell>
                       {canManage && (
                         <TableCell className="text-right tabular-nums">
@@ -399,9 +415,10 @@ export function Screens() {
             initialData={{
               brandId: getBrandId(editingScreen.brandId),
               screenModel: editingScreen.screenModel,
-              salePrice: String(editingScreen.salePrice),
+              salePrice: priceToString(editingScreen.salePrice),
               unitSalePrice: priceToString(editingScreen.unitSalePrice),
               purchasePrice: priceToString(editingScreen.purchasePrice),
+              isMechanic: editingScreen.isMechanic ?? false,
             }}
             onSubmit={async (data) => {
               await updateScreen(editingScreen._id, toInput(data));
@@ -431,6 +448,7 @@ function ScreenForm({ brands, initialData, onSubmit }: ScreenFormProps) {
       salePrice: initialData?.salePrice ?? "",
       unitSalePrice: initialData?.unitSalePrice ?? "",
       purchasePrice: initialData?.purchasePrice ?? "",
+      isMechanic: initialData?.isMechanic ?? false,
     },
   });
 
@@ -508,7 +526,31 @@ function ScreenForm({ brands, initialData, onSubmit }: ScreenFormProps) {
         <PriceField
           control={form.control}
           name="salePrice"
-          label="Precio de venta al por mayor (USD) *"
+          label="Precio de venta al por mayor (USD)"
+        />
+        <p className="-mt-2 text-xs text-gray-500">
+          Ingresa al menos uno: el precio unitario o el precio al por mayor.
+        </p>
+        <FormField
+          control={form.control}
+          name="isMechanic"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start gap-3 rounded-lg border p-3">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="cursor-pointer">Pantalla de mecánico</FormLabel>
+                <p className="text-xs text-gray-500">
+                  Márcala si proviene del proveedor mecánico. Permite exportar
+                  el catálogo por separado.
+                </p>
+              </div>
+            </FormItem>
+          )}
         />
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isSubmitting}>
@@ -524,6 +566,14 @@ function ScreenForm({ brands, initialData, onSubmit }: ScreenFormProps) {
         </div>
       </form>
     </Form>
+  );
+}
+
+function MechanicBadge({ className }: { className?: string }) {
+  return (
+    <Badge variant="secondary" className={className}>
+      Mecánico
+    </Badge>
   );
 }
 
