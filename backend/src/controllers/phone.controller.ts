@@ -44,7 +44,7 @@ export class PhoneController {
       );
       reply.send({
         success: true,
-        message: "Teléfonos obtenidos exitosamente",
+        message: "Pantallas obtenidos exitosamente",
         data: result,
       });
     } catch (error: any) {

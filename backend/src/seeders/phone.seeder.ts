@@ -40,7 +40,7 @@ export const seedPhones = async (
   brandIds: Record<string, mongoose.Types.ObjectId>,
 ): Promise<mongoose.Types.ObjectId[]> => {
   await Phone.deleteMany({});
-  console.log("🗑️  Colección de teléfonos limpiada");
+  console.log("🗑️  Colección de pantallas limpiada");
 
   // Mongoose crea índices pero nunca elimina los obsoletos: si la colección
   // conserva un índice de una versión anterior del esquema, los inserts
@@ -63,7 +63,7 @@ export const seedPhones = async (
   });
 
   const phones = await Phone.insertMany(phonesData);
-  console.log(`✅ ${phones.length} teléfonos creados`);
+  console.log(`✅ ${phones.length} pantallas creados`);
 
   return phones.map((p) => p._id);
 };

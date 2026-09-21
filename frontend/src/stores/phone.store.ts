@@ -53,7 +53,7 @@ export const usePhoneStore = create<PhoneState>((set, get) => ({
     } catch (error: any) {
       if (requestId !== latestPhonesRequestId) return;
       set({
-        error: error.response?.data?.message || 'Error al cargar teléfonos',
+        error: error.response?.data?.message || 'Error al cargar pantallas',
         isLoading: false,
       });
     }
@@ -67,7 +67,7 @@ export const usePhoneStore = create<PhoneState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al crear el teléfono',
+        error: error.response?.data?.message || 'Error al crear el pantalla',
         isLoading: false,
       });
       throw error;
@@ -82,7 +82,7 @@ export const usePhoneStore = create<PhoneState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al actualizar el teléfono',
+        error: error.response?.data?.message || 'Error al actualizar el pantalla',
         isLoading: false,
       });
       throw error;
@@ -97,7 +97,7 @@ export const usePhoneStore = create<PhoneState>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al eliminar el teléfono',
+        error: error.response?.data?.message || 'Error al eliminar el pantalla',
         isLoading: false,
       });
       throw error;

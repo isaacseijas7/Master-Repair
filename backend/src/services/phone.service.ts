@@ -105,7 +105,7 @@ export class PhoneService {
     if (!phone) throw new Error('Teléfono no encontrado');
   }
 
-  // Catálogo en formato "lista de precios": teléfonos agrupados por marca.
+  // Catálogo en formato "lista de precios": pantallas agrupados por marca.
   // Sin `brandIds` (o vacío) exporta todas las marcas. `columns` son las claves
   // de precio a incluir (además del modelo, que siempre va).
   async exportPhones(
@@ -144,7 +144,7 @@ export class PhoneService {
     const query: any = { brandId, phoneModel: phoneModel.trim() };
     if (excludeId) query._id = { $ne: excludeId };
     const existing = await Phone.findOne(query).collation(CASE_INSENSITIVE).lean();
-    if (existing) throw new Error('Ya existe un teléfono con ese modelo en la marca seleccionada');
+    if (existing) throw new Error('Ya existe un pantalla con ese modelo en la marca seleccionada');
   }
 }
 

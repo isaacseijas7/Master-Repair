@@ -29,7 +29,7 @@ interface ExportPhonesDialogProps {
   currentBrandId?: string;
 }
 
-// Solo las marcas con teléfonos aportan filas al archivo.
+// Solo las marcas con pantallas aportan filas al archivo.
 export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) {
   const { allBrands, fetchAllBrands } = useBrandStore();
   const [open, setOpen] = useState(false);
@@ -50,7 +50,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
   const handleOpenChange = async (next: boolean) => {
     setOpen(next);
     if (!next) return;
-    // Refresca los conteos por si se agregaron o eliminaron teléfonos.
+    // Refresca los conteos por si se agregaron o eliminaron pantallas.
     await fetchAllBrands();
     const brands = useBrandStore.getState().allBrands;
     const withPhones = brands.filter((b) => (b.phoneCount ?? 0) > 0);
@@ -78,7 +78,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
     try {
       // Todas las marcas seleccionadas equivale a no filtrar.
       await phoneService.exportToExcel(allSelected ? [] : selected, columns);
-      toast.success(`Excel generado con ${selectedPhones} teléfonos`);
+      toast.success(`Excel generado con ${selectedPhones} pantallas`);
       setOpen(false);
     } catch (error) {
       toast.error("Error al generar el archivo Excel");
@@ -110,7 +110,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
 
         {exportableBrands.length === 0 ? (
           <p className="py-6 text-center text-sm text-gray-500">
-            No hay teléfonos registrados para exportar.
+            No hay pantallas registrados para exportar.
           </p>
         ) : (
           <div className="space-y-3 py-2">
@@ -144,7 +144,7 @@ export function ExportPhonesDialog({ currentBrandId }: ExportPhonesDialogProps) 
                   </Label>
                   <span className="text-xs text-gray-500">
                     {brand.phoneCount}{" "}
-                    {brand.phoneCount === 1 ? "teléfono" : "teléfonos"}
+                    {brand.phoneCount === 1 ? "pantalla" : "pantallas"}
                   </span>
                 </div>
               ))}

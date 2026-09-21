@@ -37,8 +37,8 @@ const runSeeders = async (): Promise<void> => {
     console.log("\n✨ Seeding completado exitosamente");
     console.log("\n📊 Resumen de datos creados:");
     console.log("• 4 usuarios (admin, manager, 2 cashiers)");
-    console.log("• 5 marcas de teléfonos (Samsung, Xiaomi, Redmi, Spark, iPhone)");
-    console.log("• 21 teléfonos de prueba distribuidos entre esas marcas");
+    console.log("• 5 marcas de pantallas (Samsung, Xiaomi, Redmi, Spark, iPhone)");
+    console.log("• 21 pantallas de prueba distribuidos entre esas marcas");
     // console.log("• 10 categorías de productos");
     // console.log("• 8 proveedores");
     // console.log("• 50+ productos con stock realista");

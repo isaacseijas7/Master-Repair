@@ -57,7 +57,7 @@ const phoneCatalogNavigation = {
   icon: Smartphone,
   children: [
     { name: 'Marcas', href: '/brands', icon: BadgeCheck },
-    { name: 'Teléfonos', href: '/phones', icon: Smartphone },
+    { name: 'Pantallas', href: '/phones', icon: Smartphone },
   ],
 };
 
