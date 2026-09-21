@@ -11,13 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { screenService } from "@/services/screen.service";
 import { useBrandStore } from "@/stores/brand.store";
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
@@ -199,21 +193,25 @@ export function ExportScreensDialog({ currentBrandId }: ExportScreensDialogProps
               <p className="text-sm font-medium text-gray-700">
                 Tipo de pantallas
               </p>
-              <Select
+              <RadioGroup
                 value={source}
                 onValueChange={(value) => setSource(value as ScreenExportSource)}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_OPTIONS.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
+                {SOURCE_OPTIONS.map((option) => (
+                  <div key={option.id} className="flex items-center gap-2">
+                    <RadioGroupItem
+                      value={option.id}
+                      id={`export-source-${option.id}`}
+                    />
+                    <Label
+                      htmlFor={`export-source-${option.id}`}
+                      className="cursor-pointer font-normal"
+                    >
                       {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
 
             <div className="space-y-3 border-t pt-4">
