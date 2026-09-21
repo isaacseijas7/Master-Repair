@@ -44,8 +44,8 @@ export function Pagination({
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-3 px-4 py-4 border-t border-gray-200 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <p className="text-sm text-gray-500">
           Mostrando {startItem} a {endItem} de {pagination.total}
         </p>
@@ -73,7 +73,7 @@ export function Pagination({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 sm:justify-end">
         <Button
           variant="outline"
           size="sm"
