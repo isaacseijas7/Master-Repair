@@ -11,6 +11,10 @@ export interface IScreen extends Document {
   unitSalePrice?: number | null;
   // Precio de compra al proveedor (USD). Opcional. Dato interno: solo lo ven admin/manager.
   purchasePrice?: number | null;
+  // true si la pantalla es de mecánico (proveedor especial). Solo sirve para
+  // distinguirlas y filtrar la exportación; los registros anteriores no lo
+  // tienen y se tratan como "no mecánico".
+  isMechanic: boolean;
   createdAt: Date;
   updatedAt: Date;
   __v?: any;
@@ -42,6 +46,10 @@ const ScreenSchema = new Schema<IScreen>(
     purchasePrice: {
       type: Number,
       min: [0, 'El precio no puede ser negativo'],
+    },
+    isMechanic: {
+      type: Boolean,
+      default: false,
     },
   },
   {

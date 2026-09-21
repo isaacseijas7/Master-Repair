@@ -96,6 +96,8 @@ export interface Screen {
   unitSalePrice?: number | null;
   // Solo lo devuelve el backend a admin/manager
   purchasePrice?: number | null;
+  // true si es una pantalla de mecánico. Los registros anteriores no lo traen.
+  isMechanic?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -107,9 +109,13 @@ export interface CreateScreenInput {
   // null borra el valor al editar
   unitSalePrice?: number | null;
   purchasePrice?: number | null;
+  isMechanic?: boolean;
 }
 
 export type ScreenExportColumn = 'salePrice' | 'unitSalePrice' | 'purchasePrice';
+
+// Qué pantallas exportar: todas, solo de mecánico o solo las que no lo son.
+export type ScreenExportSource = 'all' | 'mechanic' | 'regular';
 
 export interface ScreenFilters extends PaginationParams {
   brandId?: string;

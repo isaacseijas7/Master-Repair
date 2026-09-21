@@ -3,6 +3,8 @@ import {
   screenService,
   SCREEN_EXPORT_COLUMNS,
   DEFAULT_SCREEN_EXPORT_COLUMNS,
+  SCREEN_EXPORT_SOURCES,
+  ScreenExportSource,
 } from "../services/screen.service";
 import { createScreenSchema, updateScreenSchema } from "../schemas/screen.schema";
 
@@ -16,7 +18,7 @@ interface GetScreensRoute extends RouteGenericInterface {
 
 interface ExportScreensRoute extends RouteGenericInterface {
   // IDs de marca separados por coma; vacío = todas las marcas.
-  Querystring: { brandIds?: string; columns?: string };
+  Querystring: { brandIds?: string; columns?: string; source?: string };
 }
 
 interface ScreenByIdRoute extends RouteGenericInterface {
@@ -166,7 +168,13 @@ export class ScreenController {
         return;
       }
 
-      const buffer = await screenService.exportScreens(brandIds, columns);
+      const source = (request.query.source ?? "all") as ScreenExportSource;
+      if (!SCREEN_EXPORT_SOURCES.includes(source)) {
+        reply.status(400).send({ success: false, message: "Origen inválido" });
+        return;
+      }
+
+      const buffer = await screenService.exportScreens(brandIds, columns, source);
 
       const timestamp = new Date().toISOString().split("T")[0];
       reply.header(

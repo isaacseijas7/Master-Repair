@@ -23,6 +23,7 @@ export const createScreenSchema = z.object({
   // Opcionales; `null` los deja vacíos (permite borrar un valor al editar).
   unitSalePrice: usdPrice("El precio de venta unitario").nullable().optional(),
   purchasePrice: usdPrice("El precio de compra").nullable().optional(),
+  isMechanic: z.boolean({ invalid_type_error: "Valor inválido" }).optional(),
 });
 
 export const updateScreenSchema = createScreenSchema.partial();

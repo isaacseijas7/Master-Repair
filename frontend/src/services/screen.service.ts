@@ -5,6 +5,7 @@ import type {
   CreateScreenInput,
   ScreenFilters,
   ScreenExportColumn,
+  ScreenExportSource,
   PaginatedResponse,
   ApiResponse,
 } from '@/types';
@@ -36,9 +37,14 @@ export const screenService = {
   },
 
   // Sin brandIds (o vacío) exporta el catálogo de todas las marcas. `columns`
-  // son las columnas de precio a incluir (el modelo siempre va).
-  async exportToExcel(brandIds: string[], columns: ScreenExportColumn[]): Promise<void> {
-    const params: Record<string, string> = { columns: columns.join(',') };
+  // son las columnas de precio a incluir (el modelo siempre va). `source`
+  // filtra por pantallas de mecánico.
+  async exportToExcel(
+    brandIds: string[],
+    columns: ScreenExportColumn[],
+    source: ScreenExportSource = 'all',
+  ): Promise<void> {
+    const params: Record<string, string> = { columns: columns.join(','), source };
     if (brandIds.length > 0) params.brandIds = brandIds.join(',');
     await downloadExcel('/screens/export', 'pantallas', params);
   },

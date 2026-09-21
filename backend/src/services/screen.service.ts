@@ -11,7 +11,12 @@ export type ScreenPriceInput = {
   salePrice?: number;
   unitSalePrice?: number | null;
   purchasePrice?: number | null;
+  isMechanic?: boolean;
 };
+
+// Origen de las pantallas a exportar: de mecánico, las que no lo son, o todas.
+export const SCREEN_EXPORT_SOURCES = ['all', 'mechanic', 'regular'] as const;
+export type ScreenExportSource = (typeof SCREEN_EXPORT_SOURCES)[number];
 
 // Columnas de precio que se pueden incluir en el Excel del catálogo, en el
 // orden en que se escriben.
@@ -107,16 +112,22 @@ export class ScreenService {
 
   // Catálogo en formato "lista de precios": pantallas agrupadas por marca.
   // Sin `brandIds` (o vacío) exporta todas las marcas. `columns` son las claves
-  // de precio a incluir (además del modelo, que siempre va).
+  // de precio a incluir (además del modelo, que siempre va). `source` filtra
+  // por pantallas de mecánico / no mecánico / todas.
   async exportScreens(
     brandIds: string[] = [],
     columns: string[] = DEFAULT_SCREEN_EXPORT_COLUMNS,
+    source: ScreenExportSource = 'all',
   ): Promise<Buffer> {
     const priceColumns = SCREEN_EXPORT_COLUMNS.filter((c) => columns.includes(c.key));
     if (priceColumns.length === 0) throw new Error('Selecciona al menos una columna de precio');
 
-    const query = brandIds.length > 0 ? { brandId: { $in: brandIds } } : {};
+    const query: any = brandIds.length > 0 ? { brandId: { $in: brandIds } } : {};
+    if (source === 'mechanic') query.isMechanic = true;
+    // `$ne: true` incluye también los registros anteriores sin el campo.
+    if (source === 'regular') query.isMechanic = { $ne: true };
     const screens = await Screen.find(query).populate('brandId', 'name').lean();
+    if (screens.length === 0) throw new Error('No hay pantallas para exportar con los filtros seleccionados');
 
     const byBrand = new Map<string, CatalogBrandGroup>();
     for (const screen of screens as any[]) {
