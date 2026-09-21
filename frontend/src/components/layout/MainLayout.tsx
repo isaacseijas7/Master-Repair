@@ -52,12 +52,12 @@ const navigation = [
 ];
 
 // Menú principal "Catálogo de Pantallas" con sus submenús.
-const phoneCatalogNavigation = {
+const screenCatalogNavigation = {
   name: 'Catálogo de Pantallas',
   icon: Smartphone,
   children: [
     { name: 'Marcas', href: '/brands', icon: BadgeCheck },
-    { name: 'Pantallas', href: '/phones', icon: Smartphone },
+    { name: 'Pantallas', href: '/screens', icon: Smartphone },
   ],
 };
 
@@ -93,7 +93,7 @@ export function MainLayout() {
   const { user, logout } = useAuthStore();
   const confirm = useConfirm();
   const isAdmin = user?.role === 'admin';
-  const isCatalogActive = phoneCatalogNavigation.children.some((child) =>
+  const isCatalogActive = screenCatalogNavigation.children.some((child) =>
     isPathActive(location.pathname, child.href)
   );
   const [catalogOpen, setCatalogOpen] = useState(isCatalogActive);
@@ -201,17 +201,17 @@ export function MainLayout() {
                   : 'text-gray-700 hover:bg-gray-100'
               )}
             >
-              <phoneCatalogNavigation.icon
+              <screenCatalogNavigation.icon
                 className={cn('w-5 h-5', isCatalogActive ? 'text-blue-700' : 'text-gray-500')}
               />
-              <span className="flex-1 text-left">{phoneCatalogNavigation.name}</span>
+              <span className="flex-1 text-left">{screenCatalogNavigation.name}</span>
               <ChevronRight
                 className={cn('w-4 h-4 transition-transform', catalogOpen && 'rotate-90')}
               />
             </button>
             {catalogOpen && (
               <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-3">
-                {phoneCatalogNavigation.children.map((child) => {
+                {screenCatalogNavigation.children.map((child) => {
                   const isActive = isPathActive(location.pathname, child.href);
                   return (
                     <Link
@@ -422,9 +422,9 @@ export function MainLayout() {
               );
             })}
             <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              {phoneCatalogNavigation.name}
+              {screenCatalogNavigation.name}
             </p>
-            {phoneCatalogNavigation.children.map((child) => {
+            {screenCatalogNavigation.children.map((child) => {
               const isActive = isPathActive(location.pathname, child.href);
               return (
                 <Link

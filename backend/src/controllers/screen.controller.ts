@@ -1,50 +1,50 @@
 import { FastifyRequest, FastifyReply, RouteGenericInterface } from "fastify";
 import {
-  phoneService,
-  PHONE_EXPORT_COLUMNS,
-  DEFAULT_PHONE_EXPORT_COLUMNS,
-} from "../services/phone.service";
-import { createPhoneSchema, updatePhoneSchema } from "../schemas/phone.schema";
+  screenService,
+  SCREEN_EXPORT_COLUMNS,
+  DEFAULT_SCREEN_EXPORT_COLUMNS,
+} from "../services/screen.service";
+import { createScreenSchema, updateScreenSchema } from "../schemas/screen.schema";
 
 // El precio de compra es un dato interno: solo admin y manager lo ven.
 const canViewCost = (request: FastifyRequest) =>
   request.user?.role === "admin" || request.user?.role === "manager";
 
-interface GetPhonesRoute extends RouteGenericInterface {
+interface GetScreensRoute extends RouteGenericInterface {
   Querystring: Record<string, any>;
 }
 
-interface ExportPhonesRoute extends RouteGenericInterface {
+interface ExportScreensRoute extends RouteGenericInterface {
   // IDs de marca separados por coma; vacío = todas las marcas.
   Querystring: { brandIds?: string; columns?: string };
 }
 
-interface PhoneByIdRoute extends RouteGenericInterface {
+interface ScreenByIdRoute extends RouteGenericInterface {
   Params: { id: string };
 }
 
-interface CreatePhoneRoute extends RouteGenericInterface {
+interface CreateScreenRoute extends RouteGenericInterface {
   Body: any;
 }
 
-interface UpdatePhoneRoute extends RouteGenericInterface {
+interface UpdateScreenRoute extends RouteGenericInterface {
   Params: { id: string };
   Body: any;
 }
 
-export class PhoneController {
-  async getPhones(
-    request: FastifyRequest<GetPhonesRoute>,
+export class ScreenController {
+  async getScreens(
+    request: FastifyRequest<GetScreensRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const result = await phoneService.getPhones(
+      const result = await screenService.getScreens(
         request.query,
         canViewCost(request),
       );
       reply.send({
         success: true,
-        message: "Pantallas obtenidos exitosamente",
+        message: "Pantallas obtenidas exitosamente",
         data: result,
       });
     } catch (error: any) {
@@ -52,36 +52,36 @@ export class PhoneController {
     }
   }
 
-  async getPhoneById(
-    request: FastifyRequest<PhoneByIdRoute>,
+  async getScreenById(
+    request: FastifyRequest<ScreenByIdRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const phone = await phoneService.getPhoneById(
+      const screen = await screenService.getScreenById(
         request.params.id,
         canViewCost(request),
       );
       reply.send({
         success: true,
-        message: "Pantalla obtenido exitosamente",
-        data: { phone },
+        message: "Pantalla obtenida exitosamente",
+        data: { screen },
       });
     } catch (error: any) {
       reply.status(404).send({ success: false, message: error.message });
     }
   }
 
-  async createPhone(
-    request: FastifyRequest<CreatePhoneRoute>,
+  async createScreen(
+    request: FastifyRequest<CreateScreenRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const validatedData = createPhoneSchema.parse(request.body);
-      const phone = await phoneService.createPhone(validatedData);
+      const validatedData = createScreenSchema.parse(request.body);
+      const screen = await screenService.createScreen(validatedData);
       reply.status(201).send({
         success: true,
-        message: "Pantalla creado exitosamente",
-        data: { phone },
+        message: "Pantalla creada exitosamente",
+        data: { screen },
       });
     } catch (error: any) {
       if (error.name === "ZodError") {
@@ -96,20 +96,20 @@ export class PhoneController {
     }
   }
 
-  async updatePhone(
-    request: FastifyRequest<UpdatePhoneRoute>,
+  async updateScreen(
+    request: FastifyRequest<UpdateScreenRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const validatedData = updatePhoneSchema.parse(request.body);
-      const phone = await phoneService.updatePhone(
+      const validatedData = updateScreenSchema.parse(request.body);
+      const screen = await screenService.updateScreen(
         request.params.id,
         validatedData,
       );
       reply.send({
         success: true,
-        message: "Pantalla actualizado exitosamente",
-        data: { phone },
+        message: "Pantalla actualizada exitosamente",
+        data: { screen },
       });
     } catch (error: any) {
       if (error.name === "ZodError") {
@@ -124,23 +124,23 @@ export class PhoneController {
     }
   }
 
-  async deletePhone(
-    request: FastifyRequest<PhoneByIdRoute>,
+  async deleteScreen(
+    request: FastifyRequest<ScreenByIdRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      await phoneService.deletePhone(request.params.id);
+      await screenService.deleteScreen(request.params.id);
       reply.send({
         success: true,
-        message: "Pantalla eliminado exitosamente",
+        message: "Pantalla eliminada exitosamente",
       });
     } catch (error: any) {
       reply.status(400).send({ success: false, message: error.message });
     }
   }
 
-  async exportPhones(
-    request: FastifyRequest<ExportPhonesRoute>,
+  async exportScreens(
+    request: FastifyRequest<ExportScreensRoute>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
@@ -156,8 +156,8 @@ export class PhoneController {
 
       const columns = request.query.columns
         ? request.query.columns.split(",").map((c) => c.trim()).filter(Boolean)
-        : DEFAULT_PHONE_EXPORT_COLUMNS;
-      const validKeys = PHONE_EXPORT_COLUMNS.map((c) => c.key as string);
+        : DEFAULT_SCREEN_EXPORT_COLUMNS;
+      const validKeys = SCREEN_EXPORT_COLUMNS.map((c) => c.key as string);
       if (
         columns.length === 0 ||
         columns.some((c) => !validKeys.includes(c))
@@ -166,7 +166,7 @@ export class PhoneController {
         return;
       }
 
-      const buffer = await phoneService.exportPhones(brandIds, columns);
+      const buffer = await screenService.exportScreens(brandIds, columns);
 
       const timestamp = new Date().toISOString().split("T")[0];
       reply.header(
@@ -175,7 +175,7 @@ export class PhoneController {
       );
       reply.header(
         "Content-Disposition",
-        `attachment; filename="telefonos-${timestamp}.xlsx"`,
+        `attachment; filename="pantallas-${timestamp}.xlsx"`,
       );
       reply.header("Content-Length", buffer.length);
 
@@ -186,4 +186,4 @@ export class PhoneController {
   }
 }
 
-export const phoneController = new PhoneController();
+export const screenController = new ScreenController();

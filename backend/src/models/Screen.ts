@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export interface IPhone extends Document {
+export interface IScreen extends Document {
   brandId: Types.ObjectId;
   // No puede llamarse `model`: es una clave reservada de Mongoose Document.
-  phoneModel: string;
+  screenModel: string;
   // Precio de venta al por mayor (USD). Se llama `salePrice` por historia: es
   // el campo original del catálogo.
   salePrice: number;
@@ -16,7 +16,7 @@ export interface IPhone extends Document {
   __v?: any;
 }
 
-const PhoneSchema = new Schema<IPhone>(
+const ScreenSchema = new Schema<IScreen>(
   {
     brandId: {
       type: Schema.Types.ObjectId,
@@ -24,7 +24,7 @@ const PhoneSchema = new Schema<IPhone>(
       required: [true, 'La marca es requerida'],
       index: true,
     },
-    phoneModel: {
+    screenModel: {
       type: String,
       required: [true, 'El modelo es requerido'],
       trim: true,
@@ -57,9 +57,9 @@ const PhoneSchema = new Schema<IPhone>(
 
 // Un mismo modelo no se repite dentro de la misma marca (sin distinguir
 // mayúsculas/minúsculas).
-PhoneSchema.index(
-  { brandId: 1, phoneModel: 1 },
+ScreenSchema.index(
+  { brandId: 1, screenModel: 1 },
   { unique: true, collation: { locale: 'en', strength: 2 } },
 );
 
-export const Phone = mongoose.model<IPhone>('Phone', PhoneSchema);
+export const Screen = mongoose.model<IScreen>('Screen', ScreenSchema);

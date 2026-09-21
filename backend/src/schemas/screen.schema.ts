@@ -10,11 +10,11 @@ const usdPrice = (label: string) =>
       message: `${label} admite máximo 2 decimales`,
     });
 
-export const createPhoneSchema = z.object({
+export const createScreenSchema = z.object({
   brandId: z
     .string({ required_error: "La marca es requerida" })
     .regex(/^[0-9a-fA-F]{24}$/, "Marca inválida"),
-  phoneModel: z
+  screenModel: z
     .string()
     .trim()
     .min(1, "El modelo es requerido")
@@ -25,7 +25,7 @@ export const createPhoneSchema = z.object({
   purchasePrice: usdPrice("El precio de compra").nullable().optional(),
 });
 
-export const updatePhoneSchema = createPhoneSchema.partial();
+export const updateScreenSchema = createScreenSchema.partial();
 
-export type CreatePhoneInput = z.infer<typeof createPhoneSchema>;
-export type UpdatePhoneInput = z.infer<typeof updatePhoneSchema>;
+export type CreateScreenInput = z.infer<typeof createScreenSchema>;
+export type UpdateScreenInput = z.infer<typeof updateScreenSchema>;

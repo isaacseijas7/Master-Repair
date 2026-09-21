@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { Phone, CreatePhoneInput, PhoneFilters } from '@/types';
-import { phoneService } from '@/services/phone.service';
+import type { Screen, CreateScreenInput, ScreenFilters } from '@/types';
+import { screenService } from '@/services/screen.service';
 
-interface PhoneState {
-  phones: Phone[];
+interface ScreenState {
+  screens: Screen[];
   pagination: {
     page: number;
     limit: number;
@@ -15,19 +15,19 @@ interface PhoneState {
   isLoading: boolean;
   error: string | null;
 
-  fetchPhones: (params?: PhoneFilters) => Promise<void>;
-  createPhone: (data: CreatePhoneInput) => Promise<void>;
-  updatePhone: (id: string, data: Partial<CreatePhoneInput>) => Promise<void>;
-  deletePhone: (id: string) => Promise<void>;
+  fetchScreens: (params?: ScreenFilters) => Promise<void>;
+  createScreen: (data: CreateScreenInput) => Promise<void>;
+  updateScreen: (id: string, data: Partial<CreateScreenInput>) => Promise<void>;
+  deleteScreen: (id: string) => Promise<void>;
   clearError: () => void;
 }
 
 // Ver product.store.ts: evita que una respuesta llegada tarde pise
 // resultados de una búsqueda más reciente.
-let latestPhonesRequestId = 0;
+let latestScreensRequestId = 0;
 
-export const usePhoneStore = create<PhoneState>((set, get) => ({
-  phones: [],
+export const useScreenStore = create<ScreenState>((set, get) => ({
+  screens: [],
   pagination: {
     page: 1,
     limit: 10,
@@ -39,19 +39,19 @@ export const usePhoneStore = create<PhoneState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchPhones: async (params = {}) => {
-    const requestId = ++latestPhonesRequestId;
+  fetchScreens: async (params = {}) => {
+    const requestId = ++latestScreensRequestId;
     set({ isLoading: true, error: null });
     try {
-      const response = await phoneService.getPhones(params);
-      if (requestId !== latestPhonesRequestId) return;
+      const response = await screenService.getScreens(params);
+      if (requestId !== latestScreensRequestId) return;
       set({
-        phones: response.data,
+        screens: response.data,
         pagination: response.pagination,
         isLoading: false,
       });
     } catch (error: any) {
-      if (requestId !== latestPhonesRequestId) return;
+      if (requestId !== latestScreensRequestId) return;
       set({
         error: error.response?.data?.message || 'Error al cargar pantallas',
         isLoading: false,
@@ -59,45 +59,45 @@ export const usePhoneStore = create<PhoneState>((set, get) => ({
     }
   },
 
-  createPhone: async (data) => {
+  createScreen: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      await phoneService.createPhone(data);
-      await get().fetchPhones();
+      await screenService.createScreen(data);
+      await get().fetchScreens();
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al crear el pantalla',
+        error: error.response?.data?.message || 'Error al crear la pantalla',
         isLoading: false,
       });
       throw error;
     }
   },
 
-  updatePhone: async (id, data) => {
+  updateScreen: async (id, data) => {
     set({ isLoading: true, error: null });
     try {
-      await phoneService.updatePhone(id, data);
-      await get().fetchPhones();
+      await screenService.updateScreen(id, data);
+      await get().fetchScreens();
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al actualizar el pantalla',
+        error: error.response?.data?.message || 'Error al actualizar la pantalla',
         isLoading: false,
       });
       throw error;
     }
   },
 
-  deletePhone: async (id) => {
+  deleteScreen: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      await phoneService.deletePhone(id);
-      await get().fetchPhones();
+      await screenService.deleteScreen(id);
+      await get().fetchScreens();
       set({ isLoading: false });
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Error al eliminar el pantalla',
+        error: error.response?.data?.message || 'Error al eliminar la pantalla',
         isLoading: false,
       });
       throw error;

@@ -7,4 +7,4 @@ export { useOrderStore } from './order.store';
 export { useDashboardStore } from './dashboard.store';
 export { useProfileStore } from './profile.store';
 export { useBrandStore } from './brand.store';
-export { usePhoneStore } from './phone.store';
+export { useScreenStore } from './screen.store';

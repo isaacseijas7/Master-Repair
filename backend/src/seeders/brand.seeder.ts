@@ -1,13 +1,13 @@
 import { Brand } from "../models/Brand";
-import { Phone } from "../models/Phone";
+import { Screen } from "../models/Screen";
 import mongoose from "mongoose";
 
 export const seedBrands = async (): Promise<
   Record<string, mongoose.Types.ObjectId>
 > => {
-  // Los pantallas referencian a las marcas: se limpian primero para no
+  // Las pantallas referencian a las marcas: se limpian primero para no
   // dejar registros huérfanos.
-  await Phone.deleteMany({});
+  await Screen.deleteMany({});
   await Brand.deleteMany({});
   console.log("🗑️  Colecciones de marcas y pantallas limpiadas");
 
