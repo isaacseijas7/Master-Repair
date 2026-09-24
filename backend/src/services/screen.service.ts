@@ -138,6 +138,7 @@ export class ScreenService {
       if (!byBrand.has(brand)) byBrand.set(brand, { brand, screens: [] });
       byBrand.get(brand)!.screens.push({
         model: screen.screenModel,
+        isMechanic: screen.isMechanic === true,
         values: Object.fromEntries(priceColumns.map((c) => [c.key, screen[c.key] ?? null])),
       });
     }
@@ -146,7 +147,8 @@ export class ScreenService {
     const groups = [...byBrand.values()].sort((a, b) => collator.compare(a.brand, b.brand));
     groups.forEach((group) => group.screens.sort((a, b) => collator.compare(a.model, b.model)));
 
-    return buildCatalogWorkbookBuffer(groups, priceColumns);
+    // Con todas las pantallas se agrega la columna TIPO para distinguirlas.
+    return buildCatalogWorkbookBuffer(groups, priceColumns, { showType: source === 'all' });
   }
 
   // Debe haber al menos un precio de venta: unitario o al por mayor.

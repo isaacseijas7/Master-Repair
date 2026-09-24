@@ -8,33 +8,65 @@ export interface CatalogPriceColumn {
 
 export interface CatalogBrandGroup {
   brand: string;
-  screens: Array<{ model: string; values: Record<string, number | null | undefined> }>;
+  screens: Array<{
+    model: string;
+    // Solo se usa cuando el libro incluye la columna TIPO.
+    isMechanic?: boolean;
+    values: Record<string, number | null | undefined>;
+  }>;
 }
 
 const FONT_NAME = "Aptos Narrow";
 const USD_FORMAT = '"$"#,##0.00';
 const THIN = { style: "thin" as const, color: { argb: "FF000000" } };
 
-const MODEL_WIDTH = 32;
-const PRICE_WIDTH = 18;
+// Ancho útil de una hoja carta vertical (8.5 in menos márgenes de 0.25 in) a
+// 96 dpi. La tabla se reparte en todo ese ancho para no dejar la hoja impresa
+// con espacio en blanco a la derecha.
+const LETTER_PRINTABLE_PX = 768;
+// exceljs no tipa Letter en su enum PaperSize; en el formato OOXML es 1.
+const PAPER_SIZE_LETTER = 1 as ExcelJS.PaperSize;
+const MODEL_SHARE = 0.4;
+const TYPE_SHARE = 0.16;
+
+// Inverso de colWidthPx: ancho de columna (en caracteres) para un ancho en px.
+const pxToColWidth = (px: number) => (px - 5) / 7;
+
+// Reparte el ancho de la hoja: Modelo, [Tipo] y una columna por cada precio.
+function buildColumnWidths(priceCount: number, showType: boolean): number[] {
+  const modelPx = LETTER_PRINTABLE_PX * MODEL_SHARE;
+  const typePx = showType ? LETTER_PRINTABLE_PX * TYPE_SHARE : 0;
+  const pricePx = (LETTER_PRINTABLE_PX - modelPx - typePx) / priceCount;
+  return [
+    pxToColWidth(modelPx),
+    ...(showType ? [pxToColWidth(typePx)] : []),
+    ...Array.from({ length: priceCount }, () => pxToColWidth(pricePx)),
+  ];
+}
 
 const baseFont = { name: FONT_NAME, size: 11, color: { argb: "FF000000" } };
 
 // Genera la "Lista de precios" del catálogo: banner con el logo, título y las
 // marcas agrupadas, una debajo de la otra. Cada bloque de marca tiene la
-// columna Modelo y una columna por cada precio seleccionado (en USD):
+// columna Modelo, opcionalmente una columna Tipo (Mecánico / Regular) y una
+// columna por cada precio seleccionado (en USD):
 //
-//   [Modelo][Precio…]
+//   [Modelo][Tipo?][Precio…]
+//
+// La tabla se ensancha hasta ocupar todo el ancho de una hoja carta.
 export async function buildCatalogWorkbookBuffer(
   groups: CatalogBrandGroup[],
   priceColumns: CatalogPriceColumn[],
+  { showType = false }: { showType?: boolean } = {},
 ): Promise<Buffer> {
-  const columnWidths = [MODEL_WIDTH, ...priceColumns.map(() => PRICE_WIDTH)];
+  const columnWidths = buildColumnWidths(priceColumns.length, showType);
+  const priceStart = showType ? 3 : 2;
   const totalColumns = columnWidths.length;
 
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet("Catálogo", {
     pageSetup: {
+      paperSize: PAPER_SIZE_LETTER,
       orientation: "portrait",
       fitToPage: true,
       fitToWidth: 1,
@@ -75,7 +107,7 @@ export async function buildCatalogWorkbookBuffer(
     // Encabezados de columnas.
     const headerRow = row + 1;
     ws.getRow(headerRow).height = 30;
-    ["MODELO", ...priceColumns.map((p) => p.header)].forEach((text, k) => {
+    ["MODELO", ...(showType ? ["TIPO"] : []), ...priceColumns.map((p) => p.header)].forEach((text, k) => {
       const cell = ws.getCell(headerRow, 1 + k);
       cell.value = text;
       cell.font = baseFont;
@@ -93,8 +125,16 @@ export async function buildCatalogWorkbookBuffer(
       modelCell.alignment = { vertical: "bottom" };
       modelCell.border = { bottom: THIN };
 
+      if (showType) {
+        const typeCell = ws.getCell(dataRow, 2);
+        typeCell.value = screen.isMechanic ? "Mecánico" : "Regular";
+        typeCell.font = baseFont;
+        typeCell.alignment = { horizontal: "center", vertical: "bottom" };
+        typeCell.border = { bottom: THIN };
+      }
+
       priceColumns.forEach((column, k) => {
-        const cell = ws.getCell(dataRow, 2 + k);
+        const cell = ws.getCell(dataRow, priceStart + k);
         const value = screen.values[column.key];
         if (typeof value === "number") cell.value = value;
         cell.numFmt = USD_FORMAT;
