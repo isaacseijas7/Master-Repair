@@ -212,6 +212,11 @@ export function ExportScreensDialog({ currentBrandId }: ExportScreensDialogProps
                   </div>
                 ))}
               </RadioGroup>
+              {source === "all" && (
+                <p className="text-xs text-gray-500">
+                  El archivo incluirá una columna “Tipo” (Mecánico o Regular).
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 border-t pt-4">
